@@ -1,4 +1,4 @@
-package com.phasmidsoftware.number.matchers
+package com.phasmidsoftware.matchers
 
 import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
