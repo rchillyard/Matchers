@@ -1,9 +1,8 @@
 package com.phasmidsoftware.matchers
 
+import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
-import java.util.NoSuchElementException
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -247,9 +246,9 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "log"
   it should "log success with LogDebug" in {
     val sb = new StringBuilder
-    import m.MatcherOps
     implicit val ll: LogLevel = LogDebug
     implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    import m.MatcherOps
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
@@ -265,10 +264,20 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
-      """success(1): matched 1
-        |""".stripMargin
+            """success(1): matched 1
+              |""".stripMargin
+  }
+  it should "log success with LogOff" in {
+    val sb = new StringBuilder
+    import m.MatcherOps
+    implicit val ll: LogLevel = LogOff
+    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    val p = m.success(1) :| "success(1)"
+    p(1).successful shouldBe true
+    sb.toString() shouldBe ""
   }
 
+  // CONSIDER eliminating the LoggingMatcher method.
   behavior of "LoggingMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
@@ -345,9 +354,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val even = 0
     z(odd, "3") shouldBe m.Match(3)
     z(even, "4") shouldBe m.Match(4)
-    // FIXME this has to do with the setting of LogLevel, I think.
-    //    z(even, "3") shouldBe m.Miss("create", "3")
-    z(even, "3") shouldBe m.Miss("valve", (0, "3"))
+    z(even, "3") shouldBe m.Miss("create", "3")
   }
 
   behavior of "chain"

@@ -84,10 +84,10 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[(Q,R), T].
     */
-  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = LoggingMatcher("valve") {
+  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = Matcher[(Q, T), R] {
     // CONSIDER redesign this in terms of other Matchers, not MatchResult
     case (q, t) => MatchResult(f, p)(q, t)
-  }
+  } :| "valve"
 
   /**
     * Matcher whose success depends on the application of a function f to the input,
@@ -355,28 +355,24 @@ trait Matchers {
     * If ll is LogInfo, a matcher based on m, which on successful matching, logging with println will occur, is returned.
     * If ll is LogDebug, then the value of log(m)(name) is returned.
     *
-    * @param m    a Matcher[T, R].
-    * @param name a String to identify this parser.
-    * @param ll   (implicit) LogLevel.
+    * @param m  a Matcher[T, R].
+    * @param ll (implicit) LogLevel.
     * @tparam T the underlying type of the input to m.
     * @tparam R the underlying type of the result of m.
     * @return a Matcher[T, R].
     */
-  def log[T, R](m: => Matcher[T, R])(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = ll match {
-    case LogDebug => Matcher { t =>
-      logger(s"trying $name on $t...")
-      val r = m(t)
-      logger(s"... $name: $r")
-      r
+  def log[T, R](m: => Matcher[T, R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = ll match {
+    case LogDebug => constructMatcher[T, R] {
+      t =>
+        logger(s"trying ${m.toString} on $t...")
+        val r: MatchResult[R] = m(t)
+        logger(s"... ${m.toString}: $r")
+        r
     }
 
-    case LogInfo =>
-      Matcher(t => {
-        val q = m | fail(name)
-        q(t) :- (x => logger(s"$name: matched $x"))
-      })
+    case LogInfo => Matcher(t => m(t) :- (x => logger(s"${m.toString}: matched $x")))
 
-    case _ => m | fail(name)
+    case _ => m
   }
 
   /**
@@ -387,7 +383,7 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = log(p)(name)
+    def :|(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = log(p.named(name))
   }
 
   /**
@@ -412,6 +408,10 @@ trait Matchers {
 
   /**
     * Method to create a Matcher, based on the given function f.
+    * Unusually, this method's identifier has a capital first letter.
+    * This is done to mimic the Parser method in the parser-combinators.
+    * It has the advantage of looking somewhat like a constructor of a Matcher.
+    *
     * NOTE: f is a partial function which may throw a MatchError.
     * In such a case, this is simply treated as a Miss.
     * However, if f throws some other non-fatal exception, then that will result in an Error.
@@ -421,10 +421,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def Matcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) => try f(t) catch {
-    case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-    case NonFatal(e) => Error(e)
-  }
+  def Matcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = constructMatcher(f)
 
   /**
     * Method to create a Matcher, based on the given function f.
@@ -857,6 +854,8 @@ trait Matchers {
     /**
       * Matcher which always succeeds (unless this causes an Error) but whose result is based on a Try[R].
       *
+      * TESTME more
+      *
       * @return Matcher[T, Option of R]
       */
     def trial: Matcher[T, Try[R]] = t =>
@@ -893,7 +892,7 @@ trait Matchers {
       this
     }
 
-    override def toString = s"Matcher ($name)"
+    override def toString = s"$name"
 
     private var name: String = ""
   }
@@ -1225,6 +1224,20 @@ trait Matchers {
       */
     def unroll21[R0, R1, R2](t: ((R0, R1), R2)): (R0, R1, R2) = (t._1._1, t._1._2, t._2)
   }
+
+  /**
+    * (Should be) Private method to construct a Matcher.
+    *
+    * @param f a T => MatchResult[R].
+    * @tparam T the input type.
+    * @tparam R the result type.
+    * @return a Matcher[T, R] based on f.
+    */
+  def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
+    try f(t) catch {
+      case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
+      case NonFatal(e) => Error(e)
+    }
 
 }
 
