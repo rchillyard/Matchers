@@ -33,11 +33,16 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "Match"
 
-  it should "support success" in {
+  it should "support good success" in {
     val target = new m.Match[Int](0)
     val value1 = target.success(1)
     value1.successful shouldBe true
     value1.getOrElse(0) shouldBe 1
+  }
+  it should "support bad success" in {
+    val target = new m.Match[Int](0)
+    val value1 = target.success(1 / 0)
+    value1.successful shouldBe false
   }
   it should "support successful" in {
     m.success(0)("").successful shouldBe true

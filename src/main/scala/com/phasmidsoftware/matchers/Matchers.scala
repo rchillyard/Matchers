@@ -675,11 +675,11 @@ trait Matchers {
     /**
       * "unit" method for a successful match.
       *
-      * @param s the value of the result.
+      * @param s the call-by-name value of the result.
       * @tparam S the underlying type of the result.
-      * @return a Match[S] with value s.
+      * @return a Match[S] with value s (unless s throws an exception, in which case the result will be an Error).
       */
-    def success[S](s: S): MatchResult[S] = Match(s)
+    def success[S](s: => S): MatchResult[S] = MatchResult(s)
 
     /**
       * FlatMap method.
