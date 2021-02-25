@@ -37,7 +37,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target = new m.Match[Int](0)
     val value1 = target.success(1)
     value1.successful shouldBe true
-    value1.get shouldBe 1
+    value1.getOrElse(0) shouldBe 1
   }
   it should "support successful" in {
     m.success(0)("").successful shouldBe true
@@ -69,12 +69,12 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "support map" in {
     val result = m.success(0)("").map(_.toString)
     result.successful shouldBe true
-    result.get shouldBe "0"
+    result.getOrElse("") shouldBe "0"
   }
   it should "support flatMap" in {
     val result = m.success(0)("").flatMap(x => m.Match(x.toString))
     result.successful shouldBe true
-    result.get shouldBe "0"
+    result.getOrElse("") shouldBe "0"
   }
   it should "support getOrElse" in {
     val result = m.success(0)("").flatMap(x => m.Match(x.toString))
@@ -165,12 +165,12 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "support map" in {
     val result = m.error[Unit](new NoSuchElementException)(()).map(_.toString)
     result.successful shouldBe false
-    a[NoSuchElementException] shouldBe thrownBy(result.get)
+    a[NoSuchElementException] shouldBe thrownBy(result.getOrElse(""))
   }
   it should "support flatMap" in {
     val result = m.error[Unit](new NoSuchElementException)(()).flatMap(x => m.Match(x.toString))
     result.successful shouldBe false
-    a[NoSuchElementException] shouldBe thrownBy(result.get)
+    a[NoSuchElementException] shouldBe thrownBy(result.getOrElse(""))
   }
   it should "support foreach" in {
     val result = m.error[Unit](new NoSuchElementException)(())
@@ -240,7 +240,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result = p("x")
     result.successful shouldBe false
     result should matchPattern { case m.Error(_) => }
-    a[NumberFormatException] shouldBe thrownBy(result.get)
+    a[NumberFormatException] shouldBe thrownBy(result.getOrElse(""))
   }
 
   behavior of "log"
@@ -386,7 +386,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     p(1).successful shouldBe true
     q(1).successful shouldBe false
     q(2).successful shouldBe true
-    q(2).get shouldBe 0
+    q(2).getOrElse(-1) shouldBe 0
   }
   it should "work for error situation" in {
     val p = m.Matcher[Unit, Unit](_ => m.Error(new NoSuchElementException))
@@ -485,7 +485,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val z = p ~> q
     val result = z(1 -> 2)
     result.successful shouldBe true
-    result.get shouldBe 2
+    result.getOrElse(0) shouldBe 2
   }
   it should "match (1,2) and result in 1" in {
     val p = m.matches(1)
@@ -493,7 +493,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val z = p <~ q
     val result = z(1 -> 2)
     result.successful shouldBe true
-    result.get shouldBe 1
+    result.getOrElse(0) shouldBe 1
   }
 
   behavior of "select"
@@ -502,35 +502,35 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val z: m.Matcher[Complex, Double] = m.select2_0(Complex)
     val result = z(Complex(1, 0))
     result.successful shouldBe true
-    result.get shouldBe 1
+    result.getOrElse(0) shouldBe 1
   }
   it should "select2_1" in {
     case class Complex(r: Double, i: Double)
     val z: m.Matcher[Complex, Double] = m.select2_1(Complex)
     val result = z(Complex(1, 0))
     result.successful shouldBe true
-    result.get shouldBe 0
+    result.getOrElse(Double.NaN) shouldBe 0
   }
   it should "select3_0" in {
     case class Vector(x: String, y: Int, z: Double)
     val z: m.Matcher[Vector, Double] = m.select3_0(Vector)
     val result = z(Vector("1", 0, 0.5))
     result.successful shouldBe true
-    result.get shouldBe "1"
+    result.getOrElse("") shouldBe "1"
   }
   it should "select3_1" in {
     case class Vector(x: String, y: Int, z: Double)
     val z: m.Matcher[Vector, Int] = m.select3_1(Vector)
     val result = z(Vector("1", 0, 0.5))
     result.successful shouldBe true
-    result.get shouldBe 0
+    result.getOrElse(-1) shouldBe 0
   }
   it should "select3_2" in {
     case class Vector(x: String, y: Int, z: Double)
     val z: m.Matcher[Vector, Double] = m.select3_2(Vector)
     val result = z(Vector("1", 0, 0.5))
     result.successful shouldBe true
-    result.get shouldBe 0.5
+    result.getOrElse(Double.NaN) shouldBe 0.5
   }
 
   behavior of "having"

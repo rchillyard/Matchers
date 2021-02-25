@@ -1,6 +1,8 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/454847cac6214df8986ef2dec68e5049)](https://www.codacy.com/gh/rchillyard/Matchers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rchillyard/Matchers&amp;utm_campaign=Badge_Grade)
+
 # Matchers
 A library of composable matchers.
-If you're familiar with the _Parsers_ class from the Scala parser-combinators library, you should be be fairly
+If you're familiar with the _Parsers_ class from the Scala parser-combinators library, you should be fairly
 comfortable with the Matchers.
 
 The chief difference between _Parsers_ and _Matchers_ is that, whereas _Parsers_ defines two parametric types via
