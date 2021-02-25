@@ -1,4 +1,5 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/454847cac6214df8986ef2dec68e5049)](https://www.codacy.com/gh/rchillyard/Matchers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rchillyard/Matchers&amp;utm_campaign=Badge_Grade)
+[![CircleCI](https://circleci.com/gh/rchillyard/Matchers.svg?style=svg)](https://circleci.com/gh/rchillyard/Matchers)
 
 # Matchers
 A library of composable matchers.
@@ -40,6 +41,25 @@ AND if the following matcher succeeds, then a Match[Expression] will result.
 The intermediate result is a tuple of _Expressions_.
 Since these are in arbitrary order, the "*" matcher will try _matchBiFunctionConstantResult(Product, Number(-1), Number.zero)_
 with the tuple straight or inverted as necessary.
+
+Debugging/Logging
+=================
+By default, matchers are not named (the default name is "anon") so if you want to turn on debugging,
+the matchers will not show the names you'd like to see.
+However, you can easily fix that.
+After any matcher reference, you can invoke the :| operator with a String representing the name.
+For example,
+
+    import m.MatcherOps
+    val p = m.success(1) :| "success(1)"
+
+Note that somewhere you will have to import the _MatcherOps_ in order to make the :| operator available.
+
+The second change you need to make to enable debugging/logging is to set the _LogLevel_ by defining an implicit val of that type.
+The default value is _LogOff_, but you also have _LogDebug_ and _LogInfo_ available.
+
+The default _MatchLogger_ results in logging information going to the console via _println_.
+You can easily set up your own implicit value of _MatchLogger_ which is simply a _String => Unit_ function.
 
 Version
 =======
