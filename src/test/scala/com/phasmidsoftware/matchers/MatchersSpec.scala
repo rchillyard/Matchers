@@ -700,7 +700,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val z: m.Matcher[String, Int] = m.success(1 / 0)
     val r: m.Matcher[(String, String, String), Int] = m.match3Any(p, q, z)
     val tuple = ("1", "", "junk")
-    an[ArithmeticException] shouldBe thrownBy(r(tuple))
+    val result = r(tuple)
+    result should matchPattern { case m.Error(_: ArithmeticException) => }
   }
 
   behavior of "match2All"

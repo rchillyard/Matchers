@@ -17,7 +17,7 @@ trait Matchers {
     * @tparam R the result type to both f and the resulting Matcher.
     * @return a Matcher[T, R].
     */
-  def lift[T, R](f: T => R): Matcher[T, R] = t => Match(f(t))
+  def lift[T, R](f: T => R): Matcher[T, R] = t => MatchResult(f(t))
 
   /**
     * Matcher which always fails and creates a Miss with the value tried.
@@ -137,7 +137,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R]
     */
-  def success[T, R](r: => R): Matcher[T, R] = _ => Match(r)
+  def success[T, R](r: => R): Matcher[T, R] = _ => MatchResult(r)
 
   /**
     * Method to match a T, resulting in an R, where the match is indirectly determined by
@@ -1160,6 +1160,18 @@ trait Matchers {
 
   object MatchResult {
     /**
+      * Method to construct a MatchResult based on r.
+      *
+      * @param r a call-by-name value of R.
+      * @tparam R the type of r and of the resulting MatchResult.
+      * @return either a Match[R] or an Error[R].
+      */
+    def apply[R](r: => R): MatchResult[R] = Try(r) match {
+      case Success(x) => Match(x)
+      case Failure(e) => Error(e)
+    }
+
+    /**
       * Construct a MatchResult[R] based on a Boolean, a T and an R.
       * If b is true, then the result is Match(r); otherwise it is Miss(t).
       *
@@ -1238,7 +1250,6 @@ trait Matchers {
       case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
       case NonFatal(e) => Error(e)
     }
-
 }
 
 case class MatcherException(msg: String, x: Throwable) extends Exception(msg, x)
