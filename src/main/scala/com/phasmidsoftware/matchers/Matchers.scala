@@ -424,7 +424,7 @@ trait Matchers {
   def Matcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = constructMatcher(f)
 
   /**
-    * Method to create a Matcher, based on the given function f.
+    * Method to create a named Matcher, based on the given function f.
     *
     * @param name the name for the logger to mention.
     * @param f    a T => MatchResult[R].
@@ -432,7 +432,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def LoggingMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
+  def namedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
 
   /**
     * Method to create a Matcher which operates on a similar, but inverted, tuple as m.

@@ -282,13 +282,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     sb.toString() shouldBe ""
   }
 
-  // CONSIDER eliminating the LoggingMatcher method.
-  behavior of "LoggingMatcher"
+  // CONSIDER eliminating the namedMatcher method.
+  behavior of "namedMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
     implicit val ll: LogLevel = LogDebug
     implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
-    val f: m.Matcher[String, Int] = m.LoggingMatcher("one")(_ => m.Match(1))
+    val f: m.Matcher[String, Int] = m.namedMatcher("one")(_ => m.Match(1))
     f("1").successful shouldBe true
     sb.toString() shouldBe
       """trying one on 1...
