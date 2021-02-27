@@ -633,6 +633,22 @@ trait Matchers {
   }
 
   /**
+    * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
+    *
+    * @param l the left value.
+    * @param s the right value.
+    * @tparam L the left type.
+    * @tparam R the right type.
+    */
+  case class ~[+L, +R](l: L, s: R) {
+    def flip: ~[R, L] = Tilde(s, l)
+  }
+
+  object Tilde {
+    def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
+  }
+
+  /**
     * Trait to define the behavior of the result of a Match.
     *
     * @tparam R the type of the result.
@@ -704,10 +720,21 @@ trait Matchers {
       * Otherwise, an Unsuccessful result will be returned.
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return a MatchResult of type ~[R,S].
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[~[R, S]]
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
       * @tparam S the type of the resulting MatchResult.
       * @return a MatchResult[S].
       */
-    def ~[S](sm: => MatchResult[S]): MatchResult[S]
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S]
 
     /**
       * Alternation method which takes a MatchResult as the alternative.
@@ -929,7 +956,22 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return sm.
       */
-    def ~[S](sm: => MatchResult[S]): MatchResult[S] = sm
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = sm
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return if this is successful, then MatchResult(r ~ s), otherwise an unsuccessful result.
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = sm match {
+      case Match(s) => MatchResult(Tilde(r, s))
+      case Miss(w, s) => Miss(w, s)
+      case Error(x) => Error(x)
+    }
 
     /**
       * If s is a Match, then the result will be a Match of the tuple of r and the result of s.
@@ -1065,6 +1107,15 @@ trait Matchers {
 
     /**
       * Method to compose this MatchResult with sm.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return this.
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Miss(msg, t)
+
+    /**
+      * Method to compose this MatchResult with sm.
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
       *
@@ -1072,7 +1123,7 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a Miss(msg, t).
       */
-    def ~[S](sm: => MatchResult[S]): MatchResult[S] = Miss(msg, t)
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = Miss(msg, t)
 
     /**
       * @param sm a MatchResult[S] (ignored).
@@ -1148,6 +1199,15 @@ trait Matchers {
 
     /**
       * Method to compose this MatchResult with sm.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return this.
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Error(e)
+
+    /**
+      * Method to compose this MatchResult with sm.
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
       *
@@ -1155,7 +1215,7 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a MatchResult[S].
       */
-    def ~[S](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = Error(e)
 
     /**
       * @param sm a MatchResult[S] (ignored).

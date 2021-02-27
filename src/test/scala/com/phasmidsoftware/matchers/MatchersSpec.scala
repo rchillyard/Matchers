@@ -1,9 +1,8 @@
 package com.phasmidsoftware.matchers
 
+import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
-import java.util.NoSuchElementException
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -56,19 +55,34 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     target(()).successful shouldBe true
   }
   it should "support Match ~" in {
-    (m.Match(0) ~ m.Match("")) shouldBe m.Match("")
-    (m.Match(0) ~ m.Miss("bad", "")) shouldBe m.Miss("bad", "")
-    (m.Match(0) ~ m.Error(new RuntimeException(""))) should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Match(0) ~ m.Match("") should matchPattern { case m.Match(m.~(0, "")) => }
+    m.Match(0) ~ m.Miss("bad", "") shouldBe m.Miss("bad", "")
+    m.Match(0) ~ m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
   it should "support Miss ~" in {
-    (m.Miss("bad", 0) ~ m.Match("")) shouldBe m.Miss("bad", 0)
-    (m.Miss("bad", 0) ~ m.Miss("bad", "")) shouldBe m.Miss("bad", 0)
-    (m.Miss("bad", 0) ~ m.Error(new RuntimeException(""))) shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) ~ m.Match("") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) ~ m.Miss("bad", "") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) ~ m.Error(new RuntimeException("")) shouldBe m.Miss("bad", 0)
   }
   it should "support Error ~" in {
-    (m.Error(new RuntimeException("")) ~ m.Match("")) should matchPattern { case m.Error(_: RuntimeException) => }
-    (m.Error(new RuntimeException("")) ~ m.Miss("bad", "")) should matchPattern { case m.Error(_: RuntimeException) => }
-    (m.Error(new RuntimeException("")) ~ m.Error(new RuntimeException(""))) should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) ~ m.Match("") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) ~ m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) ~ m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  }
+  it should "support Match conditional" in {
+    m.Match(0) conditional m.Match("") shouldBe m.Match("")
+    m.Match(0) conditional m.Miss("bad", "") shouldBe m.Miss("bad", "")
+    m.Match(0) conditional m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  }
+  it should "support Miss conditional" in {
+    m.Miss("bad", 0) conditional m.Match("") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) conditional m.Miss("bad", "") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) conditional m.Error(new RuntimeException("")) shouldBe m.Miss("bad", 0)
+  }
+  it should "support Error conditional" in {
+    m.Error(new RuntimeException("")) conditional m.Match("") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) conditional m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) conditional m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
   it should "support |" in {
     val result = m.success(0)("") | m.fail("")
@@ -410,7 +424,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     q(2).getOrElse(-1) shouldBe 0
   }
   it should "work for error situation" in {
-    val p = m.Matcher[Unit, Unit](_ => m.Error(new NoSuchElementException))
+    val p = m.Matcher[Int, Int](_ => m.Error(new NoSuchElementException))
     val q = m.not(p, 0)
     p(1).successful shouldBe false
     q(1).successful shouldBe false
