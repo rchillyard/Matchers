@@ -18,6 +18,31 @@ There are three subclasses of _MatchResult_[_R_]:
 * case class Miss[T, R](msg: String, t: T)
 * case class Error[R](e: Throwable)
 
+# Composition of MatchResult
+Perhaps the simplest place to start is with the || method:
+
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S]
+
+If _this_ is successful, then it is returned as is.
+Otherwise, _s_ will be returned.
+Note that _MatchResult[R]_ is a subtype of _MatchResult[S]_ because the parametric type of _MatchResult_ is covariant,
+and because _R_ is a subtype of _S_.
+
+There is a similar method defined as |:
+
+    def |[S >: R](sm: => Matcher[Any, S]): MatchResult[S]
+
+It behaves as || if _this_ is successful, but otherwise, matcher _sm_ is invoked on the failed input value for this _Miss_.
+An _Error_ always returns itself.
+
+The corresponding "and" methods are somewhat different because the return
+type must include two values of two disparate types:
+
+    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)]
+
+The result of the && method will be successful only if _sm_ is also successful.
+In this case, the result will a tuple of the two results.
+
 # Usage
 Typical examples of the use of Matchers would be something such as the following
 (from an application which deals with lazy expressions of numeric quantities):
