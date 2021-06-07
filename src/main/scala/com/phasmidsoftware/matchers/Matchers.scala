@@ -11,8 +11,6 @@ trait Matchers {
 
   matchers =>
 
-  import Matchers._
-
   /**
     * Matcher based on the function f.
     *
@@ -411,6 +409,15 @@ trait Matchers {
   }
 
   /**
+    * Implicit class MatcherStringOps which allows us to use the method m on a String.
+    *
+    * @param s a String.
+    */
+  implicit class MatcherStringOps(s: String) {
+    def m: Matcher[String, String] = matches(s)
+  }
+
+  /**
     * Method to create a Matcher, based on the given function f.
     * Unusually, this method's identifier has a capital first letter.
     * This is done to mimic the Parser method in the parser-combinators.
@@ -604,12 +611,6 @@ trait Matchers {
     */
   def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, (R0, R1, R2)] = p =>
     m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1]) && m2(p.productElement(2).asInstanceOf[T2]) map MatchResult.unroll21
-
-  def asTilde[R0, R1](mr: MatchResult[(R0, R1)]): Matchers.this.MatchResult[R0 ~ R1] = mr match {
-    case Match((r0, r1)) => Match(Matchers.~(r0, r1))
-    case Miss(w, t) => Miss(w, t)
-    case Error(x) => Error(x)
-  }
 
   /**
     * Method to match all element of a Tuple2.
@@ -965,6 +966,7 @@ trait Matchers {
       case Match(s) => MatchResult(Tilde(r, s))
       case Miss(w, s) => Miss(w, s)
       case Error(x) => Error(x)
+      case x => throw MatcherException(s"unexpected input to ~: $x")
     }
 
     /**
@@ -1343,38 +1345,61 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
+  private def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
     try f(t) catch {
       case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
       case NonFatal(e) => Error(e)
     }
+
+  /**
+    * Convert from tuple form to tilde form.
+    *
+    * @param mr a MatchResult[(R0, R1)].
+    * @tparam R0 one of the underlying types of mr.
+    * @tparam R1 the other underlying type of mr.
+    * @return a MatchResult[R0 ~ R1]
+    */
+  private def asTilde[R0, R1](mr: MatchResult[(R0, R1)]): MatchResult[R0 ~ R1] = mr match {
+    case Match((r0, r1)) => Match(Tilde(r0, r1))
+    case Miss(w, t) => Miss(w, t)
+    case Error(x) => Error(x)
+    case x => throw MatcherException(s"unexpected input to asTilde: $x")
+  }
 }
 
+/**
+  * Companion object to Matchers.
+  */
 object Matchers {
   val matchers: Matchers = new Matchers {}
 
-  implicit class MatcherStringOps(s: String) {
-    def m: matchers.Matcher[String, String] = matchers.matches(s)
-  }
-
-
-  /**
-    * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
-    *
-    * @param l the left value.
-    * @param s the right value.
-    * @tparam L the left type.
-    * @tparam R the right type.
-    */
-  case class ~[+L, +R](l: L, s: R) {
-    def flip: ~[R, L] = Tilde(s, l)
-  }
-
-  object Tilde {
-    def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
-  }
-
 }
+
+/**
+  * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
+  *
+  * @param l the left value.
+  * @param s the right value.
+  * @tparam L the left type.
+  * @tparam R the right type.
+  */
+case class ~[+L, +R](l: L, s: R) {
+  def flip: ~[R, L] = Tilde(s, l)
+}
+
+/**
+  * Companion object to ~ (although the name had to be changed).
+  */
+object Tilde {
+  def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
+}
+
+/**
+  * A MatcherException.
+  *
+  * @param msg a message.
+  * @param x   a Throwable.
+  */
 case class MatcherException(msg: String, x: Throwable) extends Exception(msg, x)
 
 object MatcherException {

@@ -1,9 +1,9 @@
 package com.phasmidsoftware.matchers
 
+import com.phasmidsoftware.matchers.Matchers.matchers.MatcherStringOps
+import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
-import java.util.NoSuchElementException
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -58,7 +58,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     target(()).successful shouldBe true
   }
   it should "support Match ~" in {
-    m.Match(0) ~ m.Match("") should matchPattern { case m.Match(Matchers.~(0, "")) => }
+    m.Match(0) ~ m.Match("") should matchPattern { case m.Match(~(0, "")) => }
     m.Match(0) ~ m.Miss("bad", "") shouldBe m.Miss("bad", "")
     m.Match(0) ~ m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
@@ -821,15 +821,12 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
 
   behavior of "~"
-  //  import Matchers._
-  //  import Matchers.matchers._
-
   it should "work" in {
     val matcher1: matchers.Matcher[String, String] = "1".m
     val matcher2: matchers.Matcher[String, String] = "2".m
-    val q: matchers.Matcher[(String, String), String ~ String] = matcher1 ~ matcher2
-    //    val matcher12: matchers.Matcher[(String, String), String] = (z: (String, String)) => z match {
-    //      case (x, y) => matchers.MatchResult(s"$x $y")
-    //    }
+    val z: matchers.Matcher[(String, String), Int] = matcher1 ~ matcher2 ^^ {
+      case x ~ y => x.toInt + y.toInt
+    }
+    z(("1", "2")) shouldBe matchers.Match(3)
   }
 }
