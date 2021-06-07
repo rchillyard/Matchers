@@ -11,6 +11,8 @@ trait Matchers {
 
   matchers =>
 
+  import Matchers._
+
   /**
     * Matcher based on the function f.
     *
@@ -603,6 +605,12 @@ trait Matchers {
   def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, (R0, R1, R2)] = p =>
     m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1]) && m2(p.productElement(2).asInstanceOf[T2]) map MatchResult.unroll21
 
+  def asTilde[R0, R1](mr: MatchResult[(R0, R1)]): Matchers.this.MatchResult[R0 ~ R1] = mr match {
+    case Match((r0, r1)) => Match(Matchers.~(r0, r1))
+    case Miss(w, t) => Miss(w, t)
+    case Error(x) => Error(x)
+  }
+
   /**
     * Method to match all element of a Tuple2.
     *
@@ -614,8 +622,8 @@ trait Matchers {
     * @tparam R1 the MatchResult type for m1.
     * @return a Matcher[(T0, T1), (R0, R1)] that matches at least one of the elements of the given tuple.
     */
-  def match2All[T0, T1, R0, R1](m0: Matcher[T0, R0], m1: => Matcher[T1, R1]): Matcher[(T0, T1), (R0, R1)] = {
-    case (t0, t1) => m0(t0) && m1(t1)
+  def match2All[T0, T1, R0, R1](m0: Matcher[T0, R0], m1: => Matcher[T1, R1]): Matcher[(T0, T1), R0 ~ R1] = {
+    case (t0, t1) => asTilde(m0(t0) && m1(t1))
   }
 
   /**
@@ -632,22 +640,6 @@ trait Matchers {
     */
   def match3All[T0, T1, T2, R0, R1, R2](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2]): Matcher[(T0, T1, T2), (R0, R1, R2)] = {
     case (t0, t1, t2) => m0(t0) && m1(t1) && m2(t2) map MatchResult.unroll21
-  }
-
-  /**
-    * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
-    *
-    * @param l the left value.
-    * @param s the right value.
-    * @tparam L the left type.
-    * @tparam R the right type.
-    */
-  case class ~[+L, +R](l: L, s: R) {
-    def flip: ~[R, L] = Tilde(s, l)
-  }
-
-  object Tilde {
-    def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
   }
 
   /**
@@ -869,7 +861,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[(T,P), (R,S)] which is the result of invoking match2All(this, m).
       */
-    def ~[P, S](m: Matcher[P, S]): Matcher[(T, P), (R, S)] = matchers.match2All(this, m)
+    def ~[P, S](m: Matcher[P, S]): Matcher[(T, P), R ~ S] = matchers.match2All(this, m)
 
     /**
       * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in the result from m.
@@ -879,7 +871,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[(T,P), S] which is the result of invoking ~ but stripping the first element of the tuple.
       */
-    def ~>[P, S](m: Matcher[P, S]): Matcher[(T, P), S] = this ~ m ^^ (_._2)
+    def ~>[P, S](m: Matcher[P, S]): Matcher[(T, P), S] = this ~ m ^^ { case _ ~ y => y }
 
     /**
       * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in the result from this.
@@ -889,7 +881,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[(T,P), R] which is the result of invoking ~ but stripping the second element of the tuple.
       */
-    def <~[P, S](m: Matcher[P, S]): Matcher[(T, P), R] = this ~ m ^^ (_._1)
+    def <~[P, S](m: Matcher[P, S]): Matcher[(T, P), R] = this ~ m ^^ { case x ~ _ => x }
 
     /**
       * Matcher which always succeeds (unless this causes an Error) but whose result is based on a Try[R].
@@ -1358,6 +1350,31 @@ trait Matchers {
     }
 }
 
+object Matchers {
+  val matchers: Matchers = new Matchers {}
+
+  implicit class MatcherStringOps(s: String) {
+    def m: matchers.Matcher[String, String] = matchers.matches(s)
+  }
+
+
+  /**
+    * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
+    *
+    * @param l the left value.
+    * @param s the right value.
+    * @tparam L the left type.
+    * @tparam R the right type.
+    */
+  case class ~[+L, +R](l: L, s: R) {
+    def flip: ~[R, L] = Tilde(s, l)
+  }
+
+  object Tilde {
+    def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
+  }
+
+}
 case class MatcherException(msg: String, x: Throwable) extends Exception(msg, x)
 
 object MatcherException {
