@@ -80,9 +80,9 @@ trait Matchers {
     * Matcher which succeeds if the input matches the given regular expression.
     *
     * @param regex a regular expression.
-    * @return a Matcher[CharSequence, List of Strings].
+    * @return a Parser[List of Strings].
     */
-  def regexMatcher(regex: Regex): Matcher[CharSequence, List[String]] = Matcher {
+  def regexMatcher(regex: Regex): Parser[List[String]] = {
     w =>
       regex.unapplySeq(w) match {
         case Some(ws) => Match(ws)
@@ -433,18 +433,18 @@ trait Matchers {
       * Method to create a Matcher which simply matches the String s.
       * Basically a convenience to turn a String into a literal String matcher.
       *
-      * @return Matcher[String, String]
+      * @return Parser[String]
       */
-    def m: Matcher[String, String] = matches(s)
+    def m: Parser[String] = matches(s)
 
     /**
       * Method to create a Matcher which matches the String s interpreted as a regular expression.
       * Basically a convenience to avoid having to depend on Scala Parser Combinators for simple
       * regular expressions.
       *
-      * @return Matcher[String, List of Strings]
+      * @return Parser[List of Strings]
       */
-    def regex: Matcher[String, List[String]] = Try(s.r()) map regexMatcher match {
+    def regex: Parser[List[String]] = Try(s.r()) map regexMatcher match {
       case Success(m) => m
       case Failure(x) => _ => Error(x)
     }
@@ -962,6 +962,11 @@ trait Matchers {
 
     private var name: String = ""
   }
+
+  /**
+    * Type alias for Parser.
+    */
+  type Parser[R] = Matcher[String, R]
 
   /**
     * Successful match.
