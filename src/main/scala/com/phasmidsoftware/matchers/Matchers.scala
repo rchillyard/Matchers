@@ -9,6 +9,8 @@ import scala.util.{Failure, Success, Try}
   */
 trait Matchers {
 
+  matchers =>
+
   /**
     * Matcher based on the function f.
     *
@@ -407,6 +409,15 @@ trait Matchers {
   }
 
   /**
+    * Implicit class MatcherStringOps which allows us to use the method m on a String.
+    *
+    * @param s a String.
+    */
+  implicit class MatcherStringOps(s: String) {
+    def m: Matcher[String, String] = matches(s)
+  }
+
+  /**
     * Method to create a Matcher, based on the given function f.
     * Unusually, this method's identifier has a capital first letter.
     * This is done to mimic the Parser method in the parser-combinators.
@@ -424,7 +435,7 @@ trait Matchers {
   def Matcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = constructMatcher(f)
 
   /**
-    * Method to create a Matcher, based on the given function f.
+    * Method to create a named Matcher, based on the given function f.
     *
     * @param name the name for the logger to mention.
     * @param f    a T => MatchResult[R].
@@ -432,7 +443,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def LoggingMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
+  def namedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
 
   /**
     * Method to create a Matcher which operates on a similar, but inverted, tuple as m.
@@ -612,8 +623,8 @@ trait Matchers {
     * @tparam R1 the MatchResult type for m1.
     * @return a Matcher[(T0, T1), (R0, R1)] that matches at least one of the elements of the given tuple.
     */
-  def match2All[T0, T1, R0, R1](m0: Matcher[T0, R0], m1: => Matcher[T1, R1]): Matcher[(T0, T1), (R0, R1)] = {
-    case (t0, t1) => m0(t0) && m1(t1)
+  def match2All[T0, T1, R0, R1](m0: Matcher[T0, R0], m1: => Matcher[T1, R1]): Matcher[(T0, T1), R0 ~ R1] = {
+    case (t0, t1) => asTilde(m0(t0) && m1(t1))
   }
 
   /**
@@ -699,13 +710,35 @@ trait Matchers {
     def foreach(f: R => Unit): Unit
 
     /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return a MatchResult of type ~[R,S].
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[~[R, S]]
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return a MatchResult[S].
+      */
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S]
+
+    /**
       * Alternation method which takes a MatchResult as the alternative.
       *
-      * @param s a call-by-name MatchResult which will be used if this is empty.
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
       * @tparam S the type of the result and a super-type of R.
       * @return a MatchResult[S].
       */
-    def ||[S >: R](s: => MatchResult[S]): MatchResult[S]
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S]
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -721,11 +754,11 @@ trait Matchers {
       * Composition method.
       * All the results are combined into one result.
       *
-      * @param s a call-by-name MatchResult[S].
+      * @param sm a call-by-name MatchResult[S].
       * @tparam S the underlying type of s.
       * @return a MatchResult[(R,S)].
       */
-    def &&[S](s: => MatchResult[S]): MatchResult[(R, S)]
+    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)]
 
     /**
       * Composition method.
@@ -740,12 +773,12 @@ trait Matchers {
   }
 
   /**
-    * Abstract class Matcher.
+    * Trait Matcher.
     *
     * @tparam T the input type.
     * @tparam R the result type.
     */
-  abstract class Matcher[-T, +R] extends (T => MatchResult[R]) {
+  trait Matcher[-T, +R] extends (T => MatchResult[R]) {
 
     /**
       * Unit method which yields a Matcher
@@ -794,14 +827,14 @@ trait Matchers {
       * @tparam S the type of both s and the result (a super-type of R).
       * @return a Matcher[T, R] which works in the opposite sense to this.
       */
-    def ![S >: R](s: => S): Matcher[T, S] = not(this, s)
+    def ![S >: R](s: => S): Matcher[T, S] = matchers.not(this, s)
 
     /**
       * Returns a matcher that optionally matches what this parser parses.
       *
       * @return opt(this)
       */
-    def ? : Matcher[T, Option[R]] = opt(this)
+    def ? : Matcher[T, Option[R]] = matchers.opt(this)
 
     /**
       * Method to combine Matchers in the sense that, if this fails, then we try to match using m.
@@ -809,7 +842,7 @@ trait Matchers {
       * @param m the alternative Matcher.
       * @return a Matcher[T, R] which will match either on this or on m.
       */
-    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => match2Any(this, m)((t, t))
+    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => matchers.match2Any(this, m)((t, t))
 
     /**
       * Method to combine Matchers in the sense that, when this successfully matches a T, resulting in an R,
@@ -829,7 +862,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[(T,P), (R,S)] which is the result of invoking match2All(this, m).
       */
-    def ~[P, S](m: Matcher[P, S]): Matcher[(T, P), (R, S)] = match2All(this, m)
+    def ~[P, S](m: Matcher[P, S]): Matcher[(T, P), R ~ S] = matchers.match2All(this, m)
 
     /**
       * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in the result from m.
@@ -839,7 +872,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[(T,P), S] which is the result of invoking ~ but stripping the first element of the tuple.
       */
-    def ~>[P, S](m: Matcher[P, S]): Matcher[(T, P), S] = this ~ m ^^ (_._2)
+    def ~>[P, S](m: Matcher[P, S]): Matcher[(T, P), S] = this ~ m ^^ { case _ ~ y => y }
 
     /**
       * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in the result from this.
@@ -849,7 +882,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[(T,P), R] which is the result of invoking ~ but stripping the second element of the tuple.
       */
-    def <~[P, S](m: Matcher[P, S]): Matcher[(T, P), R] = this ~ m ^^ (_._1)
+    def <~[P, S](m: Matcher[P, S]): Matcher[(T, P), R] = this ~ m ^^ { case x ~ _ => x }
 
     /**
       * Matcher which always succeeds (unless this causes an Error) but whose result is based on a Try[R].
@@ -892,7 +925,7 @@ trait Matchers {
       this
     }
 
-    override def toString = s"$name"
+    override def toString: String = name
 
     private var name: String = ""
   }
@@ -910,13 +943,40 @@ trait Matchers {
     def successful: Boolean = true
 
     /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return sm.
+      */
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = sm
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return if this is successful, then MatchResult(r ~ s), otherwise an unsuccessful result.
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = sm match {
+      case Match(s) => MatchResult(Tilde(r, s))
+      case Miss(w, s) => Miss(w, s)
+      case Error(x) => Error(x)
+      case x => throw MatcherException(s"unexpected input to ~: $x")
+    }
+
+    /**
       * If s is a Match, then the result will be a Match of the tuple of r and the result of s.
       *
-      * @param s a MatchResult[S].
+      * @param sm a MatchResult[S].
       * @tparam S the underlying type of s.
       * @return a MatchResult[(R,S)].
       */
-    def &&[S](s: => MatchResult[S]): MatchResult[(R, S)] = s.flatMap(z => Match(r -> z))
+    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)] = sm.flatMap(z => Match(r -> z))
 
     /**
       * Returns the result of invoking f on r.
@@ -937,10 +997,10 @@ trait Matchers {
     /**
       * Alternation method which takes a MatchResult as the alternative.
       *
-      * @param s a MatchResult (ignored)).
+      * @param sm a MatchResult (ignored)).
       * @return this.
       */
-    def ||[S >: R](s: => MatchResult[S]): MatchResult[S] = this
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1042,11 +1102,31 @@ trait Matchers {
     def getOrElse[S >: R](s: => S): S = s
 
     /**
-      * @param s a MatchResult[S] (ignored).
+      * Method to compose this MatchResult with sm.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return this.
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Miss(msg, t)
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return a Miss(msg, t).
+      */
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = Miss(msg, t)
+
+    /**
+      * @param sm a MatchResult[S] (ignored).
       * @tparam S the underlying type of s.
       * @return Miss(t).
       */
-    def &&[S](s: => MatchResult[S]): MatchResult[(R, S)] = Miss(msg, t)
+    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)] = Miss(msg, t)
 
     /**
       * @param f a function of R => MatchResult[S] (ignored).
@@ -1067,10 +1147,10 @@ trait Matchers {
     /**
       * Alternation method which takes a MatchResult as the alternative.
       *
-      * @param s a MatchResult which will be used if this is empty.
+      * @param sm a MatchResult which will be used if this is empty.
       * @return s.
       */
-    def ||[S >: R](s: => MatchResult[S]): MatchResult[S] = s
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = sm
 
     /**
       * Composition method.
@@ -1114,11 +1194,31 @@ trait Matchers {
     def getOrElse[S >: R](s: => S): S = get
 
     /**
-      * @param s a MatchResult[S] (ignored).
+      * Method to compose this MatchResult with sm.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of s.
+      * @return this.
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Error(e)
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return a MatchResult[S].
+      */
+    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+
+    /**
+      * @param sm a MatchResult[S] (ignored).
       * @tparam S the underlying type of s.
       * @return Error(t).
       */
-    def &&[S](s: => MatchResult[S]): MatchResult[(R, S)] = Error(e)
+    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)] = Error(e)
 
     /**
       * @param f a function of R => MatchResult[S].
@@ -1130,10 +1230,10 @@ trait Matchers {
     /**
       * Alternation method which takes a MatchResult as the alternative.
       *
-      * @param s a MatchResult which will be used if this is empty.
+      * @param sm a MatchResult which will be used if this is empty.
       * @return s.
       */
-    def ||[S >: R](s: => MatchResult[S]): MatchResult[S] = Error(e)
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = Error(e)
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1245,13 +1345,60 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
+  private def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
     try f(t) catch {
       case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
       case NonFatal(e) => Error(e)
     }
+
+  /**
+    * Convert from tuple form to tilde form.
+    *
+    * @param mr a MatchResult[(R0, R1)].
+    * @tparam R0 one of the underlying types of mr.
+    * @tparam R1 the other underlying type of mr.
+    * @return a MatchResult[R0 ~ R1]
+    */
+  private def asTilde[R0, R1](mr: MatchResult[(R0, R1)]): MatchResult[R0 ~ R1] = mr match {
+    case Match((r0, r1)) => Match(Tilde(r0, r1))
+    case Miss(w, t) => Miss(w, t)
+    case Error(x) => Error(x)
+    case x => throw MatcherException(s"unexpected input to asTilde: $x")
+  }
 }
 
+/**
+  * Companion object to Matchers.
+  */
+object Matchers {
+  val matchers: Matchers = new Matchers {}
+}
+
+/**
+  * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
+  *
+  * @param l the left value.
+  * @param s the right value.
+  * @tparam L the left type.
+  * @tparam R the right type.
+  */
+case class ~[+L, +R](l: L, s: R) {
+  def flip: ~[R, L] = Tilde(s, l)
+}
+
+/**
+  * Companion object to ~ (although the name had to be changed).
+  */
+object Tilde {
+  def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
+}
+
+/**
+  * A MatcherException.
+  *
+  * @param msg a message.
+  * @param x   a Throwable.
+  */
 case class MatcherException(msg: String, x: Throwable) extends Exception(msg, x)
 
 object MatcherException {

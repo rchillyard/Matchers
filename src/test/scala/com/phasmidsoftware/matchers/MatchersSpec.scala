@@ -1,5 +1,6 @@
 package com.phasmidsoftware.matchers
 
+import com.phasmidsoftware.matchers.Matchers.matchers.MatcherStringOps
 import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -7,7 +8,9 @@ import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
-  private val m = new Matchers {}
+  import Matchers._
+
+  private val m = matchers
 
   behavior of "MatchResult"
   it should "implement apply(Boolean, T, R)" in {
@@ -53,6 +56,36 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "support always" in {
     val target = m.always[Unit]
     target(()).successful shouldBe true
+  }
+  it should "support Match ~" in {
+    m.Match(0) ~ m.Match("") should matchPattern { case m.Match(~(0, "")) => }
+    m.Match(0) ~ m.Miss("bad", "") shouldBe m.Miss("bad", "")
+    m.Match(0) ~ m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  }
+  it should "support Miss ~" in {
+    m.Miss("bad", 0) ~ m.Match("") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) ~ m.Miss("bad", "") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) ~ m.Error(new RuntimeException("")) shouldBe m.Miss("bad", 0)
+  }
+  it should "support Error ~" in {
+    m.Error(new RuntimeException("")) ~ m.Match("") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) ~ m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) ~ m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  }
+  it should "support Match conditional" in {
+    m.Match(0) conditional m.Match("") shouldBe m.Match("")
+    m.Match(0) conditional m.Miss("bad", "") shouldBe m.Miss("bad", "")
+    m.Match(0) conditional m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  }
+  it should "support Miss conditional" in {
+    m.Miss("bad", 0) conditional m.Match("") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) conditional m.Miss("bad", "") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) conditional m.Error(new RuntimeException("")) shouldBe m.Miss("bad", 0)
+  }
+  it should "support Error conditional" in {
+    m.Error(new RuntimeException("")) conditional m.Match("") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) conditional m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) conditional m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
   it should "support |" in {
     val result = m.success(0)("") | m.fail("")
@@ -282,13 +315,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     sb.toString() shouldBe ""
   }
 
-  // CONSIDER eliminating the LoggingMatcher method.
-  behavior of "LoggingMatcher"
+  // CONSIDER eliminating the namedMatcher method.
+  behavior of "namedMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
     implicit val ll: LogLevel = LogDebug
     implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
-    val f: m.Matcher[String, Int] = m.LoggingMatcher("one")(_ => m.Match(1))
+    val f: m.Matcher[String, Int] = m.namedMatcher("one")(_ => m.Match(1))
     f("1").successful shouldBe true
     sb.toString() shouldBe
       """trying one on 1...
@@ -394,7 +427,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     q(2).getOrElse(-1) shouldBe 0
   }
   it should "work for error situation" in {
-    val p = m.Matcher[Unit, Unit](_ => m.Error(new NoSuchElementException))
+    val p = m.Matcher[Int, Int](_ => m.Error(new NoSuchElementException))
     val q = m.not(p, 0)
     p(1).successful shouldBe false
     q(1).successful shouldBe false
@@ -482,7 +515,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val z = p ~ q
     val result = z(1 -> 2)
     result.successful shouldBe true
-    result.get shouldBe (1 -> 2)
+    result.get shouldBe Tilde(1, 2)
   }
   it should "match (1,2) and result in 2" in {
     val p = m.matches(1)
@@ -607,9 +640,9 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "work" in {
     val p: m.Matcher[String, Int] = m.lift(_.toInt)
     val q: m.Matcher[Int, Double] = m.lift(_.toDouble)
-    val z: m.Matcher[(String, Int), (Int, Double)] = p ~ q
-    z("1", 1) should matchPattern { case m.Match((1, 1.0)) => }
-    m.flip(z)(1, "1") should matchPattern { case m.Match((1, 1.0)) => }
+    val z: m.Matcher[(String, Int), Int ~ Double] = p ~ q
+    z("1", 1) should matchPattern { case m.Match(~(1, 1.0)) => }
+    m.flip(z)(1, "1") should matchPattern { case m.Match(~(1, 1.0)) => }
   }
 
   behavior of "tuple2"
@@ -713,28 +746,28 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "succeed with toInt and 0" in {
     val p: m.Matcher[String, Int] = m.lift(_.toInt)
     val q: m.Matcher[String, Int] = m.success(0)
-    val r: m.Matcher[(String, String), (Int, Int)] = m.match2All(p, q)
+    val r: m.Matcher[(String, String), Int ~ Int] = m.match2All(p, q)
     val tuple = ("1", "")
     r(tuple).successful shouldBe true
   }
   it should "fail with toInt and fail" in {
     val p: m.Matcher[String, Int] = m.lift(_.toInt)
     val q: m.Matcher[String, Int] = m.fail("")
-    val r: m.Matcher[(String, String), (Int, Int)] = m.match2All(p, q)
+    val r: m.Matcher[(String, String), Int ~ Int] = m.match2All(p, q)
     val tuple = ("1", "")
     r(tuple).successful shouldBe false
   }
   it should "fail with fail and toInt" in {
     val p: m.Matcher[String, Int] = m.lift(_.toInt)
     val q: m.Matcher[String, Int] = m.fail("")
-    val r: m.Matcher[(String, String), (Int, Int)] = m.match2All(q, p)
+    val r: m.Matcher[(String, String), Int ~ Int] = m.match2All(q, p)
     val tuple = ("", "1")
     r(tuple).successful shouldBe false
   }
   it should "fail with fail and fail" in {
     val p: m.Matcher[String, Int] = m.fail("")
     val q: m.Matcher[String, Int] = m.fail("")
-    val r: m.Matcher[(String, String), (Int, Int)] = m.match2All(q, p)
+    val r: m.Matcher[(String, String), Int ~ Int] = m.match2All(q, p)
     val tuple = ("", "1")
     r(tuple).successful shouldBe false
   }
@@ -785,5 +818,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     import m.MatchResultOps
     (r :- { x => s.append(x.toString); () }).successful shouldBe true
     s.toString() shouldBe "1"
+  }
+
+  behavior of "~"
+  it should "work" in {
+    val m: matchers.Matcher[(String, String), Int] = "1".m ~ "2".m ^^ {
+      case x ~ y => x.toInt + y.toInt
+    }
+    m(("1", "2")) shouldBe matchers.Match(3)
   }
 }
