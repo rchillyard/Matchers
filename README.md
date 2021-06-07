@@ -107,5 +107,6 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.2 Support regex
 * 1.0.1 Added ~
 * 1.0.0 Original Version

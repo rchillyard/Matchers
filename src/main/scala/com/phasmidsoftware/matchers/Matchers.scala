@@ -1,6 +1,7 @@
 package com.phasmidsoftware.matchers
 
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -415,6 +416,15 @@ trait Matchers {
     */
   implicit class MatcherStringOps(s: String) {
     def m: Matcher[String, String] = matches(s)
+
+    def regex: Matcher[String, String] = Matcher {
+      w =>
+        val regex: Regex = s.r()
+        w match {
+          case regex(x) => Match(x)
+          case _ => Miss(s"String $w did not match regex $s", w)
+        }
+    }
   }
 
   /**

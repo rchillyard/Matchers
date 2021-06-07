@@ -1,6 +1,5 @@
 package com.phasmidsoftware.matchers
 
-import com.phasmidsoftware.matchers.Matchers.matchers.MatcherStringOps
 import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -822,9 +821,17 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "~"
   it should "work" in {
+    import matchers._
     val m: matchers.Matcher[(String, String), Int] = "1".m ~ "2".m ^^ {
       case x ~ y => x.toInt + y.toInt
     }
     m(("1", "2")) shouldBe matchers.Match(3)
+  }
+
+  behavior of "regex"
+  it should "work" in {
+    import matchers._
+    val m: matchers.Matcher[String, String] = """(\d+)""".regex
+    m("12345") shouldBe matchers.Match("12345")
   }
 }
