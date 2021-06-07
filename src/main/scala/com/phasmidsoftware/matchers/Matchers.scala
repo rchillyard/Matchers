@@ -1372,7 +1372,6 @@ trait Matchers {
   */
 object Matchers {
   val matchers: Matchers = new Matchers {}
-
 }
 
 /**

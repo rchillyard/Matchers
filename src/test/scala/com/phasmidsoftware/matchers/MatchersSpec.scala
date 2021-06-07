@@ -822,11 +822,9 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "~"
   it should "work" in {
-    val matcher1: matchers.Matcher[String, String] = "1".m
-    val matcher2: matchers.Matcher[String, String] = "2".m
-    val z: matchers.Matcher[(String, String), Int] = matcher1 ~ matcher2 ^^ {
+    val m: matchers.Matcher[(String, String), Int] = "1".m ~ "2".m ^^ {
       case x ~ y => x.toInt + y.toInt
     }
-    z(("1", "2")) shouldBe matchers.Match(3)
+    m(("1", "2")) shouldBe matchers.Match(3)
   }
 }
