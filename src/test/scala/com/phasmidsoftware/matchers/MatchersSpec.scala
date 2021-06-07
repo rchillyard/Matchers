@@ -829,9 +829,24 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
 
   behavior of "regex"
-  it should "work" in {
+  it should """miss (\d+) with Hello""" in {
     import matchers._
-    val m: matchers.Matcher[String, String] = """(\d+)""".regex
-    m("12345") shouldBe matchers.Match("12345")
+    val m: matchers.Matcher[String, List[String]] = """(\d+)""".regex
+    m("Hello") should matchPattern { case matchers.Miss(_, _) => }
+  }
+  it should """match (\d+) with 12345""" in {
+    import matchers._
+    val m: matchers.Matcher[String, List[String]] = """(\d+)""".regex
+    m("12345") shouldBe matchers.Match(List("12345"))
+  }
+  it should """match (\w+)\s(\d+)""" in {
+    import matchers._
+    val m: matchers.Matcher[String, List[String]] = """(\w+)\s(\d+)""".regex
+    m("Hello 12345") shouldBe matchers.Match(List("Hello", "12345"))
+  }
+  it should """result in an Error for (\d+ with Hello""" in {
+    import matchers._
+    val m: matchers.Matcher[String, List[String]] = """(\d+""".regex
+    m("Hello") should matchPattern { case matchers.Error(_) => }
   }
 }

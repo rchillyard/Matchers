@@ -53,6 +53,7 @@ As in the Scala Parser Combinators, there is a ~ case class.
 It is essentially just a tuple of two elements.
 However, if we use the ~ operator on two _Matchers_ for example as follows:
 
+    import matchers._
     val m: matchers.Matcher[(String, String), Int] = "1".m ~ "2".m ^^ {
       case x ~ y => x.toInt + y.toInt
     }
@@ -60,7 +61,17 @@ However, if we use the ~ operator on two _Matchers_ for example as follows:
 ... you can use the ^^ (or _map_) method to transform the _MatchResult_ from _String_ ~ _String_ to some other type,
 in this case an _Int_.
 
-In this case, the _m_ method on a _String_ is provided by an implicit class (currently only defined for an exact _String_).
+In this case, the _m_ method on a _String_ is provided by an implicit class _MatcherStringOps_.
+
+# Regular expressions
+It is easy to create matchers which parse regular expressions (without having to depend on Scala Parser Combinators).
+For example:
+
+    import matchers._
+    val m: matchers.Matcher[String, List[String]] = """(\w+)\s(\d+)""".regex
+    m("Hello 12345") shouldBe matchers.Match(List("Hello", "12345"))
+
+This utilizes the _regex_ method of implicit class _MatcherStringOps_.
 
 # Usage
 Typical examples of the use of **Matchers** would be something such as the following

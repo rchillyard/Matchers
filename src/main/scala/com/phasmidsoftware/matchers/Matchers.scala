@@ -77,6 +77,20 @@ trait Matchers {
   def matches[T](t: T): Matcher[T, T] = filter(_ == t)
 
   /**
+    * Matcher which succeeds if the input matches the given regular expression.
+    *
+    * @param regex a regular expression.
+    * @return a Matcher[CharSequence, List of Strings].
+    */
+  def regexMatcher(regex: Regex): Matcher[CharSequence, List[String]] = Matcher {
+    w =>
+      regex.unapplySeq(w) match {
+        case Some(ws) => Match(ws)
+        case None => Miss(s"String $w did not match regex $regex", w)
+      }
+  }
+
+  /**
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
@@ -415,15 +429,24 @@ trait Matchers {
     * @param s a String.
     */
   implicit class MatcherStringOps(s: String) {
+    /**
+      * Method to create a Matcher which simply matches the String s.
+      * Basically a convenience to turn a String into a literal String matcher.
+      *
+      * @return Matcher[String, String]
+      */
     def m: Matcher[String, String] = matches(s)
 
-    def regex: Matcher[String, String] = Matcher {
-      w =>
-        val regex: Regex = s.r()
-        w match {
-          case regex(x) => Match(x)
-          case _ => Miss(s"String $w did not match regex $s", w)
-        }
+    /**
+      * Method to create a Matcher which matches the String s interpreted as a regular expression.
+      * Basically a convenience to avoid having to depend on Scala Parser Combinators for simple
+      * regular expressions.
+      *
+      * @return Matcher[String, List of Strings]
+      */
+    def regex: Matcher[String, List[String]] = Try(s.r()) map regexMatcher match {
+      case Success(m) => m
+      case Failure(x) => _ => Error(x)
     }
   }
 
