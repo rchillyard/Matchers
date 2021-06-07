@@ -77,18 +77,85 @@ trait Matchers {
   def matches[T](t: T): Matcher[T, T] = filter(_ == t)
 
   /**
-    * Matcher which succeeds if the input matches the given regular expression.
+    * Parser which succeeds if the input matches the given regular expression.
+    * The result of the parser is a List of Strings.
     *
     * @param regex a regular expression.
     * @return a Parser[List of Strings].
     */
-  def regexMatcher(regex: Regex): Parser[List[String]] = {
-    w =>
-      regex.unapplySeq(w) match {
-        case Some(ws) => Match(ws)
-        case None => Miss(s"String $w did not match regex $regex", w)
-      }
-  }
+  def parser(regex: Regex): Parser[List[String]] = doParse(regex, _)
+
+  /**
+    * Method to yield a Parser[Z] using the given regex, a function String=>P0 and a function P0=>Z.
+    * Typically, Z will be a case class.
+    *
+    * @param regex     a regular expression.
+    * @param f0        a function String => P0.
+    * @param construct a function P0 => Z.
+    * @tparam P0 the type of the first member of Z.
+    * @tparam Z  the underlying type of the resulting parser.
+    * @return a Parser[Z].
+    */
+  def parser1[P0, Z](regex: String)(f0: String => P0)(construct: P0 => Z): Parser[Z] =
+    doParseWithFunction(regex, "parser1") { case List(x) => construct(f0(x)) }
+
+  /**
+    * Method to yield a Parser[Z] using the given regex, several intermediate functions, and a function (P0, P1)=>Z.
+    * Typically, Z will be a case class with two members.
+    *
+    * @param regex     a regular expression.
+    * @param f0        a function String => P0.
+    * @param f1        a function String => P1.
+    * @param construct a function (P0, P1) => Z.
+    * @tparam P0 the type of the first member of Z.
+    * @tparam P1 the type of the second member of Z.
+    * @tparam Z  the underlying type of the resulting parser.
+    * @return a Parser[Z].
+    */
+  def parser2[P0, P1, Z](regex: String)(f0: String => P0, f1: String => P1)(construct: (P0, P1) => Z): Parser[Z] =
+    doParseWithFunction(regex, "parser2") { case List(x, y) => construct(f0(x), f1(y)) }
+
+  /**
+    * Method to yield a Parser[Z] using the given regex, several intermediate functions, and a function (P0, P1, P2)=>Z.
+    * Typically, Z will be a case class with three members.
+    *
+    * @param regex     a regular expression.
+    * @param f0        a function String => P0.
+    * @param f1        a function String => P1.
+    * @param f2        a function String => P2.
+    * @param construct a function (P0, P1) => Z.
+    * @tparam P0 the type of the first member of Z.
+    * @tparam P1 the type of the second member of Z.
+    * @tparam P2 the type of the third member of Z.
+    * @tparam Z  the underlying type of the resulting parser.
+    * @return a Parser[Z].
+    */
+  def parser3[P0, P1, P2, Z](regex: String)(f0: String => P0, f1: String => P1, f2: String => P2)(construct: (P0, P1, P2) => Z): Parser[Z] =
+    doParseWithFunction(regex, "parser3") { case List(x, y, z) => construct(f0(x), f1(y), f2(z)) }
+
+  /**
+    * Method to parse one String from a regular expression.
+    *
+    * @param regex the String representation of the regular expression.
+    * @return a Parser[String]
+    */
+  def parserString(regex: String): Parser[String] = doParseWithFunction(regex, "parserString") { case List(x) => x }
+
+  /**
+    * Method to parse two Strings from a regular expression.
+    *
+    * @param regex the String representation of the regular expression.
+    * @return a Parser[String ~ String]
+    */
+  def parserTilde(regex: String): Parser[String ~ String] = doParseWithFunction(regex, "parser2") { case List(x, y) => Tilde(x, y) }
+
+  /**
+    * Method to parse three Strings from a regular expression.
+    *
+    * @param regex the String representation of the regular expression.
+    * @return a Parser[(String,String,String)]
+    */
+  def parserTuple3(regex: String): Parser[(String, String, String)] = doParseWithFunction(regex, "parser3") { case List(x, y, z) => (x, y, z) }
 
   /**
     * Matcher whose success depends on the application of a function f to the input,
@@ -444,7 +511,7 @@ trait Matchers {
       *
       * @return Parser[List of Strings]
       */
-    def regex: Parser[List[String]] = Try(s.r()) map regexMatcher match {
+    def regex: Parser[List[String]] = Try(s.r()) map parser match {
       case Success(m) => m
       case Failure(x) => _ => Error(x)
     }
@@ -1403,6 +1470,35 @@ trait Matchers {
     case Error(x) => Error(x)
     case x => throw MatcherException(s"unexpected input to asTilde: $x")
   }
+
+  private def doParse(regex: Regex, w: String): MatchResult[List[String]] = {
+    regex.unapplySeq(w) match {
+      case Some(ws) => Match(ws)
+      case None => Miss(s"String $w did not match regex $regex", w)
+    }
+  }
+
+  /**
+    * Method to construct a Parser for the given regex such that a particular result type is returned.
+    *
+    * @param regex the regular expression to be matched.
+    * @param name  the name of the parser method.
+    * @param f     a function of List[String] => Z.
+    * @tparam Z the type to be returned from the resulting Parser.
+    * @return a Parser of type Z.
+    */
+  private def doParseWithFunction[Z](regex: String, name: String)(f: List[String] => Z): Parser[Z] = Matcher {
+    w =>
+      doParse(new Regex(regex), w) match {
+        case Match(xs) => Try(Match(f(xs))) match {
+          case Success(m) => m
+          case Failure(e) => Error(MatcherException(s"$name: $w matched incorrect number of groups: ${xs.size}", e))
+        }
+        case Miss(z, x) => Miss(z, x)
+        case Error(z) => Error(z)
+      }
+  }
+
 }
 
 /**

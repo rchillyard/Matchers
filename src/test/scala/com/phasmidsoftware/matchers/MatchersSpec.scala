@@ -1,8 +1,9 @@
 package com.phasmidsoftware.matchers
 
-import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+
+import java.util.NoSuchElementException
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -817,6 +818,17 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     import m.MatchResultOps
     (r :- { x => s.append(x.toString); () }).successful shouldBe true
     s.toString() shouldBe "1"
+  }
+
+  behavior of "parse"
+  it should "parse 12345" in {
+    val p: m.Parser[Int] = m.parserString("""(\d+)""") ^^ (_.toInt)
+    p("12345") shouldBe m.Match(12345)
+  }
+  it should "parse rating" in {
+    case class Rating(code: String, age: Int)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)""")(identity, _.toInt)(Rating)
+    p("PG-13") shouldBe m.Match(Rating("PG", 13))
   }
 
   behavior of "~"
