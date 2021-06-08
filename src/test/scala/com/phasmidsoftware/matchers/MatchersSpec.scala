@@ -796,6 +796,23 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val q = m.opt(p)
     q("1") should matchPattern { case m.Match(Some(1)) => }
   }
+  it should "match None with null" in {
+    val p: m.Parser[Int] = m.lift(_.toInt)
+    val q = m.opt(p)
+    q(null) should matchPattern { case m.Match(None) => }
+  }
+  it should "error with a bad conversion" in {
+    val p: m.Parser[Int] = m.lift(_.toInt)
+    val q = m.opt(p)
+    val mr = q("a")
+    mr should matchPattern { case m.Error(_) => }
+  }
+  it should "miss with a bad match" in {
+    val p: m.Parser[String] = m.matches("")
+    val q = m.opt(p)
+    val mr = q("a")
+    mr should matchPattern { case m.Miss(_, _) => }
+  }
 
   behavior of "?"
   it should "succeed with a match" in {
@@ -825,10 +842,22 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: m.Parser[Int] = m.parserString("""(\d+)""") ^^ (_.toInt)
     p("12345") shouldBe m.Match(12345)
   }
-  it should "parse rating" in {
+  it should "parse rating with two required parameters" in {
     case class Rating(code: String, age: Int)
-    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)""")(identity, _.toInt)(Rating)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)""")(m.always, m.parserInt)(Rating)
     p("PG-13") shouldBe m.Match(Rating("PG", 13))
+  }
+  it should "parse rating with one optional parameter" in {
+    case class Rating(code: String, age: Option[Int])
+    val m2: m.Matcher[String, Option[Int]] = m.opt(m.parserInt)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m2)(Rating)
+    p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
+    p("R-") shouldBe m.Match(Rating("R", None))
+  }
+  it should "parse with three required parameters" in {
+    case class Rating(code: String, age: Int, length: Double)
+    val p: m.Parser[Rating] = m.parser3("""(\w+)-(\d+) (\d+\.\d+)""")(m.always, m.parserInt, m.parserDouble)(Rating)
+    p("PG-13 3.1415927") shouldBe m.Match(Rating("PG", 13, 3.1415927))
   }
 
   behavior of "~"

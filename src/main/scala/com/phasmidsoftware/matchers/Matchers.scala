@@ -90,48 +90,56 @@ trait Matchers {
     * Typically, Z will be a case class.
     *
     * @param regex     a regular expression.
-    * @param f0        a function String => P0.
+    * @param p0        a Parser[P0].
     * @param construct a function P0 => Z.
     * @tparam P0 the type of the first member of Z.
     * @tparam Z  the underlying type of the resulting parser.
     * @return a Parser[Z].
     */
-  def parser1[P0, Z](regex: String)(f0: String => P0)(construct: P0 => Z): Parser[Z] =
-    doParseWithFunction(regex, "parser1") { case List(x) => construct(f0(x)) }
+  def parser1[P0, Z](regex: String)(p0: Parser[P0])(construct: P0 => Z): Parser[Z] =
+    doParseWithFunction(regex, "parser1") { case List(x) => p0(x) map construct }
 
   /**
     * Method to yield a Parser[Z] using the given regex, several intermediate functions, and a function (P0, P1)=>Z.
     * Typically, Z will be a case class with two members.
     *
     * @param regex     a regular expression.
-    * @param f0        a function String => P0.
-    * @param f1        a function String => P1.
+    * @param p0        a Parser[P0].
+    * @param p1        a Parser[P1].
     * @param construct a function (P0, P1) => Z.
     * @tparam P0 the type of the first member of Z.
     * @tparam P1 the type of the second member of Z.
     * @tparam Z  the underlying type of the resulting parser.
     * @return a Parser[Z].
     */
-  def parser2[P0, P1, Z](regex: String)(f0: String => P0, f1: String => P1)(construct: (P0, P1) => Z): Parser[Z] =
-    doParseWithFunction(regex, "parser2") { case List(x, y) => construct(f0(x), f1(y)) }
+  def parser2[P0, P1, Z](regex: String)(p0: Parser[P0], p1: Parser[P1])(construct: (P0, P1) => Z): Parser[Z] =
+    doParseWithFunction(regex, "parser2") {
+      case List(x, y) => p0(x) ~ p1(y) map {
+        case u ~ v => construct(u, v)
+      }
+    }
 
   /**
     * Method to yield a Parser[Z] using the given regex, several intermediate functions, and a function (P0, P1, P2)=>Z.
     * Typically, Z will be a case class with three members.
     *
     * @param regex     a regular expression.
-    * @param f0        a function String => P0.
-    * @param f1        a function String => P1.
-    * @param f2        a function String => P2.
-    * @param construct a function (P0, P1) => Z.
+    * @param p0        a Parser[P0].
+    * @param p1        a Parser[P1].
+    * @param p2        a Parser[P2].
+    * @param construct a function (P0, P1, P2) => Z.
     * @tparam P0 the type of the first member of Z.
     * @tparam P1 the type of the second member of Z.
     * @tparam P2 the type of the third member of Z.
     * @tparam Z  the underlying type of the resulting parser.
     * @return a Parser[Z].
     */
-  def parser3[P0, P1, P2, Z](regex: String)(f0: String => P0, f1: String => P1, f2: String => P2)(construct: (P0, P1, P2) => Z): Parser[Z] =
-    doParseWithFunction(regex, "parser3") { case List(x, y, z) => construct(f0(x), f1(y), f2(z)) }
+  def parser3[P0, P1, P2, Z](regex: String)(p0: Parser[P0], p1: Parser[P1], p2: Parser[P2])(construct: (P0, P1, P2) => Z): Parser[Z] =
+    doParseWithFunction(regex, "parser3") {
+      case List(x, y, z) => p0(x) ~ p1(y) ~ p2(z) map {
+        case u ~ v ~ w => construct(u, v, w)
+      }
+    }
 
   /**
     * Method to parse one String from a regular expression.
@@ -139,7 +147,21 @@ trait Matchers {
     * @param regex the String representation of the regular expression.
     * @return a Parser[String]
     */
-  def parserString(regex: String): Parser[String] = doParseWithFunction(regex, "parserString") { case List(x) => x }
+  def parserString(regex: String): Parser[String] = doParseWithFunction(regex, "parserString") { case List(x) => Match(x) }
+
+  /**
+    * Method to parse one String from a regular expression.
+    *
+    * @return a Parser[Int]
+    */
+  def parserInt: Parser[Int] = lift(_.toInt)
+
+  /**
+    * Method to parse one String from a regular expression.
+    *
+    * @return a Parser[Int]
+    */
+  def parserDouble: Parser[Double] = lift(_.toDouble)
 
   /**
     * Method to parse two Strings from a regular expression.
@@ -147,7 +169,7 @@ trait Matchers {
     * @param regex the String representation of the regular expression.
     * @return a Parser[String ~ String]
     */
-  def parserTilde(regex: String): Parser[String ~ String] = doParseWithFunction(regex, "parser2") { case List(x, y) => Tilde(x, y) }
+  def parserTilde(regex: String): Parser[String ~ String] = doParseWithFunction(regex, "parser2") { case List(x, y) => Match(Tilde(x, y)) }
 
   /**
     * Method to parse three Strings from a regular expression.
@@ -155,7 +177,7 @@ trait Matchers {
     * @param regex the String representation of the regular expression.
     * @return a Parser[(String,String,String)]
     */
-  def parserTuple3(regex: String): Parser[(String, String, String)] = doParseWithFunction(regex, "parser3") { case List(x, y, z) => (x, y, z) }
+  def parserTuple3(regex: String): Parser[(String, String, String)] = doParseWithFunction(regex, "parser3") { case List(x, y, z) => Match((x, y, z)) }
 
   /**
     * Matcher whose success depends on the application of a function f to the input,
@@ -204,14 +226,15 @@ trait Matchers {
   }
 
   /**
-    * Matcher which always succeeds but whose result is based on an Option[R].
+    * Matcher which always succeeds but whose result is an Option[R].
+    * If the bound variable t of the resulting Matcher is null, then it will result in a Match(None).
     *
     * @param m a Matcher[T, R]
     * @tparam T the input type of m.
     * @tparam R the result type of m.
     * @return Matcher[T, Option of R]
     */
-  def opt[T, R](m: Matcher[T, R]): Matcher[T, Option[R]] = m ^^ (r => Some(r)) | success(None)
+  def opt[T, R](m: Matcher[T, R]): Matcher[T, Option[R]] = Matcher(t => sequence(Option(t) map m))
 
   /**
     * Matcher which always succeeds and creates a Match with value r.
@@ -1457,6 +1480,18 @@ trait Matchers {
     }
 
   /**
+    * Method to convert an Option of MatchResult[R] into a MatchResult of Option[R].
+    *
+    * @param rmo an optional MatchResult[R].
+    * @tparam R the underlying result type.
+    * @return a MatchResult of Option[R].
+    */
+  private def sequence[R](rmo: Option[MatchResult[R]]): MatchResult[Option[R]] = rmo match {
+    case Some(rm) => rm.map(Some(_))
+    case None => Match(None)
+  }
+
+  /**
     * Convert from tuple form to tilde form.
     *
     * @param mr a MatchResult[(R0, R1)].
@@ -1487,10 +1522,10 @@ trait Matchers {
     * @tparam Z the type to be returned from the resulting Parser.
     * @return a Parser of type Z.
     */
-  private def doParseWithFunction[Z](regex: String, name: String)(f: List[String] => Z): Parser[Z] = Matcher {
+  private def doParseWithFunction[Z](regex: String, name: String)(f: List[String] => MatchResult[Z]): Parser[Z] = Matcher {
     w =>
       doParse(new Regex(regex), w) match {
-        case Match(xs) => Try(Match(f(xs))) match {
+        case Match(xs) => Try(f(xs)) match {
           case Success(m) => m
           case Failure(e) => Error(MatcherException(s"$name: $w matched incorrect number of groups: ${xs.size}", e))
         }
