@@ -849,8 +849,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
   it should "parse rating with one optional parameter" in {
     case class Rating(code: String, age: Option[Int])
-    val m2: m.Matcher[String, Option[Int]] = m.opt(m.parserInt)
-    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m2)(Rating)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m.opt(m.parserInt))(Rating)
     p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
     p("R-") shouldBe m.Match(Rating("R", None))
   }

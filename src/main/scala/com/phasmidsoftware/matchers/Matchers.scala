@@ -80,6 +80,9 @@ trait Matchers {
     * Parser which succeeds if the input matches the given regular expression.
     * The result of the parser is a List of Strings.
     *
+    * CONSIDER allowing the specification of a set of indices to correspond to the groups
+    * that are desired.
+    *
     * @param regex a regular expression.
     * @return a Parser[List of Strings].
     */
@@ -88,6 +91,8 @@ trait Matchers {
   /**
     * Method to yield a Parser[Z] using the given regex, a function String=>P0 and a function P0=>Z.
     * Typically, Z will be a case class.
+    *
+    * TESTME
     *
     * @param regex     a regular expression.
     * @param p0        a Parser[P0].
@@ -166,6 +171,8 @@ trait Matchers {
   /**
     * Method to parse two Strings from a regular expression.
     *
+    * TESTME
+    *
     * @param regex the String representation of the regular expression.
     * @return a Parser[String ~ String]
     */
@@ -173,6 +180,8 @@ trait Matchers {
 
   /**
     * Method to parse three Strings from a regular expression.
+    *
+    * TESTME
     *
     * @param regex the String representation of the regular expression.
     * @return a Parser[(String,String,String)]
@@ -1506,6 +1515,16 @@ trait Matchers {
     case x => throw MatcherException(s"unexpected input to asTilde: $x")
   }
 
+  /**
+    * Method to parse the String w according to the given regex.
+    *
+    * CONSIDER add a parameter which is a sequence of indexes so that caller can
+    * specify which match-groups are to be used.
+    *
+    * @param regex a regular expression.
+    * @param w     a String to be parsed (in its entirety).
+    * @return a MatchResult of a List[String].
+    */
   private def doParse(regex: Regex, w: String): MatchResult[List[String]] = {
     regex.unapplySeq(w) match {
       case Some(ws) => Match(ws)

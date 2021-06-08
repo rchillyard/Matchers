@@ -73,6 +73,15 @@ For example:
 
 This utilizes the _regex_ method of implicit class _MatcherStringOps_.
 
+It is also easy to parse strings as instances of case classes, even with optional parameters.
+See, for example,
+
+    case class Rating(code: String, age: Option[Int])
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m.opt(m.parserInt))(Rating)
+    p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
+    p("R-") shouldBe m.Match(Rating("R", None))
+
+
 # Usage
 Typical examples of the use of **Matchers** would be something such as the following
 (from an application which deals with lazy expressions of numeric quantities):
