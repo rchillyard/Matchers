@@ -1,9 +1,10 @@
 package com.phasmidsoftware.matchers
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.NoSuchElementException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-
-import java.util.NoSuchElementException
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -837,37 +838,81 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     s.toString() shouldBe "1"
   }
 
-  behavior of "parse"
-  it should "parse 12345" in {
-    val p: m.Parser[Int] = m.parserString("""(\d+)""") ^^ (_.toInt)
+  behavior of "parsers"
+  it should "parse 12345 as Int" in {
+    val p = m.parserInt
     p("12345") shouldBe m.Match(12345)
   }
-  it should "parse rating with two required parameters" in {
+  it should "parse 12345 as Long" in {
+    val p = m.parserLong
+    p("12345") shouldBe m.Match(12345L)
+  }
+  it should "parse 12345 as BigInt" in {
+    val p = m.parserBigInt
+    p("12345") shouldBe m.Match(BigInt(12345))
+  }
+  it should "parse 3.1415927 as Double" in {
+    val p = m.parserDouble
+    p("3.1415927") shouldBe m.Match(3.1415927)
+  }
+  it should "parse 3.1415927 as BigDecimal" in {
+    val p = m.parserBigDecimal
+    p("3.1415927") shouldBe m.Match(BigDecimal("3.1415927"))
+  }
+  it should "parseWithParser given String" in {
+    val p: m.Parser[LocalDate] = m.parseWithParser("""\d+-\d+-\d+""")(m.lift(s => LocalDate.parse(s, DateTimeFormatter.ISO_DATE)))
+    p("2021-06-07") shouldBe m.Match(LocalDate.parse("2021-06-07"))
+  }
+  it should "parseWithParser given regex" in {
+    val p: m.Parser[LocalDate] = m.parseWithParser("""\d+-\d+-\d+""".r)(m.lift(s => LocalDate.parse(s, DateTimeFormatter.ISO_DATE)))
+    p("2021-06-07") shouldBe m.Match(LocalDate.parse("2021-06-07"))
+  }
+  it should "parserTilde" in {
+    val p = m.parserTilde("""(\w+)-(\d+)""")
+    p("PG-13") shouldBe m.Match(Tilde("PG", "13"))
+  }
+
+  behavior of "parserList"
+  it should "parserList 12345" in {
+    val p: m.Parser[List[String]] = m.parserList("""(\d+)""")
+    p("12345") shouldBe m.Match(List("12345"))
+  }
+  it should """match (\w+)(\s(\d+))""" in {
+    val p: m.Parser[Int] = m.parserGroup("""(\w+)(\s(\d+))""", 3)(m.parserInt)
+    p("Hello 12345") shouldBe m.Match(12345)
+  }
+  it should "parserGroup 12345" in {
+    val p: m.Parser[Int] = m.parserGroup("""(\d+)""")(m.parserInt)
+    p("12345") shouldBe m.Match(12345)
+  }
+  it should "parser2 rating with two required parameters" in {
     case class Rating(code: String, age: Int)
     val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)""")(m.always, m.parserInt)(Rating)
     p("PG-13") shouldBe m.Match(Rating("PG", 13))
   }
-  it should "parse rating with one optional parameter" in {
+  it should "parser2 rating with one optional parameter" in {
     case class Rating(code: String, age: Option[Int])
     val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m.opt(m.parserInt))(Rating)
     p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
     p("R-") shouldBe m.Match(Rating("R", None))
   }
-  it should "parse rating with one optional parameter without having to match dash" in {
+  it should "parser2 rating with one optional parameter without having to match dash" in {
     case class Rating(code: String, age: Option[Int])
     val p: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating)
     p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
     p("R") shouldBe m.Match(Rating("R", None))
   }
-  it should "parse with three required parameters" in {
+  it should "parser3 with three required parameters" in {
     case class Rating(code: String, age: Int, length: Double)
     val p: m.Parser[Rating] = m.parser3("""(\w+)-(\d+) (\d+\.\d+)""")(m.always, m.parserInt, m.parserDouble)(Rating)
     p("PG-13 3.1415927") shouldBe m.Match(Rating("PG", 13, 3.1415927))
   }
 
   behavior of "~"
+
+  import matchers._
+
   it should "work" in {
-    import matchers._
     val m: matchers.Matcher[(String, String), Int] = "1".m ~ "2".m ^^ {
       case x ~ y => x.toInt + y.toInt
     }
@@ -876,23 +921,29 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "regex"
   it should """miss (\d+) with Hello""" in {
-    import matchers._
-    val m: matchers.Parser[List[String]] = """(\d+)""".regex
+    val m: matchers.Parser[String] = """(\d+)""".regex
     m("Hello") should matchPattern { case matchers.Miss(_, _) => }
   }
   it should """match (\d+) with 12345""" in {
-    import matchers._
-    val m: matchers.Parser[List[String]] = """(\d+)""".regex
+    val m: matchers.Parser[String] = """(\d+)""".regex
+    m("12345") shouldBe matchers.Match("12345")
+  }
+
+  behavior of "regexGroups"
+  it should """miss (\d+) with Hello""" in {
+    val m: matchers.Parser[List[String]] = """(\d+)""".regexGroups
+    m("Hello") should matchPattern { case matchers.Miss(_, _) => }
+  }
+  it should """match (\d+) with 12345""" in {
+    val m: matchers.Parser[List[String]] = """(\d+)""".regexGroups
     m("12345") shouldBe matchers.Match(List("12345"))
   }
   it should """match (\w+)\s(\d+)""" in {
-    import matchers._
-    val m: matchers.Parser[List[String]] = """(\w+)\s(\d+)""".regex
+    val m: matchers.Parser[List[String]] = """(\w+)\s(\d+)""".regexGroups
     m("Hello 12345") shouldBe matchers.Match(List("Hello", "12345"))
   }
   it should """result in an Error for (\d+ with Hello""" in {
-    import matchers._
-    val m: matchers.Parser[List[String]] = """(\d+""".regex
+    val m: matchers.Parser[List[String]] = """(\d+""".regexGroups
     m("Hello") should matchPattern { case matchers.Error(_) => }
   }
 }

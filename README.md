@@ -48,6 +48,31 @@ type must include two values of two disparate types:
 The result of the && method will be successful only if _sm_ is also successful.
 In this case, the result will a tuple of the two results.
 
+# Parsing
+Any _Matcher_ whose input is a _String_ can be referred to as a _Parser_ (a type alias).
+
+There are simple numeric parsers, for example:
+
+    val p = m.parserInt
+    p("12345") shouldBe m.Match(12345)
+
+It is easy to create matchers which parse regular expressions (without having to depend on Scala Parser Combinators).
+For example:
+
+    import matchers._
+    val m: matchers.Parser[List[String]] = """(\w+)\s(\d+)""".regexGroups
+    m("Hello 12345") shouldBe matchers.Match(List("Hello", "12345"))
+
+This utilizes the _regexGroups_ method of implicit class _ParserOps_.
+
+It is also easy to parse strings as instances of case classes, even with optional parameters.
+See, for example,
+
+    case class Rating(code: String, age: Option[Int])
+    val p: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating)
+    p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
+    p("R") shouldBe m.Match(Rating("R", None))
+
 # Tilde
 As in the Scala Parser Combinators, there is a ~ case class.
 It is essentially just a tuple of two elements.
@@ -62,25 +87,6 @@ However, if we use the ~ operator on two _Matchers_ for example as follows:
 in this case an _Int_.
 
 In this case, the _m_ method on a _String_ is provided by an implicit class _MatcherStringOps_.
-
-# Regular expressions
-It is easy to create matchers which parse regular expressions (without having to depend on Scala Parser Combinators).
-For example:
-
-    import matchers._
-    val m: matchers.Matcher[String, List[String]] = """(\w+)\s(\d+)""".regex
-    m("Hello 12345") shouldBe matchers.Match(List("Hello", "12345"))
-
-This utilizes the _regex_ method of implicit class _MatcherStringOps_.
-
-It is also easy to parse strings as instances of case classes, even with optional parameters.
-See, for example,
-
-    case class Rating(code: String, age: Option[Int])
-    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m.opt(m.parserInt))(Rating)
-    p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
-    p("R-") shouldBe m.Match(Rating("R", None))
-
 
 # Usage
 Typical examples of the use of **Matchers** would be something such as the following
@@ -127,6 +133,6 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
-* 1.0.2 Support regex
+* 1.0.2 Support regex parsers
 * 1.0.1 Added ~
 * 1.0.0 Original Version
