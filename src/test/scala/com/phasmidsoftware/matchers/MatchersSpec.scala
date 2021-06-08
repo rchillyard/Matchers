@@ -853,6 +853,12 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
     p("R-") shouldBe m.Match(Rating("R", None))
   }
+  it should "parse rating with one optional parameter without having to match dash" in {
+    case class Rating(code: String, age: Option[Int])
+    val p: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating)
+    p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
+    p("R") shouldBe m.Match(Rating("R", None))
+  }
   it should "parse with three required parameters" in {
     case class Rating(code: String, age: Int, length: Double)
     val p: m.Parser[Rating] = m.parser3("""(\w+)-(\d+) (\d+\.\d+)""")(m.always, m.parserInt, m.parserDouble)(Rating)
