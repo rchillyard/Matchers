@@ -936,6 +936,16 @@ trait Matchers {
       */
     def getOrElse[S >: R](s: => S): S
 
+
+    /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S], either this (if successful) otherwise sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S]
+
     /**
       * Map method.
       *
@@ -995,12 +1005,13 @@ trait Matchers {
 
     /**
       * Alternation method which takes a MatchResult as the alternative.
+      * Identical to orElse.
       *
       * @param sm a call-by-name MatchResult which will be used if this is empty.
       * @tparam S the type of the result and a super-type of R.
       * @return a MatchResult[S].
       */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S]
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = orElse(sm)
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1221,6 +1232,14 @@ trait Matchers {
     def conditional[S](sm: => MatchResult[S]): MatchResult[S] = sm
 
     /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a MatchResult (ignored)).
+      * @return this.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
+
+    /**
       * Method to compose this MatchResult with sm.
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
@@ -1260,14 +1279,6 @@ trait Matchers {
       * @param f a function of R => Unit.
       */
     def foreach(f: R => Unit): Unit = f(r)
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a MatchResult (ignored)).
-      * @return this.
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1369,6 +1380,15 @@ trait Matchers {
     def getOrElse[S >: R](s: => S): S = s
 
     /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a MatchResult which will be returned.
+      * @tparam S the underlying type of the result and a super-class of R.
+      * @return sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = sm
+
+    /**
       * Method to compose this MatchResult with sm.
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
@@ -1412,14 +1432,6 @@ trait Matchers {
     def |[S >: R](m: => Matcher[Any, S]): MatchResult[S] = m(t)
 
     /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a MatchResult which will be used if this is empty.
-      * @return s.
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = sm
-
-    /**
       * Composition method.
       * If this MatchResult is successful then return the value of m applied to the result.
       *
@@ -1461,6 +1473,15 @@ trait Matchers {
     def getOrElse[S >: R](s: => S): S = get
 
     /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a MatchResult which will be ignored.
+      * @tparam S the underlying type of the result and a super-class of R.
+      * @return sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+
+    /**
       * Method to compose this MatchResult with sm.
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
@@ -1493,14 +1514,6 @@ trait Matchers {
       * @return Error(e).
       */
     def flatMap[S](f: R => MatchResult[S]): MatchResult[S] = Error(e)
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a MatchResult which will be used if this is empty.
-      * @return s.
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = Error(e)
 
     /**
       * Alternation method which takes a Matcher as the alternative.
