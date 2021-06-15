@@ -354,7 +354,6 @@ trait Matchers {
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser2") {
       case List(x, y) => p0(x) ~ p1(y) map {
         case u ~ v => construct(u, v)
-        case _ => throw MatcherException("parser2: no match")
       }
       case _ => throw MatcherException("parser2: no match")
     }
@@ -379,7 +378,6 @@ trait Matchers {
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser3") {
       case List(x, y, z) => p0(x) ~ p1(y) ~ p2(z) map {
         case u ~ v ~ w => construct(u, v, w)
-        case _ => throw MatcherException("parser3: no match")
       }
       case _ => throw MatcherException("parser3: no match")
     }
@@ -847,6 +845,10 @@ trait Matchers {
     def :|(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = log(p.named(name))
   }
 
+  implicit class TildeOps[R, S](r: R) {
+    def ~(s: S): R ~ S = new ~(r, s)
+  }
+
   /**
     * Implicit class MatchResultOps which allows us to use the method tee on a MatchResult[R].
     *
@@ -923,7 +925,7 @@ trait Matchers {
 
     /**
       * @return the result of the MatchResult.
-      * @throws MatcherException if this is not a Match.
+      * @throws Throwable (a MatcherException) if this is not a Match.
       */
     def get: R
 
@@ -1328,7 +1330,7 @@ trait Matchers {
     /**
       * get method (will always throw an exception).
       *
-      * @throws MatcherException or Throwable (e).
+      * @throws Throwable (a MatcherException) or other Throwable (e).
       */
     def get: R = x match {
       case x: Throwable => throw x
@@ -1776,7 +1778,19 @@ object RegexGroups {
   * @tparam R the right type.
   */
 case class ~[+L, +R](l: L, r: R) {
-  def flip: ~[R, L] = Tilde(r, l)
+  /**
+    * Reverse the order of this ~.
+    *
+    * @return ~(r, l)
+    */
+  def flip: ~[R, L] = new ~(r, l)
+
+  /**
+    * Convert to tuple form.
+    *
+    * @return a (L, R).
+    */
+  def asTuple: (L, R) = l -> r
 }
 
 /**
