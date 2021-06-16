@@ -667,35 +667,37 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.flip(z)(1 ~ "1") should matchPattern { case m.Match(~(1, 1.0)) => }
   }
 
-  behavior of "tuple2"
+  behavior of "tilde2"
   it should "work" in {
-    val p: m.Matcher[StringPair, (String, String)] = m.tuple2(StringPair)
-    p(StringPair("x", "y")) should matchPattern { case m.Match(("x", "y")) => }
+    val p: m.Matcher[StringPair, String ~ String] = m.tilde2(StringPair)
+    p(StringPair("x", "y")) should matchPattern { case m.Match("x" ~ "y") => }
   }
 
-  behavior of "tuple3"
+  behavior of "tilde3"
   it should "work" in {
-    val p: m.Matcher[Triple, (String, String, Int)] = m.tuple3(Triple)
-    p(Triple("x", "y", 1)) should matchPattern { case m.Match(("x", "y", 1)) => }
+    val p: m.Matcher[Triple, String ~ String ~ Int] = m.tilde3(Triple)
+    p(Triple("x", "y", 1)) should matchPattern { case m.Match("x" ~ "y" ~ 1) => }
   }
 
   behavior of "product2"
   it should "one-way" in {
-    val p: m.Matcher[(String, String), StringPair] = m.product2(StringPair)
-    p(("x", "y")) should matchPattern { case m.Match(StringPair("x", "y")) => }
+    val p: m.Matcher[String ~ String, StringPair] = m.product2(StringPair)
+    import m.TildeOps
+    p("x" ~ "y") should matchPattern { case m.Match(StringPair("x", "y")) => }
   }
   it should "round-trip" in {
-    val p: m.Matcher[StringPair, StringPair] = m.tuple2(StringPair) & m.product2(StringPair)
+    val p: m.Matcher[StringPair, StringPair] = m.tilde2(StringPair) & m.product2(StringPair)
     p(StringPair("x", "y")) should matchPattern { case m.Match(StringPair("x", "y")) => }
   }
 
   behavior of "product3"
   it should "one-way" in {
-    val p: m.Matcher[(String, String, Int), Triple] = m.product3(Triple)
-    p(("x", "y", 1)) should matchPattern { case m.Match(Triple("x", "y", 1)) => }
+    val p: m.Matcher[String ~ String ~ Int, Triple] = m.product3(Triple)
+    import m.TildeOps
+    p("x" ~ "y" ~ 1) should matchPattern { case m.Match(Triple("x", "y", 1)) => }
   }
   it should "round-trip" in {
-    val p: m.Matcher[Triple, Triple] = m.tuple3(Triple) & m.product3(Triple)
+    val p: m.Matcher[Triple, Triple] = m.tilde3(Triple) & m.product3(Triple)
     p(Triple("x", "y", 1)) should matchPattern { case m.Match(Triple("x", "y", 1)) => }
   }
 
@@ -703,30 +705,34 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "succeed with toInt and 0" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.success(0)
-    val r: m.Matcher[(String, String), Int] = m.match2Any(p, q)
-    val tuple = ("1", "")
-    r(tuple).successful shouldBe true
+    val r: m.Matcher[String ~ String, Int] = m.match2Any(p, q)
+    import m.TildeOps
+    val tilde = "1" ~ ""
+    r(tilde).successful shouldBe true
   }
   it should "succeed with toInt and fail" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.fail("")
-    val r: m.Matcher[(String, String), Int] = m.match2Any(p, q)
-    val tuple = ("1", "")
-    r(tuple).successful shouldBe true
+    val r: m.Matcher[String ~ String, Int] = m.match2Any(p, q)
+    import m.TildeOps
+    val tilde = "1" ~ ""
+    r(tilde).successful shouldBe true
   }
   it should "succeed with fail and toInt" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.fail("")
-    val r: m.Matcher[(String, String), Int] = m.match2Any(q, p)
-    val tuple = ("", "1")
-    r(tuple).successful shouldBe true
+    val r: m.Matcher[String ~ String, Int] = m.match2Any(q, p)
+    import m.TildeOps
+    val tilde = "" ~ "1"
+    r(tilde).successful shouldBe true
   }
   it should "fail with fail and fail" in {
     val p: m.Parser[Int] = m.fail("")
     val q: m.Parser[Int] = m.fail("")
-    val r: m.Matcher[(String, String), Int] = m.match2Any(q, p)
-    val tuple = ("1", "")
-    r(tuple).successful shouldBe false
+    val r: m.Matcher[String ~ String, Int] = m.match2Any(q, p)
+    import m.TildeOps
+    val tilde = "1" ~ ""
+    r(tilde).successful shouldBe false
   }
 
   behavior of "match3Any"
