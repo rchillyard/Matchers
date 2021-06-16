@@ -1,10 +1,11 @@
 package com.phasmidsoftware.matchers
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.NoSuchElementException
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -326,10 +327,16 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     f("1").successful shouldBe true
     sb.toString() shouldBe
       """trying one on 1...
-              |... one: Match: 1
-              |""".stripMargin
+        |... one: Match: 1
+        |""".stripMargin
   }
 
+  behavior of "tildeOps"
+  it should "support ~" in {
+    import m.TildeOps
+    val x = 1 ~ 2
+    x shouldBe new ~(1, 2)
+  }
   behavior of "success"
   it should "work with 1" in {
     val f = m.success[String, Int](1)
@@ -917,6 +924,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
       case x ~ y => x.toInt + y.toInt
     }
     m(("1", "2")) shouldBe matchers.Match(3)
+  }
+
+  it should "do stuff" in {
+    val intParser = m.parserInt
+    val z: m.MatchResult[Int ~ Int ~ Int] = intParser("1") ~ intParser("2") ~ intParser("3")
+    z.successful shouldBe true
+    z.get shouldBe 1 ~ 2 ~ 3
   }
 
   behavior of "regex"
