@@ -1,11 +1,10 @@
 package com.phasmidsoftware.matchers
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
-
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.NoSuchElementException
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -104,7 +103,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "support &&" in {
     val result = m.success(0)("") && m.success(1)("")
     result.successful shouldBe true
-    result.get shouldBe 0 -> 1
+    import m.TildeOps
+    result.get shouldBe 0 ~ 1
   }
   it should "support map" in {
     val result = m.success(0)("").map(_.toString)
@@ -639,7 +639,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "succeed with toInt and 0" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.success(0)
-    val r: m.Matcher[StringPair, (Int, Int)] = m.matchProduct2All(p, q)(StringPair)
+    val r: m.Matcher[StringPair, Int ~ Int] = m.matchProduct2All(p, q)(StringPair)
     val tuple = StringPair("1", "")
     r(tuple).successful shouldBe true
   }
@@ -652,7 +652,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.success(0)
     val z: m.Matcher[Int, Int] = m.lift(identity)
-    val r: m.Matcher[Triple, (Int, Int, Int)] = m.matchProduct3All(p, q, z)(Triple.apply)
+    val r: m.Matcher[Triple, Int ~ Int ~ Int] = m.matchProduct3All(p, q, z)(Triple.apply)
     val tuple = Triple("1", "", 0)
     r(tuple).successful shouldBe true
   }
