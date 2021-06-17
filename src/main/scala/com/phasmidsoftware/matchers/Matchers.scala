@@ -438,17 +438,21 @@ trait Matchers {
     * Matcher which tries m on the given (~) input.
     * If m is unsuccessful, it then tries m on the swapped (inverted) ~.
     *
-    * @param m a Matcher[T ~ T, R].
+    * @param m    a Matcher[T ~ T, R].
+    * @param flip if true (the default), then we can try flipping the order of the incoming ~.
+    *             If false then we do not try.
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T ~ T, R].
     */
-  def *[T, R](m: Matcher[T ~ T, R]): Matcher[T ~ T, R] = m | (swap & m)
+  def *[T, R](m: Matcher[T ~ T, R], flip: Boolean = true): Matcher[T ~ T, R] = m | (maybe[T ~ T](flip) & swap & m)
 
   /**
     * Matcher which tries m on the given (~~) input.
     * If m is unsuccessful, it then tries m on the rotated ~~.
     * If that's unsuccessful, it then tries m on the inverted ~~.
+    *
+    * CONSIDER adding a flip parameter like in *
     *
     * @param m a Matcher[T ~ T ~ T, R].
     * @tparam T the input type.
@@ -638,7 +642,7 @@ trait Matchers {
   def log[T, R](m: => Matcher[T, R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = ll match {
     case LogDebug => constructMatcher[T, R] {
       t =>
-        logger(s"trying ${m.toString} on $t...")
+        logger(s"trying matcher ${m.toString} on $t...")
         val r: MatchResult[R] = m(t)
         logger(s"... ${m.toString}: $r")
         r
@@ -1776,6 +1780,8 @@ case class ~[+L, +R](l: L, r: R) {
     * @return a (L, R).
     */
   def asTuple: (L, R) = l -> r
+
+  override def toString: String = s"$l~$r"
 }
 
 /**

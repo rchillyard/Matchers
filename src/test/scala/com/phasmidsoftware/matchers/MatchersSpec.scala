@@ -292,7 +292,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
-      """trying success(1) on 1...
+      """trying matcher success(1) on 1...
         |... success(1): Match: 1
         |""".stripMargin
   }
@@ -326,7 +326,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val f: m.Parser[Int] = m.namedMatcher("one")(_ => m.Match(1))
     f("1").successful shouldBe true
     sb.toString() shouldBe
-      """trying one on 1...
+      """trying matcher one on 1...
         |... one: Match: 1
         |""".stripMargin
   }
@@ -451,12 +451,19 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
 
   behavior of "*"
-  it should "work" in {
+  it should "work with default parameter" in {
     import m.TildeOps
     val t = 1 ~ 2
     val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
     m.*(p)(t).successful shouldBe true
+  }
+  it should "not work with false" in {
+    import m.TildeOps
+    val t = 1 ~ 2
+    val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    p(t).successful shouldBe false
+    m.*(p, flip = false)(t).successful shouldBe false
   }
 
   behavior of "**"
