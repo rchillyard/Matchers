@@ -1141,14 +1141,14 @@ trait Matchers {
       * @tparam S the type of both s and the result (a super-type of R).
       * @return a Matcher[T, R] which works in the opposite sense to this.
       */
-    def ![S >: R](s: => S): Matcher[T, S] = matchers.not(this, s)
+    def ![S >: R](s: => S): Matcher[T, S] = not(this, s)
 
     /**
       * Returns a matcher that optionally matches what this parser parses.
       *
       * @return opt(this)
       */
-    def ? : Matcher[T, Option[R]] = matchers.opt(this)
+    def ? : Matcher[T, Option[R]] = opt(this)
 
     /**
       * Method to combine Matchers in the sense that, if this fails, then we try to match using m.
@@ -1156,7 +1156,7 @@ trait Matchers {
       * @param m the alternative Matcher.
       * @return a Matcher[T, R] which will match either on this or on m.
       */
-    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => matchers.match2Any(this, m)(t ~ t)
+    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => match2Any(this, m)(t ~ t)
 
     /**
       * Method to combine Matchers in the sense that, when this successfully matches a T, resulting in an R,
@@ -1176,7 +1176,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[T ~ P, R ~ S] which is the result of invoking match2All(this, m).
       */
-    def ~[P, S](m: Matcher[P, S]): Matcher[T ~ P, R ~ S] = matchers.match2All(this, m)
+    def ~[P, S](m: Matcher[P, S]): Matcher[T ~ P, R ~ S] = match2All(this, m)
 
     /**
       * Method to combine Matchers this and m such that the resulting Matcher takes a ~ and results in the result from m.
