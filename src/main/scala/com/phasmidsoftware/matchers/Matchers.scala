@@ -984,9 +984,9 @@ trait Matchers {
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
       * @tparam S the type of s.
-      * @return a MatchResult of type ~[R,S].
+      * @return a MatchResult of type R ~ S.
       */
-    def ~[S](sm: => MatchResult[S]): MatchResult[~[R, S]]
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S]
 
     /**
       * Method to compose this MatchResult with sm.
