@@ -120,6 +120,8 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
+    * FIXME
+    *
     * @param f a T => R.
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
     * @tparam Q the "control" type.
@@ -135,6 +137,8 @@ trait Matchers {
   /**
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
+    *
+    * FIXME
     *
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
     * @tparam Q the "control" type.
@@ -274,20 +278,6 @@ trait Matchers {
   def parserTilde(regex: String, groups: Int*): Parser[String ~ String] = parserTilde(regex.r, groups: _*)
 
   /**
-    * Method to parse three Strings from a regular expression.
-    *
-    * TESTME
-    *
-    * @param regex  the String representation of the regular expression.
-    * @param groups a list of required group indexes, starting at 1 (if empty, then all groups are selected).
-    * @return a Parser[(String,String,String)]
-    */
-  def parserTuple3(regex: String, groups: Int*): Parser[(String, String, String)] = doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser3") {
-    case List(x, y, z) => Match((x, y, z))
-    case _ => throw MatcherException("parserTuple3: no match")
-  }
-
-  /**
     * Parser which succeeds if the input matches the given regular expression.
     * The result of the parser is the desired List of matched Strings.
     *
@@ -354,7 +344,6 @@ trait Matchers {
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser2") {
       case List(x, y) => p0(x) ~ p1(y) map {
         case u ~ v => construct(u, v)
-        case _ => throw MatcherException("parser2: no match")
       }
       case _ => throw MatcherException("parser2: no match")
     }
@@ -379,7 +368,6 @@ trait Matchers {
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser3") {
       case List(x, y, z) => p0(x) ~ p1(y) ~ p2(z) map {
         case u ~ v ~ w => construct(u, v, w)
-        case _ => throw MatcherException("parser3: no match")
       }
       case _ => throw MatcherException("parser3: no match")
     }
@@ -424,40 +412,40 @@ trait Matchers {
   def having[T, U, R](m: Matcher[U, R])(lens: T => U): Matcher[T, R] = t => m(lens(t))
 
   /**
-    * Method to create a Matcher which operates on a similar, but inverted, tuple as m.
+    * Method to create a Matcher which operates on a similar, but inverted, ~ as m.
     *
-    * @param m a Matcher[(T0,T1),R].
+    * @param m a Matcher[T0 ~ T1, R].
     * @tparam T0 one of the input types.
     * @tparam T1 the other input type.
     * @tparam R  the result type.
-    * @return a Matcher[(T1,T0),R].
+    * @return a Matcher[T1 ~ T0, R].
     */
-  def flip[T0, T1, R](m: Matcher[(T0, T1), R]): Matcher[(T1, T0), R] = {
-    case (t1, t0) => m(t0, t1)
+  def flip[T0, T1, R](m: Matcher[T0 ~ T1, R]): Matcher[T1 ~ T0, R] = Matcher {
+    case t1 ~ t0 => m(t0 ~ t1)
   }
 
   /**
-    * Matcher which tries m on the given (Tuple2) input.
-    * If m is unsuccessful, it then tries m on the swapped (inverted) tuple.
+    * Matcher which tries m on the given (~) input.
+    * If m is unsuccessful, it then tries m on the swapped (inverted) ~.
     *
-    * @param m a Matcher[(T,T), R].
+    * @param m a Matcher[T ~ T, R].
     * @tparam T the input type.
     * @tparam R the result type.
-    * @return a Matcher[(T,T), R].
+    * @return a Matcher[T ~ T, R].
     */
-  def *[T, R](m: Matcher[(T, T), R]): Matcher[(T, T), R] = m | (swap & m)
+  def *[T, R](m: Matcher[T ~ T, R]): Matcher[T ~ T, R] = m | (swap & m)
 
   /**
-    * Matcher which tries m on the given (Tuple3) input.
-    * If m is unsuccessful, it then tries m on the rotated tuple.
-    * If that's unsuccessful, it then tries m on the inverted tuple.
+    * Matcher which tries m on the given (~~) input.
+    * If m is unsuccessful, it then tries m on the rotated ~~.
+    * If that's unsuccessful, it then tries m on the inverted ~~.
     *
-    * @param m a Matcher[(T,T), R].
+    * @param m a Matcher[T ~ T ~ T, R].
     * @tparam T the input type.
     * @tparam R the result type.
-    * @return a Matcher[(T,T), R].
+    * @return a Matcher[T ~ T ~ T, R].
     */
-  def **[T, R](m: Matcher[(T, T, T), R]): Matcher[(T, T, T), R] = m | (rotate3 & m) | (invert3 & m)
+  def **[T, R](m: Matcher[T ~ T ~ T, R]): Matcher[T ~ T ~ T, R] = m | (rotate3 & m) | (invert3 & m)
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T0, based on the first element of P.
@@ -528,101 +516,101 @@ trait Matchers {
   )
 
   /**
-    * Method to create a Matcher of Tuple2, which succeeds if the first member matches the given Matcher.
+    * Method to create a Matcher of a Tilde, which succeeds if the first member matches the given Matcher.
     *
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam R0 type of result's first member.
-    * @return a Matcher[(T0, T1), (R0, T1)].
+    * @return a Matcher[T0 ~ T1, R0 ~ T1].
     */
-  def filter2_0[T0, T1, R0](m: Matcher[T0, R0]): Matcher[(T0, T1), (R0, T1)] = {
-    case (t0, t1) => m(t0) && Match(t1)
+  def filter2_0[T0, T1, R0](m: Matcher[T0, R0]): Matcher[T0 ~ T1, R0 ~ T1] = {
+    case t0 ~ t1 => m(t0) ~ Match(t1)
   }
 
   /**
-    * Method to create a Matcher of Tuple2, which succeeds if the first member matches the given Matcher.
+    * Method to create a Matcher of ~, which succeeds if the first member matches the given Matcher.
     *
     * @tparam T0 first of the input member types.
     * @tparam T1 second of the input member types.
     * @tparam R1 type of result's second member.
-    * @return a Matcher[(T0, T1), (T0, R1)].
+    * @return a Matcher[T0 ~ T1, T0 ~ R1].
     */
-  def filter2_1[T0, T1, R1](m: Matcher[T1, R1]): Matcher[(T0, T1), (T0, R1)] = {
-    case (t0, t1) => Match(t0) && m(t1)
+  def filter2_1[T0, T1, R1](m: Matcher[T1, R1]): Matcher[T0 ~ T1, T0 ~ R1] = {
+    case t0 ~ t1 => Match(t0) ~ m(t1)
   }
 
   /**
-    * Method to create a Matcher of Tuple3, which succeeds if the first member matches the given Matcher.
+    * Method to create a Matcher of ~~, which succeeds if the first member matches the given Matcher.
     *
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam T2 third of the member types.
     * @tparam R0 type of result's first member.
-    * @return a Matcher[(T0, T1, T2), (R0, T1, T2)].
+    * @return a Matcher[T0 ~ T1 ~ T2, R0 ~ T1 ~ T2].
     */
-  def filter3_0[T0, T1, T2, R0](m: Matcher[T0, R0]): Matcher[(T0, T1, T2), (R0, T1, T2)] = {
-    case (t0, t1, t2) => m(t0) && Match(t1) && Match(t2) map MatchResult.unroll21
+  def filter3_0[T0, T1, T2, R0](m: Matcher[T0, R0]): Matcher[T0 ~ T1 ~ T2, R0 ~ T1 ~ T2] = {
+    case t0 ~ t1 ~ t2 => m(t0) ~ Match(t1) ~ Match(t2)
   }
 
   /**
-    * Method to create a Matcher of Tuple3, which succeeds if the second member matches the given Matcher.
+    * Method to create a Matcher of ~~, which succeeds if the second member matches the given Matcher.
     *
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam T2 third of the member types.
     * @tparam R1 type of result's second member.
-    * @return a Matcher[(T0, T1, T2), (R0, T1, T2)].
+    * @return a Matcher[T0 ~ T1 ~ T2, T0 ~ R1 ~ T2].
     */
-  def filter3_1[T0, T1, T2, R1](m: Matcher[T1, R1]): Matcher[(T0, T1, T2), (T0, R1, T2)] = {
-    case (t0, t1, t2) => Match(t0) && m(t1) && Match(t2) map MatchResult.unroll21
+  def filter3_1[T0, T1, T2, R1](m: Matcher[T1, R1]): Matcher[T0 ~ T1 ~ T2, T0 ~ R1 ~ T2] = {
+    case t0 ~ t1 ~ t2 => Match(t0) ~ m(t1) ~ Match(t2)
   }
 
   /**
-    * Method to create a Matcher of Tuple3, which succeeds if the third member matches the given Matcher.
+    * Method to create a Matcher of ~~, which succeeds if the third member matches the given Matcher.
     *
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam T2 third of the member types.
     * @tparam R2 type of result's third member.
-    * @return a Matcher[(T0, T1, T2), (T0, T1, R2)].
+    * @return a Matcher[T0 ~ T1 ~ T2, T0 ~ T1 ~ R2].
     */
-  def filter3_2[T0, T1, T2, R2](m: Matcher[T2, R2]): Matcher[(T0, T1, T2), (T0, T1, R2)] = {
-    case (t0, t1, t2) => Match(t0) && Match(t1) && m(t2) map MatchResult.unroll21
+  def filter3_2[T0, T1, T2, R2](m: Matcher[T2, R2]): Matcher[T0 ~ T1 ~ T2, T0 ~ T1 ~ R2] = {
+    case t0 ~ t1 ~ t2 => Match(t0) ~ Match(t1) ~ m(t2)
   }
 
   /**
-    * Method to swap the order of elements in a Tuple2.
+    * Method to swap the order of elements in a Tilde.
     *
     * @tparam T0 the first element type.
     * @tparam T1 the second element type.
-    * @return a Matcher from (T0,T1) to (T1,T0).
+    * @return a Matcher from T0 ~ T1 to T1 ~ T0.
     */
-  def swap[T0, T1]: Matcher[(T0, T1), (T1, T0)] = lift[(T0, T1), (T1, T0)] {
-    case (t0, t1) => (t1, t0)
+  def swap[T0, T1]: Matcher[T0 ~ T1, T1 ~ T0] = lift[T0 ~ T1, T1 ~ T0] {
+    case t0 ~ t1 => t1 ~ t0
   }
 
   /**
-    * Method to rotate the order of elements in a Tuple3.
-    *
-    * @tparam T0 the first element type.
-    * @tparam T1 the second element type.
-    * @tparam T2 the third element type.
-    * @return a Matcher from (T0,T1,T2) to (T1,T2,T0).
-    */
-  def rotate3[T0, T1, T2]: Matcher[(T0, T1, T2), (T1, T2, T0)] = lift {
-    case (t0, t1, t2) => (t1, t2, t0)
-  }
-
-  /**
-    * Method to invert the order of elements in a Tuple3.
+    * Method to rotate the order of elements in a ~~.
     *
     * @tparam T0 the first element type.
     * @tparam T1 the second element type.
     * @tparam T2 the third element type.
-    * @return a Matcher from (T0,T1,T2) to (T1,T2,T0).
+    * @return a Matcher[T0 ~ T1 ~ T2, T1 ~ T2 ~ T0].
     */
-  def invert3[T0, T1, T2]: Matcher[(T0, T1, T2), (T2, T1, T0)] = lift {
-    case (t0, t1, t2) => (t2, t1, t0)
+  def rotate3[T0, T1, T2]: Matcher[T0 ~ T1 ~ T2, T1 ~ T2 ~ T0] = lift {
+    case t0 ~ t1 ~ t2 => t1 ~ t2 ~ t0
+  }
+
+  /**
+    * Method to invert the order of elements in a ~~.
+    *
+    * @tparam T0 the first element type.
+    * @tparam T1 the second element type.
+    * @tparam T2 the third element type.
+    * @return a Matcher[T0 ~ T1 ~ T2, T2 ~ T1 ~ T0].
+    */
+  def invert3[T0, T1, T2]: Matcher[T0 ~ T1 ~ T2, T2 ~ T1 ~ T0] = lift {
+    case t0 ~ t1 ~ t2 => t2 ~ t1 ~ t0
   }
 
   /**
@@ -652,72 +640,72 @@ trait Matchers {
   }
 
   /**
-    * Method to create a Matcher, which always succeeds, of a P whose result is a Tuple2.
+    * Method to create a Matcher, which always succeeds, of a P whose result is a ~.
     *
     * @param f method to convert a (T0, T1) into a P.
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam P  the product type.
-    * @return a Matcher[P,(T0,T1)]
+    * @return a Matcher[P, T0 ~ T1].
     */
-  def tuple2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, (T0, T1)] = lift(
-    p => (p.productElement(0).asInstanceOf[T0], p.productElement(1).asInstanceOf[T1])
+  def tilde2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0 ~ T1] = lift(
+    p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1]
   )
 
   /**
-    * Method to create a Matcher, which always succeeds, of a P whose result is a Tuple3.
+    * Method to create a Matcher, which always succeeds, of a P whose result is a ~~.
     *
     * @param f method to convert a (T0, T1, T2) into a P.
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam T2 third of the member types.
     * @tparam P  the product type.
-    * @return a Matcher[P,(T0,T1,T2)]
+    * @return a Matcher[P, T0 ~ T1 ~ T2].
     */
-  def tuple3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, (T0, T1, T2)] = lift(
-    p => (p.productElement(0).asInstanceOf[T0], p.productElement(1).asInstanceOf[T1], p.productElement(2).asInstanceOf[T2])
+  def tilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0 ~ T1 ~ T2] = lift(
+    p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1] ~ p.productElement(2).asInstanceOf[T2]
   )
 
   /**
-    * Method to create a Matcher, which always succeeds, of a Tuple2 whose result is a P.
-    * This method is the inverse of tuple2.
+    * Method to create a Matcher, which always succeeds, of a ~ whose result is a P.
+    * This method is the inverse of tilde2.
     *
     * @param f method to convert a (T0, T1) into a P.
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam P  the product type.
-    * @return a Matcher[P,(T0,T1)]
+    * @return a Matcher[T0 ~ T1, P].
     */
-  def product2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[(T0, T1), P] = lift(
-    t => f.tupled(t)
-  )
+  def product2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[T0 ~ T1, P] = lift {
+    case x ~ y => f(x, y)
+  }
 
   /**
-    * Method to create a Matcher, which always succeeds, of a Tuple2 whose result is a P.
-    * This method is the inverse of tuple2.
+    * Method to create a Matcher, which always succeeds, of a ~~ whose result is a P.
+    * This method is the inverse of tilde2.
     *
     * @param f method to convert a (T0, T1) into a P.
     * @tparam T0 first of the member types.
     * @tparam T1 second of the member types.
     * @tparam P  the product type.
-    * @return a Matcher[P,(T0,T1)]
+    * @return a Matcher[T0 ~ T1 ~ T2, P].
     */
-  def product3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[(T0, T1, T2), P] = lift(
-    t => f(t._1, t._2, t._3)
-  )
+  def product3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[T0 ~ T1 ~ T2, P] = lift {
+    case x ~ y ~ z => f(x, y, z)
+  }
 
   /**
-    * Method to match any element of a Tuple2.
+    * Method to match any element of a ~.
     *
     * @param m0 the Matcher corresponding to the first element.
     * @param m1 the Matcher corresponding to the second element.
     * @tparam T0 the input type for the first Matcher.
     * @tparam T1 the input type for the second Matcher.
     * @tparam R  the MatchResult type.
-    * @return a Matcher[(T0, T1), R] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[T0 ~ T1, R] that matches at least one of the elements of the given tilde.
     */
-  def match2Any[T0, T1, R](m0: Matcher[T0, R], m1: => Matcher[T1, R]): Matcher[(T0, T1), R] = {
-    case (t0, t1) => matchProduct2Any(m0, m1)(->.apply)(t0 -> t1)
+  def match2Any[T0, T1, R](m0: Matcher[T0, R], m1: => Matcher[T1, R]): Matcher[T0 ~ T1, R] = {
+    case t0 ~ t1 => matchProduct2Any(m0, m1)(->.apply)(t0 -> t1)
   }
 
   /**
@@ -730,13 +718,15 @@ trait Matchers {
     * @tparam T1 the input type for the second Matcher.
     * @tparam R  the MatchResult type.
     * @tparam P  the input type.
-    * @return a Matcher[P, R] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[P, R] that matches at least one of the elements of the given P.
     */
   def matchProduct2Any[T0, T1, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R])(f: (T0, T1) => P): Matcher[P, R] = p =>
     m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1])
 
   /**
     * Method to match any element of a Tuple3.
+    *
+    * TODO fix me
     *
     * @param m0 the Matcher corresponding to the first element.
     * @param m1 the Matcher corresponding to the second element.
@@ -765,7 +755,7 @@ trait Matchers {
     * @tparam T2 the input type for the third Matcher.
     * @tparam R  the MatchResult type.
     * @tparam P  the input type.
-    * @return a Matcher[P, R] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[P, R] that matches at least one of the elements of the given P.
     */
   def matchProduct3Any[T0, T1, T2, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R], m2: => Matcher[T2, R])(f: (T0, T1, T2) => P): Matcher[P, R] = p =>
     m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]) || m2(p.productElement(2).asInstanceOf[T2])
@@ -781,9 +771,9 @@ trait Matchers {
     * @tparam R0 the first MatchResult type.
     * @tparam R1 the second MatchResult type.
     * @tparam P  the input type.
-    * @return a Matcher[P, R] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[P, R0 ~ R1] that matches at least one of the elements of the given P.
     */
-  def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(f: (T0, T1) => P): Matcher[P, (R0, R1)] = p =>
+  def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(f: (T0, T1) => P): Matcher[P, R0 ~ R1] = p =>
     m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1])
 
   /**
@@ -800,13 +790,13 @@ trait Matchers {
     * @tparam R1 the second MatchResult type.
     * @tparam R2 the third MatchResult type.
     * @tparam P  the input type.
-    * @return a Matcher[P, (R0, R1, R2)] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[P, R0 ~ R1 ~ R2] that matches at least one of the elements of the given P.
     */
-  def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, (R0, R1, R2)] = p =>
-    m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1]) && m2(p.productElement(2).asInstanceOf[T2]) map MatchResult.unroll21
+  def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, R0 ~ R1 ~ R2] = p =>
+    m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1]) && m2(p.productElement(2).asInstanceOf[T2])
 
   /**
-    * Method to match all element of a Tuple2.
+    * Method to match all elements of a ~.
     *
     * @param m0 the Matcher corresponding to the first element.
     * @param m1 the Matcher corresponding to the second element.
@@ -814,14 +804,14 @@ trait Matchers {
     * @tparam T1 the input type for the second Matcher.
     * @tparam R0 the MatchResult type for m0.
     * @tparam R1 the MatchResult type for m1.
-    * @return a Matcher[(T0, T1), (R0, R1)] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[T0 ~ T1, R0 ~ R1] that matches all the elements of the given ~.
     */
-  def match2All[T0, T1, R0, R1](m0: Matcher[T0, R0], m1: => Matcher[T1, R1]): Matcher[(T0, T1), R0 ~ R1] = {
-    case (t0, t1) => asTilde(m0(t0) && m1(t1))
+  def match2All[T0, T1, R0, R1](m0: Matcher[T0, R0], m1: => Matcher[T1, R1]): Matcher[T0 ~ T1, R0 ~ R1] = {
+    case t0 ~ t1 => m0(t0) ~ m1(t1)
   }
 
   /**
-    * Method to match all elements of a Tuple3.
+    * Method to match all elements of a ~~.
     *
     * @param m0 the Matcher corresponding to the first element.
     * @param m1 the Matcher corresponding to the second element.
@@ -830,10 +820,10 @@ trait Matchers {
     * @tparam R0 the MatchResult type for m0.
     * @tparam R1 the MatchResult type for m1.
     * @tparam R2 the MatchResult type for m2.
-    * @return a Matcher[(T0, T1), (R0, R1)] that matches at least one of the elements of the given tuple.
+    * @return a Matcher[T0 ~ T1 ~ T2, R0 ~ R1 ~ R2] that matches at least one of the elements of the given ~~.
     */
-  def match3All[T0, T1, T2, R0, R1, R2](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2]): Matcher[(T0, T1, T2), (R0, R1, R2)] = {
-    case (t0, t1, t2) => m0(t0) && m1(t1) && m2(t2) map MatchResult.unroll21
+  def match3All[T0, T1, T2, R0, R1, R2](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2]): Matcher[T0 ~ T1 ~ T2, R0 ~ R1 ~ R2] = {
+    case t0 ~ t1 ~ t2 => m0(t0) ~ m1(t1) ~ m2(t2)
   }
 
   /**
@@ -845,6 +835,10 @@ trait Matchers {
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
     def :|(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = log(p.named(name))
+  }
+
+  implicit class TildeOps[R, S](r: R) {
+    def ~(s: S): R ~ S = new ~(r, s)
   }
 
   /**
@@ -923,7 +917,7 @@ trait Matchers {
 
     /**
       * @return the result of the MatchResult.
-      * @throws MatcherException if this is not a Match.
+      * @throws Throwable (a MatcherException) if this is not a Match.
       */
     def get: R
 
@@ -935,6 +929,25 @@ trait Matchers {
       * @return the result of the MatchResult if it's a Match, otherwise return s if it's a Miss.
       */
     def getOrElse[S >: R](s: => S): S
+
+    /**
+      * Composition method.
+      * All the results are combined into one result.
+      *
+      * @param sm a call-by-name MatchResult[S].
+      * @tparam S the underlying type of s.
+      * @return a MatchResult[R ~ S].
+      */
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S]
+
+    /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S], either this (if successful) otherwise sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S]
 
     /**
       * Map method.
@@ -995,12 +1008,13 @@ trait Matchers {
 
     /**
       * Alternation method which takes a MatchResult as the alternative.
+      * Identical to orElse.
       *
       * @param sm a call-by-name MatchResult which will be used if this is empty.
       * @tparam S the type of the result and a super-type of R.
       * @return a MatchResult[S].
       */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S]
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = orElse(sm)
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1018,9 +1032,9 @@ trait Matchers {
       *
       * @param sm a call-by-name MatchResult[S].
       * @tparam S the underlying type of s.
-      * @return a MatchResult[(R,S)].
+      * @return a MatchResult[R ~ S].
       */
-    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)]
+    def &&[S](sm: => MatchResult[S]): MatchResult[R ~ S] = andThen(sm)
 
     /**
       * Composition method.
@@ -1104,7 +1118,7 @@ trait Matchers {
       * @param m the alternative Matcher.
       * @return a Matcher[T, R] which will match either on this or on m.
       */
-    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => matchers.match2Any(this, m)((t, t))
+    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => matchers.match2Any(this, m)(t ~ t)
 
     /**
       * Method to combine Matchers in the sense that, when this successfully matches a T, resulting in an R,
@@ -1117,34 +1131,34 @@ trait Matchers {
     def &[S](m: Matcher[R, S]): Matcher[T, S] = t => this (t) & m
 
     /**
-      * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in a tuple.
+      * Method to combine Matchers this and m such that the resulting Matcher takes a ~ and results in a ~.
       *
       * @param m a Matcher[P, S]
       * @tparam P the input type of m.
       * @tparam S the result type of m.
-      * @return a Matcher[(T,P), (R,S)] which is the result of invoking match2All(this, m).
+      * @return a Matcher[T ~ P, R ~ S] which is the result of invoking match2All(this, m).
       */
-    def ~[P, S](m: Matcher[P, S]): Matcher[(T, P), R ~ S] = matchers.match2All(this, m)
+    def ~[P, S](m: Matcher[P, S]): Matcher[T ~ P, R ~ S] = matchers.match2All(this, m)
 
     /**
-      * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in the result from m.
+      * Method to combine Matchers this and m such that the resulting Matcher takes a ~ and results in the result from m.
       *
       * @param m a Matcher[P, S]
       * @tparam P the input type of m.
       * @tparam S the result type of m.
-      * @return a Matcher[(T,P), S] which is the result of invoking ~ but stripping the first element of the tuple.
+      * @return a Matcher[(T,P), S] which is the result of invoking ~ but stripping the first element of the ~.
       */
-    def ~>[P, S](m: Matcher[P, S]): Matcher[(T, P), S] = this ~ m ^^ { case _ ~ y => y }
+    def ~>[P, S](m: Matcher[P, S]): Matcher[T ~ P, S] = this ~ m ^^ { case _ ~ y => y }
 
     /**
-      * Method to combine Matchers this and m such that the resulting Matcher takes a tuple and results in the result from this.
+      * Method to combine Matchers this and m such that the resulting Matcher takes a ~ and results in the result from this.
       *
       * @param m a Matcher[P, S]
       * @tparam P the input type of m.
       * @tparam S the result type of m.
-      * @return a Matcher[(T,P), R] which is the result of invoking ~ but stripping the second element of the tuple.
+      * @return a Matcher[(T,P), R] which is the result of invoking ~ but stripping the second element of the ~.
       */
-    def <~[P, S](m: Matcher[P, S]): Matcher[(T, P), R] = this ~ m ^^ { case x ~ _ => x }
+    def <~[P, S](m: Matcher[P, S]): Matcher[T ~ P, R] = this ~ m ^^ { case x ~ _ => x }
 
     /**
       * CONSIDER maybe doesn't make sense (compare with valve).
@@ -1221,6 +1235,14 @@ trait Matchers {
     def conditional[S](sm: => MatchResult[S]): MatchResult[S] = sm
 
     /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a MatchResult (ignored)).
+      * @return this.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
+
+    /**
       * Method to compose this MatchResult with sm.
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
@@ -1237,13 +1259,13 @@ trait Matchers {
     }
 
     /**
-      * If s is a Match, then the result will be a Match of the tuple of r and the result of s.
+      * If s is a Match, then the result will be a Match of the ~ of r and the result of s.
       *
       * @param sm a MatchResult[S].
       * @tparam S the underlying type of s.
       * @return a MatchResult[(R,S)].
       */
-    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)] = sm.flatMap(z => Match(r -> z))
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = sm.flatMap(z => Match(r ~ z))
 
     /**
       * Returns the result of invoking f on r.
@@ -1260,14 +1282,6 @@ trait Matchers {
       * @param f a function of R => Unit.
       */
     def foreach(f: R => Unit): Unit = f(r)
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a MatchResult (ignored)).
-      * @return this.
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1328,7 +1342,7 @@ trait Matchers {
     /**
       * get method (will always throw an exception).
       *
-      * @throws MatcherException or Throwable (e).
+      * @throws Throwable (a MatcherException) or other Throwable (e).
       */
     def get: R = x match {
       case x: Throwable => throw x
@@ -1369,6 +1383,15 @@ trait Matchers {
     def getOrElse[S >: R](s: => S): S = s
 
     /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a MatchResult which will be returned.
+      * @tparam S the underlying type of the result and a super-class of R.
+      * @return sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = sm
+
+    /**
       * Method to compose this MatchResult with sm.
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
@@ -1393,7 +1416,7 @@ trait Matchers {
       * @tparam S the underlying type of s.
       * @return Miss(t).
       */
-    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)] = Miss(msg, t)
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Miss(msg, t)
 
     /**
       * @param f a function of R => MatchResult[S] (ignored).
@@ -1410,14 +1433,6 @@ trait Matchers {
       * @return m(t).
       */
     def |[S >: R](m: => Matcher[Any, S]): MatchResult[S] = m(t)
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a MatchResult which will be used if this is empty.
-      * @return s.
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = sm
 
     /**
       * Composition method.
@@ -1461,6 +1476,15 @@ trait Matchers {
     def getOrElse[S >: R](s: => S): S = get
 
     /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a MatchResult which will be ignored.
+      * @tparam S the underlying type of the result and a super-class of R.
+      * @return sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+
+    /**
       * Method to compose this MatchResult with sm.
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
@@ -1485,7 +1509,7 @@ trait Matchers {
       * @tparam S the underlying type of s.
       * @return Error(t).
       */
-    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)] = Error(e)
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Error(e)
 
     /**
       * @param f a function of R => MatchResult[S].
@@ -1493,14 +1517,6 @@ trait Matchers {
       * @return Error(e).
       */
     def flatMap[S](f: R => MatchResult[S]): MatchResult[S] = Error(e)
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a MatchResult which will be used if this is empty.
-      * @return s.
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = Error(e)
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1591,17 +1607,6 @@ trait Matchers {
       * @return a MatchResult[R].
       */
     def apply[Q, T, R](f: T => R, p: (Q, R) => Boolean)(q: Q, t: T): MatchResult[R] = MatchResult.create(p)(q, t, f(t))
-
-    /**
-      * Method to flatten a nested Tuple2 into a Tuple3.
-      *
-      * @param t the input nested tuple of type ((R0, R1), R2).
-      * @tparam R0 the first element type of the resulting tuple.
-      * @tparam R1 the second element type of the resulting tuple.
-      * @tparam R2 the third element type of the resulting tuple.
-      * @return a Tuple3[R0, R1, R2].
-      */
-    def unroll21[R0, R1, R2](t: ((R0, R1), R2)): (R0, R1, R2) = (t._1._1, t._1._2, t._2)
   }
 
   /**
@@ -1638,21 +1643,6 @@ trait Matchers {
   private def sequence[R](rmo: Option[MatchResult[R]]): MatchResult[Option[R]] = rmo match {
     case Some(rm) => rm.map(Some(_))
     case None => Match(None)
-  }
-
-  /**
-    * Convert from tuple form to tilde form.
-    *
-    * @param mr a MatchResult[(R0, R1)].
-    * @tparam R0 one of the underlying types of mr.
-    * @tparam R1 the other underlying type of mr.
-    * @return a MatchResult[R0 ~ R1]
-    */
-  private def asTilde[R0, R1](mr: MatchResult[(R0, R1)]): MatchResult[R0 ~ R1] = mr match {
-    case Match((r0, r1)) => Match(r0) ~ Match(r1)
-    case Miss(w, t) => Miss(w, t)
-    case Error(x) => Error(x)
-    case x => throw MatcherException(s"unexpected input to asTilde: $x")
   }
 
   /**
@@ -1776,14 +1766,47 @@ object RegexGroups {
   * @tparam R the right type.
   */
 case class ~[+L, +R](l: L, r: R) {
-  def flip: ~[R, L] = Tilde(r, l)
+  /**
+    * Reverse the order of this ~.
+    *
+    * @return ~(r, l)
+    */
+  def flip: ~[R, L] = new ~(r, l)
+
+  /**
+    * Convert to tuple form.
+    *
+    * NOTE: unused.
+    *
+    * @return a (L, R).
+    */
+  def asTuple: (L, R) = l -> r
 }
 
 /**
   * Companion object to ~ (although the name had to be changed).
   */
 object Tilde {
+  /**
+    * Create a ~ from two values.
+    *
+    * @param l the left-hand value.
+    * @param r the right-hand value.
+    * @tparam L the type of l.
+    * @tparam R the type of r.
+    * @return a new L ~ R
+    */
   def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
+
+  /**
+    * Create a ~ from an (L, R) tuple.
+    *
+    * @param t a tuple (L, R).
+    * @tparam L the type of the first member of the input.
+    * @tparam R the type of r the second member of the input.
+    * @return a new L ~ R
+    */
+  def apply[L, R](t: (L, R)): ~[L, R] = apply(t._1, t._2)
 }
 
 /**
