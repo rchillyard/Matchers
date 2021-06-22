@@ -130,6 +130,7 @@ trait Matchers {
       m(t) match {
         case z@Match(_) => z
         case Miss(_, _) => Match(t)
+        case Error(x) => Error(x)
       }
   }
 
@@ -1343,7 +1344,7 @@ trait Matchers {
     /**
       * Render this Match as a String.
       *
-      * @return s"Match: $r"
+      * @return s"Match: r"
       */
     override def toString: String = s"Match: $r"
   }
