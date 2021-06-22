@@ -43,7 +43,7 @@ An _Error_ always returns itself.
 The corresponding "and" methods are somewhat different because the return
 type must include two values of two disparate types:
 
-    def &&[S](sm: => MatchResult[S]): MatchResult[(R, S)]
+    def &&[S](sm: => MatchResult[S]): MatchResult[R ~ S]
 
 The result of the && method will be successful only if _sm_ is also successful.
 In this case, the result will a tuple of the two results.
@@ -79,7 +79,7 @@ It is essentially just a tuple of two elements.
 However, if we use the ~ operator on two _Matchers_ for example as follows:
 
     import matchers._
-    val m: matchers.Matcher[(String, String), Int] = "1".m ~ "2".m ^^ {
+    val m: matchers.Matcher[String ~ String, Int] = "1".m ~ "2".m ^^ {
       case x ~ y => x.toInt + y.toInt
     }
 
@@ -133,6 +133,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.3 Replaced most tuples with tildes.
 * 1.0.2 Support regex parsers
 * 1.0.1 Added ~
 * 1.0.0 Original Version
