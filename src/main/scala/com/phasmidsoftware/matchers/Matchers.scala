@@ -101,6 +101,8 @@ trait Matchers {
   /**
     * Matcher which succeeds only if the predicate p evaluates to true.
     *
+    * CONSIDER redefining this using guard.
+    *
     * @param b a constant Boolean value.
     * @tparam R both the input type and the result type.
     * @return a Matcher[R, R] which succeeds only if p(r) is true.
@@ -796,7 +798,7 @@ trait Matchers {
     * @return a Matcher[P, R0 ~ R1] that matches at least one of the elements of the given P.
     */
   def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(f: (T0, T1) => P): Matcher[P, R0 ~ R1] = p =>
-    m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1])
+    m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1])
 
   /**
     * Method to match any element of a Product with two elements.
@@ -815,7 +817,7 @@ trait Matchers {
     * @return a Matcher[P, R0 ~ R1 ~ R2] that matches at least one of the elements of the given P.
     */
   def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, R0 ~ R1 ~ R2] = p =>
-    m0(p.productElement(0).asInstanceOf[T0]) && m1(p.productElement(1).asInstanceOf[T1]) && m2(p.productElement(2).asInstanceOf[T2])
+    m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]) ~ m2(p.productElement(2).asInstanceOf[T2])
 
   /**
     * Method to match all elements of a ~.
@@ -933,52 +935,10 @@ trait Matchers {
     def successful: Boolean
 
     /**
-      * @return false if this is a Match
-      */
-    def isEmpty: Boolean = !successful
-
-    /**
       * @return the result of the MatchResult.
       * @throws Throwable (a MatcherException) if this is not a Match.
       */
     def get: R
-
-    /**
-      * Alternative form of get such that, in the case of a Miss, the default value given by s will be returned.
-      *
-      * @param s a call-by-name value to be used if this is unsuccessful.
-      * @tparam S a super-class of R.
-      * @return the result of the MatchResult if it's a Match, otherwise return s if it's a Miss.
-      */
-    def getOrElse[S >: R](s: => S): S
-
-    /**
-      * Composition method.
-      * All the results are combined into one result.
-      *
-      * @param sm a call-by-name MatchResult[S].
-      * @tparam S the underlying type of s.
-      * @return a MatchResult[R ~ S].
-      */
-    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S]
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a call-by-name MatchResult which will be used if this is empty.
-      * @tparam S the type of the result and a super-type of R.
-      * @return a MatchResult[S], either this (if successful) otherwise sm.
-      */
-    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S]
-
-    /**
-      * Map method.
-      *
-      * @param f a function of R => S.
-      * @tparam S the underlying type of the returned MatchResult.
-      * @return MatchResult[S].
-      */
-    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
 
     /**
       * "unit" method for a successful match.
@@ -1001,6 +961,35 @@ trait Matchers {
     def flatMap[S](f: R => MatchResult[S]): MatchResult[S]
 
     /**
+      * Alternative form of get such that, in the case of a Miss, the default value given by s will be returned.
+      *
+      * @param s a call-by-name value to be used if this is unsuccessful.
+      * @tparam S a super-class of R.
+      * @return the result of the MatchResult if it's a Match, otherwise return s if it's a Miss.
+      */
+    def getOrElse[S >: R](s: => S): S
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * The results of this and of sm are combined into one ~.
+      * The ~ method is a synonym of andThen.
+      *
+      * @param sm a call-by-name MatchResult[S].
+      * @tparam S the underlying type of s.
+      * @return a MatchResult[R ~ S].
+      */
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S]
+
+    /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S], either this (if successful) otherwise sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S]
+
+    /**
       * Foreach method.
       *
       * @param f a function of R => Unit.
@@ -1013,32 +1002,15 @@ trait Matchers {
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
       *
-      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
-      * @tparam S the type of s.
-      * @return a MatchResult of type R ~ S.
-      */
-    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S]
-
-    /**
-      * Method to compose this MatchResult with sm.
-      * It this is successful, then sm will be returned.
-      * Otherwise, an Unsuccessful result will be returned.
+      * Similar to ~ except that this MatchResult[R] is discarded and not part of the result.
+      * In other words, this acts purely as a guard.
+      * Synonym: &&.
       *
       * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
       * @tparam S the type of the resulting MatchResult.
       * @return a MatchResult[S].
       */
-    def conditional[S](sm: => MatchResult[S]): MatchResult[S]
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      * Identical to orElse.
-      *
-      * @param sm a call-by-name MatchResult which will be used if this is empty.
-      * @tparam S the type of the result and a super-type of R.
-      * @return a MatchResult[S].
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = orElse(sm)
+    def guard[S](sm: => MatchResult[S]): MatchResult[S]
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -1052,16 +1024,6 @@ trait Matchers {
 
     /**
       * Composition method.
-      * All the results are combined into one result.
-      *
-      * @param sm a call-by-name MatchResult[S].
-      * @tparam S the underlying type of s.
-      * @return a MatchResult[R ~ S].
-      */
-    def &&[S](sm: => MatchResult[S]): MatchResult[R ~ S] = andThen(sm)
-
-    /**
-      * Composition method.
       * If this MatchResult is successful then return the value of m applied to the result.
       *
       * @param m a call-by-name Matcher of S to T.
@@ -1070,6 +1032,58 @@ trait Matchers {
       * @return a MatchResult[T].
       */
     def &[S >: R, T](m: => Matcher[S, T]): MatchResult[T]
+
+    /**
+      * Map method.
+      *
+      * @param f a function of R => S.
+      * @tparam S the underlying type of the returned MatchResult.
+      * @return MatchResult[S].
+      */
+    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
+
+    /**
+      * Method to determine if this is unsuccessful.
+      *
+      * @return the negation of successful.
+      */
+    def isEmpty: Boolean = !successful
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * The results of this and of sm are combined into one ~.
+      * ~ is a synonym of andThen.
+      *
+      * @param sm a call-by-name MatchResult[S].
+      * @tparam S the underlying type of s.
+      * @return a MatchResult[R ~ S].
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = andThen(sm)
+
+    /**
+      * Alternation method which takes a MatchResult as the alternative.
+      * Identical to orElse.
+      *
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S] which is the result of invoking orElse(sm).
+      */
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = orElse(sm)
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * Similar to ~ except that this MatchResult[R] is discarded and not part of the result.
+      * In other words, this acts purely as a guard.
+      * This method simply invokes guard(sm).
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return a MatchResult[S] which is the result of calling guard(sm).
+      */
+    def &&[S](sm: => MatchResult[S]): MatchResult[S] = guard(sm)
   }
 
   /**
@@ -1127,14 +1141,14 @@ trait Matchers {
       * @tparam S the type of both s and the result (a super-type of R).
       * @return a Matcher[T, R] which works in the opposite sense to this.
       */
-    def ![S >: R](s: => S): Matcher[T, S] = matchers.not(this, s)
+    def ![S >: R](s: => S): Matcher[T, S] = not(this, s)
 
     /**
       * Returns a matcher that optionally matches what this parser parses.
       *
       * @return opt(this)
       */
-    def ? : Matcher[T, Option[R]] = matchers.opt(this)
+    def ? : Matcher[T, Option[R]] = opt(this)
 
     /**
       * Method to combine Matchers in the sense that, if this fails, then we try to match using m.
@@ -1142,7 +1156,7 @@ trait Matchers {
       * @param m the alternative Matcher.
       * @return a Matcher[T, R] which will match either on this or on m.
       */
-    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => matchers.match2Any(this, m)(t ~ t)
+    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => match2Any(this, m)(t ~ t)
 
     /**
       * Method to combine Matchers in the sense that, when this successfully matches a T, resulting in an R,
@@ -1162,7 +1176,7 @@ trait Matchers {
       * @tparam S the result type of m.
       * @return a Matcher[T ~ P, R ~ S] which is the result of invoking match2All(this, m).
       */
-    def ~[P, S](m: Matcher[P, S]): Matcher[T ~ P, R ~ S] = matchers.match2All(this, m)
+    def ~[P, S](m: Matcher[P, S]): Matcher[T ~ P, R ~ S] = match2All(this, m)
 
     /**
       * Method to combine Matchers this and m such that the resulting Matcher takes a ~ and results in the result from m.
@@ -1256,7 +1270,7 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return sm.
       */
-    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = sm
+    def guard[S](sm: => MatchResult[S]): MatchResult[S] = sm
 
     /**
       * Alternation method which takes a MatchResult as the alternative.
@@ -1265,22 +1279,6 @@ trait Matchers {
       * @return this.
       */
     def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
-
-    /**
-      * Method to compose this MatchResult with sm.
-      * It this is successful, then sm will be returned.
-      * Otherwise, an Unsuccessful result will be returned.
-      *
-      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
-      * @tparam S the type of s.
-      * @return if this is successful, then MatchResult(r ~ s), otherwise an unsuccessful result.
-      */
-    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = sm match {
-      case Match(s) => MatchResult(Tilde(r, s))
-      case Miss(w, s) => Miss(w, s)
-      case Error(x) => Error(x)
-      case x => throw MatcherException(s"unexpected input to ~: $x")
-    }
 
     /**
       * If s is a Match, then the result will be a Match of the ~ of r and the result of s.
@@ -1417,15 +1415,6 @@ trait Matchers {
 
     /**
       * Method to compose this MatchResult with sm.
-      *
-      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
-      * @tparam S the type of s.
-      * @return this.
-      */
-    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Miss(msg, t)
-
-    /**
-      * Method to compose this MatchResult with sm.
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
       *
@@ -1433,7 +1422,7 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a Miss(msg, t).
       */
-    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = Miss(msg, t)
+    def guard[S](sm: => MatchResult[S]): MatchResult[S] = Miss(msg, t)
 
     /**
       * @param sm a MatchResult[S] (ignored).
@@ -1510,15 +1499,6 @@ trait Matchers {
 
     /**
       * Method to compose this MatchResult with sm.
-      *
-      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
-      * @tparam S the type of s.
-      * @return this.
-      */
-    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Error(e)
-
-    /**
-      * Method to compose this MatchResult with sm.
       * It this is successful, then sm will be returned.
       * Otherwise, an Unsuccessful result will be returned.
       *
@@ -1526,7 +1506,7 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a MatchResult[S].
       */
-    def conditional[S](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+    def guard[S](sm: => MatchResult[S]): MatchResult[S] = Error(e)
 
     /**
       * @param sm a MatchResult[S] (ignored).

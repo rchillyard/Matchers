@@ -58,6 +58,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target = m.always[Unit]
     target(()).successful shouldBe true
   }
+  // NOTE that ~ is a synonym of andThen.
   it should "support Match ~" in {
     m.Match(0) ~ m.Match("") should matchPattern { case m.Match(~(0, "")) => }
     m.Match(0) ~ m.Miss("bad", "") shouldBe m.Miss("bad", "")
@@ -73,20 +74,21 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.Error(new RuntimeException("")) ~ m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
     m.Error(new RuntimeException("")) ~ m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
-  it should "support Match conditional" in {
-    m.Match(0) conditional m.Match("") shouldBe m.Match("")
-    m.Match(0) conditional m.Miss("bad", "") shouldBe m.Miss("bad", "")
-    m.Match(0) conditional m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  // NOTE that && is a synonym of guard.
+  it should "support Match &&" in {
+    m.Match(0) && m.Match("") shouldBe m.Match("")
+    m.Match(0) && m.Miss("bad", "") shouldBe m.Miss("bad", "")
+    m.Match(0) && m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
-  it should "support Miss conditional" in {
-    m.Miss("bad", 0) conditional m.Match("") shouldBe m.Miss("bad", 0)
-    m.Miss("bad", 0) conditional m.Miss("bad", "") shouldBe m.Miss("bad", 0)
-    m.Miss("bad", 0) conditional m.Error(new RuntimeException("")) shouldBe m.Miss("bad", 0)
+  it should "support Miss &&" in {
+    m.Miss("bad", 0) && m.Match("") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) && m.Miss("bad", "") shouldBe m.Miss("bad", 0)
+    m.Miss("bad", 0) && m.Error(new RuntimeException("")) shouldBe m.Miss("bad", 0)
   }
-  it should "support Error conditional" in {
-    m.Error(new RuntimeException("")) conditional m.Match("") should matchPattern { case m.Error(_: RuntimeException) => }
-    m.Error(new RuntimeException("")) conditional m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
-    m.Error(new RuntimeException("")) conditional m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
+  it should "support Error &&" in {
+    m.Error(new RuntimeException("")) && m.Match("") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) && m.Miss("bad", "") should matchPattern { case m.Error(_: RuntimeException) => }
+    m.Error(new RuntimeException("")) && m.Error(new RuntimeException("")) should matchPattern { case m.Error(_: RuntimeException) => }
   }
   it should "support |" in {
     val result = m.success(0)("") | m.fail("")
@@ -101,7 +103,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result.successful shouldBe true
   }
   it should "support &&" in {
-    val result = m.success(0)("") && m.success(1)("")
+    val result = m.success(0)("") ~ m.success(1)("")
     result.successful shouldBe true
     import m.TildeOps
     result.get shouldBe 0 ~ 1
@@ -150,7 +152,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result.successful shouldBe false
   }
   it should "support &&" in {
-    val result = m.fail("")("") && m.success(1)("")
+    val result = m.fail("")("") ~ m.success(1)("")
     result.successful shouldBe false
   }
   it should "support map" in {
@@ -198,8 +200,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result = m.error[Unit](new NoSuchElementException)(()) & m.success[Any, Int](0)
     result.successful shouldBe false
   }
-  it should "support &&" in {
-    val result = m.error[Unit](new NoSuchElementException)(()) && m.success(1)("")
+  it should "~" in {
+    val result = m.error[Unit](new NoSuchElementException)(()) ~ m.success(1)("")
     result.successful shouldBe false
   }
   it should "support map" in {
