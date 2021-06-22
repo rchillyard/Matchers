@@ -475,16 +475,36 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val t = 1 ~ 2
     val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
-    m.*(p, flip = false)(t).successful shouldBe false
+    m.*(p, commutes = false)(t).successful shouldBe false
   }
 
   behavior of "**"
-  it should "work" in {
+  it should "match 1 with commuting" in {
+    import m.TildeOps
+    val t = 1 ~ 2 ~ 3
+    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(1))
+    p(t).successful shouldBe true
+    m.**(p)(t).successful shouldBe true
+  }
+  it should "match 2 with commuting" in {
     import m.TildeOps
     val t = 1 ~ 2 ~ 3
     val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
     p(t).successful shouldBe false
     m.**(p)(t).successful shouldBe true
+  }
+  it should "match 3 with commuting" in {
+    import m.TildeOps
+    val t = 1 ~ 2 ~ 3
+    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(3))
+    p(t).successful shouldBe false
+    m.**(p)(t).successful shouldBe true
+  }
+  it should "fail without commuting" in {
+    import m.TildeOps
+    val t = 1 ~ 2 ~ 3
+    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
+    m.**(p, commutes = false)(t).successful shouldBe false
   }
 
   behavior of "filter"

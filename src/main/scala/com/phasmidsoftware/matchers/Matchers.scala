@@ -133,6 +133,7 @@ trait Matchers {
         case z@Match(_) => z
         case Miss(_, _) => Match(t)
         case Error(x) => Error(x)
+        case _ => throw MatcherException("this case not possible")
       }
   }
 
@@ -140,7 +141,7 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
-    * FIXME
+    * CONSIDER what to do with this
     *
     * @param f a T => R.
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
@@ -158,7 +159,7 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
-    * FIXME
+    * CONSIDER what to do with this
     *
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
     * @tparam Q the "control" type.
@@ -448,28 +449,33 @@ trait Matchers {
     * Matcher which tries m on the given (~) input.
     * If m is unsuccessful, it then tries m on the swapped (inverted) ~.
     *
-    * @param m    a Matcher[T ~ T, R].
-    * @param flip if true (the default), then we can try flipping the order of the incoming ~.
-    *             If false then we do not try.
+    * @param m        a Matcher[T ~ T, R].
+    * @param commutes if true (the default), the order of the incoming ~ elements is immaterial,
+    *                 thus we can try flipping their order.
+    *                 If false then we do not try.
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T ~ T, R].
     */
-  def *[T, R](m: Matcher[T ~ T, R], flip: Boolean = true): Matcher[T ~ T, R] = m | (maybe[T ~ T](flip) & swap & m)
+  def *[T, R](m: Matcher[T ~ T, R], commutes: Boolean = true): Matcher[T ~ T, R] = m | (maybe[T ~ T](commutes) & swap & m)
 
   /**
     * Matcher which tries m on the given (~~) input.
     * If m is unsuccessful, it then tries m on the rotated ~~.
     * If that's unsuccessful, it then tries m on the inverted ~~.
     *
-    * CONSIDER adding a flip parameter like in *
+    * CONSIDER adding a commutes parameter like in *
     *
-    * @param m a Matcher[T ~ T ~ T, R].
+    * @param m        a Matcher[T ~ T ~ T, R].
+    * @param commutes if true (the default), the order of the incoming ~ elements is immaterial,
+    *                 thus we can try rotating their order.
+    *                 If false then we do not try.
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T ~ T ~ T, R].
     */
-  def **[T, R](m: Matcher[T ~ T ~ T, R]): Matcher[T ~ T ~ T, R] = m | (rotate3 & m) | (invert3 & m)
+  def **[T, R](m: Matcher[T ~ T ~ T, R], commutes: Boolean = true): Matcher[T ~ T ~ T, R] =
+    m | (maybe[T ~ T ~ T](commutes) & rotate3 & m) | (maybe[T ~ T ~ T](commutes) & invert3 & m)
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T0, based on the first element of P.
