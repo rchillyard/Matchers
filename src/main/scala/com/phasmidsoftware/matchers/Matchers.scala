@@ -117,6 +117,23 @@ trait Matchers {
   def matches[T](t: T): Matcher[T, T] = filter(_ == t)
 
   /**
+    * Matcher which tries to match the input t according to m.
+    * If it's a match, then the match will be returned.
+    * If it's a miss, then we return a match based on the original t.
+    *
+    * @param m a Mather[T, T]
+    * @tparam T both the type of the input and the underlying type of the output.
+    * @return a Matcher[T, T]
+    */
+  def alt[T](m: Matcher[T, T]): Matcher[T, T] = Matcher {
+    t =>
+      m(t) match {
+        case z@Match(_) => z
+        case Miss(_, _) => Match(t)
+      }
+  }
+
+  /**
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
@@ -962,6 +979,8 @@ trait Matchers {
 
     /**
       * FlatMap method.
+      * If this is a Match(r), then return f(r).
+      * Otherwise, we return an unsuccessful result based on this.
       *
       * @param f a function of R => MatchResult[S].
       * @tparam S the underlying type of the returned MatchResult.

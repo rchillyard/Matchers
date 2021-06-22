@@ -1,11 +1,10 @@
 package com.phasmidsoftware.matchers
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
-
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.NoSuchElementException
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -360,6 +359,16 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "matches"
   it should "match 1" in {
     val f = m.matches(1)
+    f(1).successful shouldBe true
+  }
+
+  behavior of "alt"
+  it should "match 1" in {
+    val f = m.alt(m.matches(1))
+    f(1).successful shouldBe true
+  }
+  it should "match 2" in {
+    val f = m.alt(m.matches(2))
     f(1).successful shouldBe true
   }
 
