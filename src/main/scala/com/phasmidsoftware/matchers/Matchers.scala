@@ -1,6 +1,5 @@
 package com.phasmidsoftware.matchers
 
-import scala.util.control.NonFatal
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
@@ -148,7 +147,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[(Q,R), T].
     */
-  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = Matcher[(Q, T), R] {
+  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean)(implicit logger: MatchLogger): Matcher[(Q, T), R] = Matcher[(Q, T), R] {
     // CONSIDER redesign this in terms of other Matchers, not MatchResult
     case (q, t) => MatchResult(f, p)(q, t)
   } :| "valve"
@@ -646,12 +645,11 @@ trait Matchers {
     * If ll is LogDebug, then the value of log(m)(name) is returned.
     *
     * @param m  a Matcher[T, R].
-    * @param ll (implicit) LogLevel.
     * @tparam T the underlying type of the input to m.
     * @tparam R the underlying type of the result of m.
     * @return a Matcher[T, R].
     */
-  def log[T, R](m: => Matcher[T, R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = ll match {
+  def log[T, R](m: => Matcher[T, R])(implicit logger: MatchLogger): Matcher[T, R] = logger.logLevel match {
     case LogDebug => constructMatcher[T, R] {
       t =>
         logger(s"trying matcher ${m.toString} on $t...")
@@ -860,7 +858,7 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = log(p.named(name))
+    def :|(name: => String)(implicit logger: MatchLogger): Matcher[T, R] = log(p.named(name))
   }
 
   implicit class TildeOps[R, S](r: R) {
@@ -1636,7 +1634,7 @@ trait Matchers {
   private def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
     try f(t) catch {
       case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-      case NonFatal(e) => Error(e)
+      case scala.util.control.NonFatal(e) => Error(e)
     }
 
   /**
@@ -1829,6 +1827,10 @@ object MatcherException {
   def apply(msg: String): MatcherException = MatcherException(msg, null)
 }
 
+import org.slf4j.Logger
+
+import scala.reflect.ClassTag
+
 /**
   * Trait which is used to define a logging level for the log method of SignificantSpaceParsers.
   */
@@ -1844,20 +1846,27 @@ object LogLevel {
   implicit val ll: LogLevel = LogOff
 }
 
-trait MatchLogger extends ((String => Unit))
+class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String => Unit)) {
+  override def apply(w: String): Unit =
+    logLevel match {
+      case LogInfo | LogDebug => f(w)
+      case _ =>
+    }
+}
+
+case class Slf4jLogger[T: ClassTag](override val logLevel: LogLevel, logger: Logger) extends MatchLogger(logLevel, w => {
+  logLevel match {
+    case LogInfo => logger.info(w)
+    case LogDebug => logger.debug(w)
+    case _ =>
+  }
+})
 
 object MatchLogger {
 
   import org.slf4j.LoggerFactory
 
-  private val logger = LoggerFactory.getLogger(Matchers.getClass)
-  implicit val defaultMatchLogger: MatchLogger = {
-    w =>
-      import LogLevel.ll
-      ll match {
-        case LogInfo => logger.info(w)
-        case LogDebug => logger.debug(w)
-        case _ =>
-      }
-  }
+  def apply[T: ClassTag](logLevel: LogLevel): MatchLogger = Slf4jLogger(logLevel, LoggerFactory.getLogger(implicitly[ClassTag[T]].runtimeClass))
+
+  def apply(logger: Logger): MatchLogger = Slf4jLogger(LogInfo, logger)
 }

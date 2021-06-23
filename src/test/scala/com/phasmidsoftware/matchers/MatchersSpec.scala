@@ -1,10 +1,11 @@
 package com.phasmidsoftware.matchers
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.NoSuchElementException
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -288,8 +289,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "log"
   it should "log success with LogDebug" in {
     val sb = new StringBuilder
-    implicit val ll: LogLevel = LogDebug
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    implicit val logger: MatchLogger = new MatchLogger(LogDebug, { w => sb.append(s"$w\n"); () })
     import m.MatcherOps
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
@@ -299,21 +299,19 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
         |""".stripMargin
   }
   it should "log success with LogInfo" in {
-    val sb = new StringBuilder
     import m.MatcherOps
-    implicit val ll: LogLevel = LogInfo
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogInfo, sb)
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
-            """success(1): matched 1
-              |""".stripMargin
+      """success(1): matched 1
+        |""".stripMargin
   }
   it should "log success with LogOff" in {
     val sb = new StringBuilder
     import m.MatcherOps
-    implicit val ll: LogLevel = LogOff
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    implicit val logger: MatchLogger = SBLogger(LogOff, sb)
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe ""
@@ -323,8 +321,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "namedMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
-    implicit val ll: LogLevel = LogDebug
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val f: m.Parser[Int] = m.namedMatcher("one")(_ => m.Match(1))
     f("1").successful shouldBe true
     sb.toString() shouldBe
@@ -400,6 +397,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: (Int, Int) => Boolean = {
       case (x, y) => x == y
     }
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val z: m.Matcher[(Int, String), Int] = m.valve(_.toInt, p)
     z(1, "1").successful shouldBe true
   }
@@ -407,6 +406,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: (Int, Int) => Boolean = {
       case (x, y) => y % 2 == x
     }
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val z: m.Matcher[(Int, String), Int] = m.valve(_.toInt, p)
     val odd = 1
     val even = 0
@@ -1026,3 +1027,6 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m("Hello") should matchPattern { case matchers.Error(_) => }
   }
 }
+
+case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () })
+
