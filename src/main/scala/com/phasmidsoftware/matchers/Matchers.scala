@@ -101,8 +101,6 @@ trait Matchers {
   /**
     * Matcher which succeeds only if the predicate p evaluates to true.
     *
-    * CONSIDER redefining this using guard.
-    *
     * @param b a constant Boolean value.
     * @tparam R both the input type and the result type.
     * @return a Matcher[R, R] which succeeds only if p(r) is true.
@@ -463,8 +461,6 @@ trait Matchers {
     * Matcher which tries m on the given (~~) input.
     * If m is unsuccessful, it then tries m on the rotated ~~.
     * If that's unsuccessful, it then tries m on the inverted ~~.
-    *
-    * CONSIDER adding a commutes parameter like in *
     *
     * @param m        a Matcher[T ~ T ~ T, R].
     * @param commutes if true (the default), the order of the incoming ~ elements is immaterial,
