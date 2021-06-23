@@ -1847,5 +1847,17 @@ object LogLevel {
 trait MatchLogger extends ((String => Unit))
 
 object MatchLogger {
-  implicit val defaultMatchLogger: MatchLogger = w => println(w)
+
+  import org.slf4j.LoggerFactory
+
+  private val logger = LoggerFactory.getLogger(Matchers.getClass)
+  implicit val defaultMatchLogger: MatchLogger = {
+    w =>
+      import LogLevel.ll
+      ll match {
+        case LogInfo => logger.info(w)
+        case LogDebug => logger.debug(w)
+        case _ =>
+      }
+  }
 }
