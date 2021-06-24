@@ -1026,6 +1026,11 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val m: matchers.Parser[List[String]] = """(\d+""".regexGroups
     m("Hello") should matchPattern { case matchers.Error(_) => }
   }
+
+  behavior of "MatchLogger"
+  it should "work" in {
+    MatchLogger(LogInfo, classOf[MatchersSpec])("Hello")
+  }
 }
 
 case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () })

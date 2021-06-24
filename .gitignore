@@ -6,3 +6,5 @@
 .bsp/
 
 project/project/target/
+
+logs/

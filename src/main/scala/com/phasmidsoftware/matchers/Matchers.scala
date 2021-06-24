@@ -1829,8 +1829,6 @@ object MatcherException {
 
 import org.slf4j.Logger
 
-import scala.reflect.ClassTag
-
 /**
   * Trait which is used to define a logging level for the log method of SignificantSpaceParsers.
   */
@@ -1854,7 +1852,7 @@ class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String =>
     }
 }
 
-case class Slf4jLogger[T: ClassTag](override val logLevel: LogLevel, logger: Logger) extends MatchLogger(logLevel, w => {
+case class Slf4jLogger(override val logLevel: LogLevel, logger: Logger) extends MatchLogger(logLevel, w => {
   logLevel match {
     case LogInfo => logger.info(w)
     case LogDebug => logger.debug(w)
@@ -1866,7 +1864,7 @@ object MatchLogger {
 
   import org.slf4j.LoggerFactory
 
-  def apply[T: ClassTag](logLevel: LogLevel): MatchLogger = Slf4jLogger(logLevel, LoggerFactory.getLogger(implicitly[ClassTag[T]].runtimeClass))
+  def apply(logLevel: LogLevel, clazz: Class[_]): MatchLogger = Slf4jLogger(logLevel, LoggerFactory.getLogger(clazz))
 
   def apply(logger: Logger): MatchLogger = Slf4jLogger(LogInfo, logger)
 }
