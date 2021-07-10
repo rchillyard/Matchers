@@ -1153,10 +1153,19 @@ trait Matchers {
     /**
       * Method to combine Matchers in the sense that, if this fails, then we try to match using m.
       *
+      * NOTE: changed the logic to avoid using match2Any because it is unnecessarily convoluted.
+      *
+      * NOTE: if equals is not properly implemented for type T, it is possible to get into an infinite recursion.
+      * This is actually Issue #14.
+      *
       * @param m the alternative Matcher.
       * @return a Matcher[T, R] which will match either on this or on m.
       */
-    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t => match2Any(this, m)(t ~ t)
+    def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t =>
+      this (t) match {
+        case x@Match(_) => x
+        case _ => m(t)
+      }
 
     /**
       * Method to combine Matchers in the sense that, when this successfully matches a T, resulting in an R,
