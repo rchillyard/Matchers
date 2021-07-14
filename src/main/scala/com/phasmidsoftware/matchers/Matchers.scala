@@ -1164,7 +1164,9 @@ trait Matchers {
     def |[U <: T, S >: R](m: Matcher[U, S]): Matcher[U, S] = t =>
       this (t) match {
         case x@Match(_) => x
-        case _ => m(t)
+          // CONSIDER this is an attempt to avoid infinite recursion. No idea if it works.
+        case _ if m != this => m(t)
+        case _ => throw MatcherException("recursive matcher")
       }
 
     /**
