@@ -33,6 +33,8 @@ trait Matchers {
   /**
     * Method to create a named Matcher, based on the given function f.
     *
+    * CONSIDER rename as loggedMatcher
+    *
     * @param name the name for the logger to mention.
     * @param f    a T => MatchResult[R].
     * @tparam T the input type.
@@ -858,7 +860,7 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit logger: MatchLogger): Matcher[T, R] = log(p.named(name))
+    def :|(name: => String)(implicit logger: MatchLogger): Matcher[T, R] = log(p.named(name))(logger.indented)
   }
 
   implicit class TildeOps[R, S](r: R) {
@@ -1724,6 +1726,7 @@ trait Matchers {
 
   lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
 
+  val indent: Int = 0
 }
 
 /**
@@ -1844,10 +1847,15 @@ object LogLevel {
   implicit val ll: LogLevel = LogOff
 }
 
-class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String => Unit)) {
+class MatchLogger(val logLevel: LogLevel, f: String => Unit, indent: Int = 0) extends ((String => Unit)) {
+  def indented: MatchLogger = new MatchLogger(logLevel, f, indent + 1)
+
+  private def doIndent() = "  " * indent
+
   override def apply(w: String): Unit =
     logLevel match {
-      case LogInfo | LogDebug => f(w)
+      case LogInfo | LogDebug =>
+        f(w.replaceAll("""^""", s"""$doIndent"""))
       case _ =>
     }
 }
@@ -1858,7 +1866,7 @@ case class Slf4jLogger(override val logLevel: LogLevel, logger: Logger) extends 
     case LogDebug => logger.debug(w)
     case _ =>
   }
-})
+}, 0)
 
 object MatchLogger {
 

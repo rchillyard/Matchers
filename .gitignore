@@ -8,3 +8,7 @@
 project/project/target/
 
 logs/
+
+*.jar
+
+jars/
