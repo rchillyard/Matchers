@@ -55,13 +55,15 @@ trait Matchers {
   /**
     * Method to create a named Matcher, based on the given function f.
     *
+    * CONSIDER eliminating this method.
+    *
     * @param name the name for the logger to mention.
     * @param f    a T => MatchResult[R].
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def namedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
+  def namedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
 
   /**
     * Matcher based on the function f.
@@ -663,32 +665,6 @@ trait Matchers {
   }
 
   /**
-    * (Internal) log method.
-    * If ll is LogOff, p is returned unchanged, other than that on failure of m, the matcher fail(name) is invoked.
-    * If ll is LogInfo, a matcher based on m, which on successful matching, logging with println will occur, is returned.
-    * If ll is LogDebug, then the value of log(m)(name) is returned.
-    *
-    * @param m  a Matcher[T, R].
-    * @tparam T the underlying type of the input to m.
-    * @tparam R the underlying type of the result of m.
-    * @return a Matcher[T, R].
-    */
-  def log[T, R](m: => Matcher[T, R])(implicit logger: MatchLogger): Matcher[T, R] = logger.logLevel match {
-    case LogDebug => (t: T) => {
-
-      logger(s"trying matcher ${m.toString} on $t...")
-
-      val r: MatchResult[R] = m(t)
-      logger(s"... ${m.toString}: $r")
-      r
-    }
-
-    case LogInfo => Matcher(t => m(t) :- (x => logger(s"${m.toString}: matched $x")))
-
-    case _ => m
-  }
-
-  /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a ~.
     *
     * @param f method to convert a (T0, T1) into a P.
@@ -883,7 +859,7 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit logger: MatchLogger): Matcher[T, R] = log(p.named(name))
+    def :|(name: => String)(implicit ml: MatchLogger): Matcher[T, R] = new LoggingMatcher[T, R](p, name)(ml)
   }
 
   implicit class TildeOps[R, S](r: R) {
@@ -1672,16 +1648,47 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] = new Matcher[T, R] {
-    def apply(t: T): MatchResult[R] = {
-      try f(t) catch {
-        case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-        case scala.util.control.NonFatal(e) => Error(e)
-      }
+  private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
+    if (logger.disabled) (t: T) => tryMatch(f, t)
+    else new LoggingMatcher[T, R](f, matcherName)(logger)
+
+  /**
+    * Class to add logging to a Matcher.
+    *
+    * @param f           a function T => MatchResult[R].
+    * @param matcherName the name to be used for this matcher.
+    * @param logger      interpreted as follows:
+    *                    If logger is LogOff, the Matcher instance will simply invoke function f.
+    *                    If logger is LogInfo, then in addition to evaluating function f, a successful match will be logged.
+    *                    If logger is LogDebug, then in addition to evaluating function f, the attempted match and its result will be logged.
+    * @tparam T the underlying type of the input to the matcher.
+    * @tparam R the underlying type of the result of the matcher.
+    */
+  class LoggingMatcher[T, R](f: T => MatchResult[R], matcherName: String = "")(logger: MatchLogger) extends Matcher[T, R] {
+    def apply(t: T): MatchResult[R] = logger.logLevel match {
+      case LogDebug =>
+        logger(s"trying matcher $name on $t...")
+        val r = tryMatch(f, t)
+        logger(s"... $name: $r")
+        r
+
+      case LogInfo =>
+        val r = tryMatch(f, t)
+        if (r.successful) logger(s"$name: matched $t")
+        r
+
+      case _ => tryMatch(f, t)
     }
 
     override protected val name: String = matcherName
   }
+
+  private def tryMatch[T, R](f: T => MatchResult[R], t: T) = try f(t) catch {
+    case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
+    case scala.util.control.NonFatal(e) => Error(e)
+  }
+
+  val logger: MatchLogger
 
   /**
     * Method to convert an Option of MatchResult[R] into a MatchResult of Option[R].
@@ -1776,7 +1783,10 @@ trait Matchers {
   * Companion object to Matchers.
   */
 object Matchers {
-  val matchers: Matchers = new Matchers {}
+  // NOTE: this is a default instance of Matchers. In general, applications should construct their own.
+  val matchers: Matchers = new Matchers {
+    val logger: MatchLogger = implicitly[MatchLogger]
+  }
 
 }
 
@@ -1891,6 +1901,8 @@ object LogLevel {
 }
 
 class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String => Unit)) {
+  def disabled: Boolean = logLevel == LogOff
+
   override def apply(w: String): Unit =
     logLevel match {
       case LogInfo | LogDebug => f(w)
@@ -1907,6 +1919,8 @@ case class Slf4jLogger(override val logLevel: LogLevel, logger: Logger) extends 
 })
 
 object MatchLogger {
+
+  implicit val matchLogger: MatchLogger = apply(LogOff, classOf[Matchers])
 
   import org.slf4j.LoggerFactory
 

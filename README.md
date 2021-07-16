@@ -133,7 +133,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
-* 1.0.4 Ongoing
+* 1.0.4 Make logging more consistent and easier to use.
 * 1.0.3 Replaced most tuples with tildes.
 * 1.0.2 Support regex parsers
 * 1.0.1 Added ~
