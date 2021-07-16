@@ -55,16 +55,20 @@ trait Matchers {
   /**
     * Method to create a named Matcher, based on the given function f.
     *
+    * CONSIDER eliminating this method.
+    *
     * @param name the name for the logger to mention.
     * @param f    a T => MatchResult[R].
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  def namedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
+  def namedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit logger: MatchLogger): Matcher[T, R] = Matcher(f) :| name
 
   /**
     * Matcher based on the function f.
+    * The result will identify as "lift".
+    * Use namedLift if you want to be more specific.
     *
     * @param f a function of T => R
     * @tparam T the input type to both f and the resulting Matcher.
@@ -73,6 +77,15 @@ trait Matchers {
     */
   def lift[T, R](f: T => R): Matcher[T, R] = NamedMatcher("lift")(t => MatchResult(f(t)))
 
+  /**
+    * Named matcher based on the function f.
+    *
+    * @param name the name which will identify the resulting Matcher.
+    * @param f    a function of T => R
+    * @tparam T the input type to both f and the resulting Matcher.
+    * @tparam R the result type to both f and the resulting Matcher.
+    * @return a Matcher[T, R].
+    */
   def namedLift[T, R](name: String)(f: T => R): Matcher[T, R] = NamedMatcher(name)(t => MatchResult(f(t)))
 
   /**
@@ -663,32 +676,6 @@ trait Matchers {
   }
 
   /**
-    * (Internal) log method.
-    * If ll is LogOff, p is returned unchanged, other than that on failure of m, the matcher fail(name) is invoked.
-    * If ll is LogInfo, a matcher based on m, which on successful matching, logging with println will occur, is returned.
-    * If ll is LogDebug, then the value of log(m)(name) is returned.
-    *
-    * @param m  a Matcher[T, R].
-    * @tparam T the underlying type of the input to m.
-    * @tparam R the underlying type of the result of m.
-    * @return a Matcher[T, R].
-    */
-  def log[T, R](m: => Matcher[T, R])(implicit logger: MatchLogger): Matcher[T, R] = logger.logLevel match {
-    case LogDebug => (t: T) => {
-
-      logger(s"trying matcher ${m.toString} on $t...")
-
-      val r: MatchResult[R] = m(t)
-      logger(s"... ${m.toString}: $r")
-      r
-    }
-
-    case LogInfo => Matcher(t => m(t) :- (x => logger(s"${m.toString}: matched $x")))
-
-    case _ => m
-  }
-
-  /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a ~.
     *
     * @param f method to convert a (T0, T1) into a P.
@@ -876,6 +863,18 @@ trait Matchers {
   }
 
   /**
+    * Not sure why we need this but it's here.
+    *
+    * @param q a control value.
+    * @param r a result value.
+    * @tparam R the common type.
+    * @return true if they are the same.
+    */
+  def isEqual[R](q: R, r: R): Boolean = q == r
+
+  val logger: MatchLogger
+
+  /**
     * Implicit class MatcherOps which allows us to use the method :| on a Matcher[T,R].
     *
     * @param p a Matcher[T,R].
@@ -883,7 +882,7 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit logger: MatchLogger): Matcher[T, R] = log(p.named(name))
+    def :|(name: => String)(implicit ml: MatchLogger): Matcher[T, R] = new LoggingMatcher[T, R](p, name)(ml)
   }
 
   implicit class TildeOps[R, S](r: R) {
@@ -900,13 +899,30 @@ trait Matchers {
     /**
       * This method can be pronounced as "tee" as it's like a tee in a pipe.
       * The input and the output are identical (so it's like identity) but it has a side-effect:
-      * the function f is invoked on the matched value of r (assuming that it is a Match).
+      * the function f is invoked on the matched value of r (assuming that it is a Match, otherwise f is not invoked).
       *
       * @param f a R => Unit function.
       * @return rr unchanged.
       */
     def :-(f: R => Unit): MatchResult[R] = {
       rr foreach f
+      rr
+    }
+
+    /**
+      * This method can also be pronounced as "tee" as it's like a tee in a pipe.
+      * The input and the output are identical (so it's like identity) but it has a side-effect:
+      * the function f is invoked on the matched value of r,
+      * while, otherwise, the function g is invoked on the String representation of the MatchResult (a Miss or Error).
+      *
+      * @param f a R => Unit function.
+      * @return rr unchanged.
+      */
+    def ::-(f: R => Unit, g: String => Unit): MatchResult[R] = {
+      rr match {
+        case Match(r) => f(r)
+        case m => g(m.toString)
+      }
       rr
     }
   }
@@ -946,169 +962,6 @@ trait Matchers {
       case Success(m) => m
       case Failure(x) => _ => Error(x)
     }
-  }
-
-  /**
-    * Trait to define the behavior of the result of a Match.
-    *
-    * @tparam R the type of the result.
-    */
-  sealed trait MatchResult[+R] {
-    /**
-      * @return true if this is a Match
-      */
-    def successful: Boolean
-
-    /**
-      * @return the result of the MatchResult.
-      * @throws Throwable (a MatcherException) if this is not a Match.
-      */
-    def get: R
-
-    /**
-      * "unit" method for a successful match.
-      *
-      * @param s the call-by-name value of the result.
-      * @tparam S the underlying type of the result.
-      * @return a Match[S] with value s (unless s throws an exception, in which case the result will be an Error).
-      */
-    def success[S](s: => S): MatchResult[S] = MatchResult(s)
-
-    /**
-      * FlatMap method.
-      * If this is a Match(r), then return f(r).
-      * Otherwise, we return an unsuccessful result based on this.
-      *
-      * @param f a function of R => MatchResult[S].
-      * @tparam S the underlying type of the returned MatchResult.
-      * @return MatchResult[S].
-      */
-    def flatMap[S](f: R => MatchResult[S]): MatchResult[S]
-
-    /**
-      * Alternative form of get such that, in the case of a Miss, the default value given by s will be returned.
-      *
-      * @param s a call-by-name value to be used if this is unsuccessful.
-      * @tparam S a super-class of R.
-      * @return the result of the MatchResult if it's a Match, otherwise return s if it's a Miss.
-      */
-    def getOrElse[S >: R](s: => S): S
-
-    /**
-      * Method to compose this MatchResult with sm.
-      * The results of this and of sm are combined into one ~.
-      * The ~ method is a synonym of andThen.
-      *
-      * @param sm a call-by-name MatchResult[S].
-      * @tparam S the underlying type of s.
-      * @return a MatchResult[R ~ S].
-      */
-    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S]
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      *
-      * @param sm a call-by-name MatchResult which will be used if this is empty.
-      * @tparam S the type of the result and a super-type of R.
-      * @return a MatchResult[S], either this (if successful) otherwise sm.
-      */
-    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S]
-
-    /**
-      * Foreach method.
-      *
-      * @param f a function of R => Unit.
-      * @return Unit.
-      */
-    def foreach(f: R => Unit): Unit
-
-    /**
-      * Method to compose this MatchResult with sm.
-      * It this is successful, then sm will be returned.
-      * Otherwise, an Unsuccessful result will be returned.
-      *
-      * Similar to ~ except that this MatchResult[R] is discarded and not part of the result.
-      * In other words, this acts purely as a guard.
-      * Synonym: &&.
-      *
-      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
-      * @tparam S the type of the resulting MatchResult.
-      * @return a MatchResult[S].
-      */
-    def guard[S](sm: => MatchResult[S]): MatchResult[S]
-
-    /**
-      * Alternation method which takes a Matcher as the alternative.
-      * If this MatchResult is empty then return the value of m applied to the input.
-      *
-      * @param m a Matcher of Any to S.
-      * @tparam S the type of the result and a super-type of R.
-      * @return a MatchResult[S].
-      */
-    def |[S >: R](m: => Matcher[Any, S]): MatchResult[S]
-
-    /**
-      * Composition method.
-      * If this MatchResult is successful then return the value of m applied to the result.
-      *
-      * @param m a call-by-name Matcher of S to T.
-      * @tparam S the underlying type of the input to m (S is a super-class of R).
-      * @tparam T the underlying type of the returned value.
-      * @return a MatchResult[T].
-      */
-    def &[S >: R, T](m: => Matcher[S, T]): MatchResult[T]
-
-    /**
-      * Map method.
-      *
-      * @param f a function of R => S.
-      * @tparam S the underlying type of the returned MatchResult.
-      * @return MatchResult[S].
-      */
-    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
-
-    /**
-      * Method to determine if this is unsuccessful.
-      *
-      * @return the negation of successful.
-      */
-    def isEmpty: Boolean = !successful
-
-    /**
-      * Method to compose this MatchResult with sm.
-      * The results of this and of sm are combined into one ~.
-      * ~ is a synonym of andThen.
-      *
-      * @param sm a call-by-name MatchResult[S].
-      * @tparam S the underlying type of s.
-      * @return a MatchResult[R ~ S].
-      */
-    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = andThen(sm)
-
-    /**
-      * Alternation method which takes a MatchResult as the alternative.
-      * Identical to orElse.
-      *
-      * @param sm a call-by-name MatchResult which will be used if this is empty.
-      * @tparam S the type of the result and a super-type of R.
-      * @return a MatchResult[S] which is the result of invoking orElse(sm).
-      */
-    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = orElse(sm)
-
-    /**
-      * Method to compose this MatchResult with sm.
-      * It this is successful, then sm will be returned.
-      * Otherwise, an Unsuccessful result will be returned.
-      *
-      * Similar to ~ except that this MatchResult[R] is discarded and not part of the result.
-      * In other words, this acts purely as a guard.
-      * This method simply invokes guard(sm).
-      *
-      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
-      * @tparam S the type of the resulting MatchResult.
-      * @return a MatchResult[S] which is the result of calling guard(sm).
-      */
-    def &&[S](sm: => MatchResult[S]): MatchResult[S] = guard(sm)
   }
 
   /**
@@ -1287,6 +1140,169 @@ trait Matchers {
     * Type alias for Parser.
     */
   type Parser[R] = Matcher[String, R]
+
+  /**
+    * Trait to define the behavior of the result of a Match.
+    *
+    * @tparam R the type of the result.
+    */
+  sealed trait MatchResult[+R] {
+    /**
+      * @return true if this is a Match
+      */
+    def successful: Boolean
+
+    /**
+      * @return the result of the MatchResult.
+      * @throws Throwable (a MatcherException) if this is not a Match.
+      */
+    def get: R
+
+    /**
+      * "unit" method for a successful match.
+      *
+      * @param s the call-by-name value of the result.
+      * @tparam S the underlying type of the result.
+      * @return a Match[S] with value s (unless s throws an exception, in which case the result will be an Error).
+      */
+    def success[S](s: => S): MatchResult[S] = MatchResult(s)
+
+    /**
+      * FlatMap method.
+      * If this is a Match(r), then return f(r).
+      * Otherwise, we return an unsuccessful result based on this.
+      *
+      * @param f a function of R => MatchResult[S].
+      * @tparam S the underlying type of the returned MatchResult.
+      * @return MatchResult[S].
+      */
+    def flatMap[S](f: R => MatchResult[S]): MatchResult[S]
+
+    /**
+      * Alternative form of get such that, in the case of a Miss, the default value given by s will be returned.
+      *
+      * @param s a call-by-name value to be used if this is unsuccessful.
+      * @tparam S a super-class of R.
+      * @return the result of the MatchResult if it's a Match, otherwise return s if it's a Miss.
+      */
+    def getOrElse[S >: R](s: => S): S
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * The results of this and of sm are combined into one ~.
+      * The ~ method is a synonym of andThen.
+      *
+      * @param sm a call-by-name MatchResult[S].
+      * @tparam S the underlying type of s.
+      * @return a MatchResult[R ~ S].
+      */
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S]
+
+    /**
+      * Alternation method which takes a MatchResult as the alternative.
+      *
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S], either this (if successful) otherwise sm.
+      */
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S]
+
+    /**
+      * Foreach method.
+      *
+      * @param f a function of R => Unit.
+      * @return Unit.
+      */
+    def foreach(f: R => Unit): Unit
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * Similar to ~ except that this MatchResult[R] is discarded and not part of the result.
+      * In other words, this acts purely as a guard.
+      * Synonym: &&.
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return a MatchResult[S].
+      */
+    def guard[S](sm: => MatchResult[S]): MatchResult[S]
+
+    /**
+      * Alternation method which takes a Matcher as the alternative.
+      * If this MatchResult is empty then return the value of m applied to the input.
+      *
+      * @param m a Matcher of Any to S.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S].
+      */
+    def |[S >: R](m: => Matcher[Any, S]): MatchResult[S]
+
+    /**
+      * Composition method.
+      * If this MatchResult is successful then return the value of m applied to the result.
+      *
+      * @param m a call-by-name Matcher of S to T.
+      * @tparam S the underlying type of the input to m (S is a super-class of R).
+      * @tparam T the underlying type of the returned value.
+      * @return a MatchResult[T].
+      */
+    def &[S >: R, T](m: => Matcher[S, T]): MatchResult[T]
+
+    /**
+      * Map method.
+      *
+      * @param f a function of R => S.
+      * @tparam S the underlying type of the returned MatchResult.
+      * @return MatchResult[S].
+      */
+    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
+
+    /**
+      * Method to determine if this is unsuccessful.
+      *
+      * @return the negation of successful.
+      */
+    def isEmpty: Boolean = !successful
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * The results of this and of sm are combined into one ~.
+      * ~ is a synonym of andThen.
+      *
+      * @param sm a call-by-name MatchResult[S].
+      * @tparam S the underlying type of s.
+      * @return a MatchResult[R ~ S].
+      */
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = andThen(sm)
+
+    /**
+      * Alternation method which takes a MatchResult as the alternative.
+      * Identical to orElse.
+      *
+      * @param sm a call-by-name MatchResult which will be used if this is empty.
+      * @tparam S the type of the result and a super-type of R.
+      * @return a MatchResult[S] which is the result of invoking orElse(sm).
+      */
+    def ||[S >: R](sm: => MatchResult[S]): MatchResult[S] = orElse(sm)
+
+    /**
+      * Method to compose this MatchResult with sm.
+      * It this is successful, then sm will be returned.
+      * Otherwise, an Unsuccessful result will be returned.
+      *
+      * Similar to ~ except that this MatchResult[R] is discarded and not part of the result.
+      * In other words, this acts purely as a guard.
+      * This method simply invokes guard(sm).
+      *
+      * @param sm the MatchResult which must follow this MatchResult for a successful outcome.
+      * @tparam S the type of the resulting MatchResult.
+      * @return a MatchResult[S] which is the result of calling guard(sm).
+      */
+    def &&[S](sm: => MatchResult[S]): MatchResult[S] = guard(sm)
+  }
 
   /**
     * Successful match.
@@ -1653,34 +1669,62 @@ trait Matchers {
   }
 
   /**
-    * Not sure why we need this but it's here.
+    * Class to add logging to a Matcher.
     *
-    * @param q a control value.
-    * @param r a result value.
-    * @tparam R the common type.
-    * @return true if they are the same.
+    * @param f           a function T => MatchResult[R].
+    * @param matcherName the name to be used for this matcher.
+    * @param logger      interpreted as follows:
+    *                    If logger is LogOff, the Matcher instance will simply invoke function f.
+    *                    If logger is LogInfo, then in addition to evaluating function f, a successful match will be logged.
+    *                    If logger is LogDebug, then in addition to evaluating function f, the attempted match and its result will be logged.
+    * @tparam T the underlying type of the input to the matcher.
+    * @tparam R the underlying type of the result of the matcher.
     */
-  def isEqual[R](q: R, r: R): Boolean = q == r
+  class LoggingMatcher[T, R](f: T => MatchResult[R], matcherName: String = "")(logger: MatchLogger) extends Matcher[T, R] {
+    def apply(t: T): MatchResult[R] = logger.logLevel match {
+      case LogDebug =>
+        logger(s"trying matcher $name on $t...")
+        tryMatch(f, t) ::- (r => logger(s"... $name: Match: $r"), w => logger(s"... $name($t): $w"))
+
+      case LogInfo =>
+        tryMatch(f, t) :- (_ => logger(s"$name: matched $t"))
+
+      case _ => tryMatch(f, t)
+    }
+
+    override protected val name: String = matcherName
+  }
 
   /**
-    * (Should be) Private method to construct a Matcher.
+    * Private method to construct a Matcher.
+    * The class of the resulting Matcher is dependent on the value
+    * of logger (defined by trait Matchers).
     *
-    * CONSIDER: could use the named method.
-    *
-    * @param f a T => MatchResult[R].
+    * @param f           a T => MatchResult[R].
+    * @param matcherName the name to use for the Matcher (defaults to empty).
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T, R] based on f.
     */
-  private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] = new Matcher[T, R] {
-    def apply(t: T): MatchResult[R] = {
-      try f(t) catch {
-        case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-        case scala.util.control.NonFatal(e) => Error(e)
-      }
-    }
+  private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
+    if (logger.disabled) (t: T) => tryMatch(f, t)
+    else new LoggingMatcher[T, R](f, matcherName)(logger)
 
-    override protected val name: String = matcherName
+  /**
+    * Method to invoke the given function but protected by try/catch.
+    * A MatchError results in a Miss.
+    * Any other non-fatal exception results in an Error.
+    * Fatal exceptions are not caught.
+    *
+    * @param f the function which takes an input value of T and returns a MatchResult[R].
+    * @param t the (call-by-name) value of T to be passed to f.
+    * @tparam T the input type to f.
+    * @tparam R the output type of f.
+    * @return a MatchResult[R].
+    */
+  private def tryMatch[T, R](f: T => MatchResult[R], t: => T) = try f(t) catch {
+    case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
+    case scala.util.control.NonFatal(e) => Error(e)
   }
 
   /**
@@ -1776,141 +1820,8 @@ trait Matchers {
   * Companion object to Matchers.
   */
 object Matchers {
-  val matchers: Matchers = new Matchers {}
-
-}
-
-/**
-  * A class combining a regular expression and a list of group indexes.
-  *
-  * @param regex  a Regex.
-  * @param groups a list of required group indexes (if Nil, then all groups are selected).
-  *               NOTE that the group indexes start at 1.
-  */
-case class RegexGroups(regex: Regex, groups: Seq[Int]) {
-  def unapplySeq(s: CharSequence): Option[List[String]] = regex.unapplySeq(s) map selectGroups
-
-  private def selectGroups(ws: List[String]): List[String] = groups match {
-    case Nil => ws
-    case groups => (for (group <- groups) yield ws(group - 1)).toList
+  // NOTE: this is a default instance of Matchers. In general, applications should construct their own.
+  val matchers: Matchers = new Matchers {
+    val logger: MatchLogger = implicitly[MatchLogger]
   }
-
-}
-
-object RegexGroups {
-  def apply(regex: Regex): RegexGroups = apply(regex, Nil)
-
-  def apply(regex: String): RegexGroups = apply(new Regex(regex))
-
-  def create(regex: Regex, groups: Int*): RegexGroups = apply(regex, groups)
-
-  def create(regex: String, groups: Int*): RegexGroups = apply(new Regex(regex), groups)
-}
-
-/**
-  * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
-  *
-  * @param l the left value.
-  * @param r the right value.
-  * @tparam L the left type.
-  * @tparam R the right type.
-  */
-case class ~[+L, +R](l: L, r: R) {
-  /**
-    * Reverse the order of this ~.
-    *
-    * @return ~(r, l)
-    */
-  def flip: ~[R, L] = new ~(r, l)
-
-  /**
-    * Convert to tuple form.
-    *
-    * NOTE: unused.
-    *
-    * @return a (L, R).
-    */
-  def asTuple: (L, R) = l -> r
-
-  override def toString: String = s"$l~$r"
-}
-
-/**
-  * Companion object to ~ (although the name had to be changed).
-  */
-object Tilde {
-  /**
-    * Create a ~ from two values.
-    *
-    * @param l the left-hand value.
-    * @param r the right-hand value.
-    * @tparam L the type of l.
-    * @tparam R the type of r.
-    * @return a new L ~ R
-    */
-  def apply[L, R](l: L, r: R): ~[L, R] = new ~(l, r)
-
-  /**
-    * Create a ~ from an (L, R) tuple.
-    *
-    * @param t a tuple (L, R).
-    * @tparam L the type of the first member of the input.
-    * @tparam R the type of r the second member of the input.
-    * @return a new L ~ R
-    */
-  def apply[L, R](t: (L, R)): ~[L, R] = apply(t._1, t._2)
-}
-
-/**
-  * A MatcherException.
-  *
-  * @param msg a message.
-  * @param x   a Throwable.
-  */
-case class MatcherException(msg: String, x: Throwable) extends Exception(msg, x)
-
-object MatcherException {
-  def apply(msg: String): MatcherException = MatcherException(msg, null)
-}
-
-import org.slf4j.Logger
-
-/**
-  * Trait which is used to define a logging level for the log method of SignificantSpaceParsers.
-  */
-trait LogLevel
-
-case object LogDebug extends LogLevel
-
-case object LogInfo extends LogLevel
-
-case object LogOff extends LogLevel
-
-object LogLevel {
-  implicit val ll: LogLevel = LogOff
-}
-
-class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String => Unit)) {
-  override def apply(w: String): Unit =
-    logLevel match {
-      case LogInfo | LogDebug => f(w)
-      case _ =>
-    }
-}
-
-case class Slf4jLogger(override val logLevel: LogLevel, logger: Logger) extends MatchLogger(logLevel, w => {
-  logLevel match {
-    case LogInfo => logger.info(w)
-    case LogDebug => logger.debug(w)
-    case _ =>
-  }
-})
-
-object MatchLogger {
-
-  import org.slf4j.LoggerFactory
-
-  def apply(logLevel: LogLevel, clazz: Class[_]): MatchLogger = Slf4jLogger(logLevel, LoggerFactory.getLogger(clazz))
-
-  def apply(logger: Logger): MatchLogger = Slf4jLogger(LogInfo, logger)
 }

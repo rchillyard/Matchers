@@ -902,13 +902,36 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     q("1") should matchPattern { case m.Match(Success(1)) => }
   }
 
-  behavior of "tee"
-  it should "work" in {
+  behavior of ":-"
+  it should "work for success" in {
     val r: m.MatchResult[Int] = m.Match(1)
     val s = new StringBuilder
     import m.MatchResultOps
     (r :- { x => s.append(x.toString); () }).successful shouldBe true
     s.toString() shouldBe "1"
+  }
+  it should "not work for failure" in {
+    val r: m.MatchResult[Int] = m.Miss("miss", 1)
+    val s = new StringBuilder
+    import m.MatchResultOps
+    (r :- { x => s.append(x.toString); () }).successful shouldBe false
+    s.toString() shouldBe ""
+  }
+
+  behavior of "::-"
+  it should "work for success" in {
+    val r: m.MatchResult[Int] = m.Match(1)
+    val s = new StringBuilder
+    import m.MatchResultOps
+    (r ::- (x => s.append(x.toString), w => s.append(w))).successful shouldBe true
+    s.toString() shouldBe "1"
+  }
+  it should "not work for failure" in {
+    val r: m.MatchResult[Int] = m.Miss("0", 1)
+    val s = new StringBuilder
+    import m.MatchResultOps
+    (r ::- (x => s.append(x.toString), w => s.append(w))).successful shouldBe false
+    s.toString() shouldBe "Miss: 0: 1"
   }
 
   behavior of "parsers"
