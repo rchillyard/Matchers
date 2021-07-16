@@ -899,13 +899,30 @@ trait Matchers {
     /**
       * This method can be pronounced as "tee" as it's like a tee in a pipe.
       * The input and the output are identical (so it's like identity) but it has a side-effect:
-      * the function f is invoked on the matched value of r (assuming that it is a Match).
+      * the function f is invoked on the matched value of r (assuming that it is a Match, otherwise f is not invoked).
       *
       * @param f a R => Unit function.
       * @return rr unchanged.
       */
     def :-(f: R => Unit): MatchResult[R] = {
       rr foreach f
+      rr
+    }
+
+    /**
+      * This method can also be pronounced as "tee" as it's like a tee in a pipe.
+      * The input and the output are identical (so it's like identity) but it has a side-effect:
+      * the function f is invoked on the matched value of r,
+      * while, otherwise, the function g is invoked on the String representation of the MatchResult (a Miss or Error).
+      *
+      * @param f a R => Unit function.
+      * @return rr unchanged.
+      */
+    def ::-(f: R => Unit, g: String => Unit): MatchResult[R] = {
+      rr match {
+        case Match(r) => f(r)
+        case m => g(m.toString)
+      }
       rr
     }
   }
@@ -1667,14 +1684,10 @@ trait Matchers {
     def apply(t: T): MatchResult[R] = logger.logLevel match {
       case LogDebug =>
         logger(s"trying matcher $name on $t...")
-        val r = tryMatch(f, t)
-        logger(s"... $name: $r")
-        r
+        tryMatch(f, t) ::- (r => logger(s"... $name: Match: $r"), w => logger(s"... $name($t): $w"))
 
       case LogInfo =>
-        val r = tryMatch(f, t)
-        if (r.successful) logger(s"$name: matched $t")
-        r
+        tryMatch(f, t) :- (_ => logger(s"$name: matched $t"))
 
       case _ => tryMatch(f, t)
     }
