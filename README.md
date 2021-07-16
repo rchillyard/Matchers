@@ -114,10 +114,10 @@ with the tuple straight or inverted as necessary.
 
 Debugging/Logging
 =================
-By default, matchers are not named (the default name is "anon") so if you want to turn on debugging,
-the matchers will not show the names you'd like to see.
-However, you can easily fix that.
-After any matcher reference, you can invoke the :| operator with a String representing the name.
+By default, matchers are not named (the default name is "").
+it is easy to name matchers, either by using the _Matchers_ method (with name parameter) or the following mechanism:
+After any matcher reference, you can invoke the :| operator with a String representing the name and this will
+turn on logging for just that .
 For example,
 
     import m.MatcherOps
@@ -133,6 +133,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.4 Make logging more consistent and easier to use.
 * 1.0.3 Replaced most tuples with tildes.
 * 1.0.2 Support regex parsers
 * 1.0.1 Added ~

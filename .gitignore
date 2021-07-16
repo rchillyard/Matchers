@@ -6,3 +6,7 @@
 .bsp/
 
 project/project/target/
+
+logs/
+
+jars/
