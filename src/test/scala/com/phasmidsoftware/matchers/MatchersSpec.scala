@@ -146,6 +146,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "support ||" in {
     val result = m.fail("")("") || m.success(0)("")
     result.successful shouldBe true
+    result.get shouldBe 0
   }
   it should "support &" in {
     val result = m.fail("")("") & m.success[Any, Int](0)
@@ -288,49 +289,58 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "log"
   it should "log success with LogDebug" in {
     val sb = new StringBuilder
-    implicit val ll: LogLevel = LogDebug
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    implicit val logger: MatchLogger = new MatchLogger(LogDebug, { w => sb.append(s"$w\n"); () }, 0)
     import m.MatcherOps
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
-      """trying matcher success(1) on 1...
-        |... success(1): Match: 1
-        |""".stripMargin
+            """  trying matcher success(1) on 1...
+              |  ... success(1): Match: 1
+              |""".stripMargin
   }
   it should "log success with LogInfo" in {
-    val sb = new StringBuilder
     import m.MatcherOps
-    implicit val ll: LogLevel = LogInfo
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogInfo, sb)
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
-            """success(1): matched 1
+            """  success(1): matched 1
               |""".stripMargin
   }
   it should "log success with LogOff" in {
     val sb = new StringBuilder
     import m.MatcherOps
-    implicit val ll: LogLevel = LogOff
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    implicit val logger: MatchLogger = SBLogger(LogOff, sb)
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe ""
+  }
+  it should "handle nested matchers" in {
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
+    import m.MatcherOps
+    val m1 = m.matches(1) :| "one"
+    val m2 = m.matches(2) :| "two"
+    val x = (m1 | m2) :| "one or two"
+    val z = x(3)
+    println(z)
+    z should matchPattern { case m.Miss(_, _) => }
+    println(sb)
+    sb.toString() shouldBe "  trying matcher one or two on 3...\n  trying matcher one on 3...\n  ... one: Miss: filter: 3\n  trying matcher two on 3...\n  ... two: Miss: filter: 3\n  ... one or two: Miss: filter: 3\n"
   }
 
   // CONSIDER eliminating the namedMatcher method.
   behavior of "namedMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
-    implicit val ll: LogLevel = LogDebug
-    implicit val logger: MatchLogger = { w => sb.append(s"$w\n"); () }
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val f: m.Parser[Int] = m.namedMatcher("one")(_ => m.Match(1))
     f("1").successful shouldBe true
     sb.toString() shouldBe
-      """trying matcher one on 1...
-        |... one: Match: 1
-        |""".stripMargin
+            """  trying matcher one on 1...
+              |  ... one: Match: 1
+              |""".stripMargin
   }
 
   behavior of "tildeOps"
@@ -400,6 +410,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: (Int, Int) => Boolean = {
       case (x, y) => x == y
     }
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val z: m.Matcher[(Int, String), Int] = m.valve(_.toInt, p)
     z(1, "1").successful shouldBe true
   }
@@ -407,6 +419,8 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: (Int, Int) => Boolean = {
       case (x, y) => y % 2 == x
     }
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val z: m.Matcher[(Int, String), Int] = m.valve(_.toInt, p)
     val odd = 1
     val even = 0
@@ -475,16 +489,36 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val t = 1 ~ 2
     val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
-    m.*(p, flip = false)(t).successful shouldBe false
+    m.*(p, commutes = false)(t).successful shouldBe false
   }
 
   behavior of "**"
-  it should "work" in {
+  it should "match 1 with commuting" in {
+    import m.TildeOps
+    val t = 1 ~ 2 ~ 3
+    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(1))
+    p(t).successful shouldBe true
+    m.**(p)(t).successful shouldBe true
+  }
+  it should "match 2 with commuting" in {
     import m.TildeOps
     val t = 1 ~ 2 ~ 3
     val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
     p(t).successful shouldBe false
     m.**(p)(t).successful shouldBe true
+  }
+  it should "match 3 with commuting" in {
+    import m.TildeOps
+    val t = 1 ~ 2 ~ 3
+    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(3))
+    p(t).successful shouldBe false
+    m.**(p)(t).successful shouldBe true
+  }
+  it should "fail without commuting" in {
+    import m.TildeOps
+    val t = 1 ~ 2 ~ 3
+    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
+    m.**(p, commutes = false)(t).successful shouldBe false
   }
 
   behavior of "filter"
@@ -1005,4 +1039,12 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val m: matchers.Parser[List[String]] = """(\d+""".regexGroups
     m("Hello") should matchPattern { case matchers.Error(_) => }
   }
+
+  behavior of "MatchLogger"
+  it should "work" in {
+    MatchLogger(LogInfo, classOf[MatchersSpec])("Hello")
+  }
 }
+
+case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder, indent: Int = 0) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () }, indent)
+

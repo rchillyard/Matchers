@@ -1,6 +1,5 @@
 package com.phasmidsoftware.matchers
 
-import scala.util.control.NonFatal
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
@@ -33,6 +32,8 @@ trait Matchers {
 
   /**
     * Method to create a named Matcher, based on the given function f.
+    *
+    * CONSIDER rename as loggedMatcher
     *
     * @param name the name for the logger to mention.
     * @param f    a T => MatchResult[R].
@@ -101,8 +102,6 @@ trait Matchers {
   /**
     * Matcher which succeeds only if the predicate p evaluates to true.
     *
-    * CONSIDER redefining this using guard.
-    *
     * @param b a constant Boolean value.
     * @tparam R both the input type and the result type.
     * @return a Matcher[R, R] which succeeds only if p(r) is true.
@@ -133,6 +132,7 @@ trait Matchers {
         case z@Match(_) => z
         case Miss(_, _) => Match(t)
         case Error(x) => Error(x)
+        case _ => throw MatcherException("this case not possible")
       }
   }
 
@@ -140,7 +140,7 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
-    * FIXME
+    * CONSIDER what to do with this
     *
     * @param f a T => R.
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
@@ -149,7 +149,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[(Q,R), T].
     */
-  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = Matcher[(Q, T), R] {
+  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean)(implicit logger: MatchLogger): Matcher[(Q, T), R] = Matcher[(Q, T), R] {
     // CONSIDER redesign this in terms of other Matchers, not MatchResult
     case (q, t) => MatchResult(f, p)(q, t)
   } :| "valve"
@@ -158,7 +158,7 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
-    * FIXME
+    * CONSIDER what to do with this
     *
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
     * @tparam Q the "control" type.
@@ -448,28 +448,31 @@ trait Matchers {
     * Matcher which tries m on the given (~) input.
     * If m is unsuccessful, it then tries m on the swapped (inverted) ~.
     *
-    * @param m    a Matcher[T ~ T, R].
-    * @param flip if true (the default), then we can try flipping the order of the incoming ~.
-    *             If false then we do not try.
+    * @param m        a Matcher[T ~ T, R].
+    * @param commutes if true (the default), the order of the incoming ~ elements is immaterial,
+    *                 thus we can try flipping their order.
+    *                 If false then we do not try.
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T ~ T, R].
     */
-  def *[T, R](m: Matcher[T ~ T, R], flip: Boolean = true): Matcher[T ~ T, R] = m | (maybe[T ~ T](flip) & swap & m)
+  def *[T, R](m: Matcher[T ~ T, R], commutes: Boolean = true): Matcher[T ~ T, R] = m | (maybe[T ~ T](commutes) & swap & m)
 
   /**
     * Matcher which tries m on the given (~~) input.
     * If m is unsuccessful, it then tries m on the rotated ~~.
     * If that's unsuccessful, it then tries m on the inverted ~~.
     *
-    * CONSIDER adding a flip parameter like in *
-    *
-    * @param m a Matcher[T ~ T ~ T, R].
+    * @param m        a Matcher[T ~ T ~ T, R].
+    * @param commutes if true (the default), the order of the incoming ~ elements is immaterial,
+    *                 thus we can try rotating their order.
+    *                 If false then we do not try.
     * @tparam T the input type.
     * @tparam R the result type.
     * @return a Matcher[T ~ T ~ T, R].
     */
-  def **[T, R](m: Matcher[T ~ T ~ T, R]): Matcher[T ~ T ~ T, R] = m | (rotate3 & m) | (invert3 & m)
+  def **[T, R](m: Matcher[T ~ T ~ T, R], commutes: Boolean = true): Matcher[T ~ T ~ T, R] =
+    m | (maybe[T ~ T ~ T](commutes) & rotate3 & m) | (maybe[T ~ T ~ T](commutes) & invert3 & m)
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T0, based on the first element of P.
@@ -644,12 +647,11 @@ trait Matchers {
     * If ll is LogDebug, then the value of log(m)(name) is returned.
     *
     * @param m  a Matcher[T, R].
-    * @param ll (implicit) LogLevel.
     * @tparam T the underlying type of the input to m.
     * @tparam R the underlying type of the result of m.
     * @return a Matcher[T, R].
     */
-  def log[T, R](m: => Matcher[T, R])(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = ll match {
+  def log[T, R](m: => Matcher[T, R])(implicit logger: MatchLogger): Matcher[T, R] = logger.logLevel match {
     case LogDebug => constructMatcher[T, R] {
       t =>
         logger(s"trying matcher ${m.toString} on $t...")
@@ -858,7 +860,7 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit ll: LogLevel, logger: MatchLogger): Matcher[T, R] = log(p.named(name))
+    def :|(name: => String)(implicit logger: MatchLogger): Matcher[T, R] = log(p.named(name))(logger.indented)
   }
 
   implicit class TildeOps[R, S](r: R) {
@@ -1634,7 +1636,7 @@ trait Matchers {
   private def constructMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = (t: T) =>
     try f(t) catch {
       case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-      case NonFatal(e) => Error(e)
+      case scala.util.control.NonFatal(e) => Error(e)
     }
 
   /**
@@ -1724,6 +1726,7 @@ trait Matchers {
 
   lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
 
+  val indent: Int = 0
 }
 
 /**
@@ -1827,6 +1830,8 @@ object MatcherException {
   def apply(msg: String): MatcherException = MatcherException(msg, null)
 }
 
+import org.slf4j.Logger
+
 /**
   * Trait which is used to define a logging level for the log method of SignificantSpaceParsers.
   */
@@ -1842,8 +1847,32 @@ object LogLevel {
   implicit val ll: LogLevel = LogOff
 }
 
-trait MatchLogger extends ((String => Unit))
+class MatchLogger(val logLevel: LogLevel, f: String => Unit, indent: Int = 0) extends ((String => Unit)) {
+  def indented: MatchLogger = new MatchLogger(logLevel, f, indent + 1)
+
+  private def doIndent() = "  " * indent
+
+  override def apply(w: String): Unit =
+    logLevel match {
+      case LogInfo | LogDebug =>
+        f(w.replaceAll("""^""", s"""$doIndent"""))
+      case _ =>
+    }
+}
+
+case class Slf4jLogger(override val logLevel: LogLevel, logger: Logger) extends MatchLogger(logLevel, w => {
+  logLevel match {
+    case LogInfo => logger.info(w)
+    case LogDebug => logger.debug(w)
+    case _ =>
+  }
+}, 0)
 
 object MatchLogger {
-  implicit val defaultMatchLogger: MatchLogger = w => println(w)
+
+  import org.slf4j.LoggerFactory
+
+  def apply(logLevel: LogLevel, clazz: Class[_]): MatchLogger = Slf4jLogger(logLevel, LoggerFactory.getLogger(clazz))
+
+  def apply(logger: Logger): MatchLogger = Slf4jLogger(LogInfo, logger)
 }
