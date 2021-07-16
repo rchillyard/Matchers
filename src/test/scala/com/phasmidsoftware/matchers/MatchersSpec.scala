@@ -1,11 +1,10 @@
 package com.phasmidsoftware.matchers
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
-
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.NoSuchElementException
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -266,20 +265,20 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result shouldBe m.Miss("not", "1")
   }
 
-  behavior of "Matcher method"
+  behavior of "UnnamedMatcher method"
 
   it should "work with fixed success result" in {
-    val f: m.Parser[Int] = m.Matcher(_ => m.Match(1))
+    val f: m.Parser[Int] = m.UnnamedMatcher(_ => m.Match(1))
     f("1").successful shouldBe true
   }
   it should "work with fixed fail result" in {
-    val f: m.Parser[Int] = m.Matcher(e => m.Miss("", e))
+    val f: m.Parser[Int] = m.UnnamedMatcher(e => m.Miss("", e))
     f("1").successful shouldBe false
   }
   it should "result in error when function throws exception" in {
     def f(x: String): m.MatchResult[Int] = m.Match(x.toInt)
 
-    val p: m.Parser[Int] = m.Matcher(f)
+    val p: m.Parser[Int] = m.UnnamedMatcher(f)
     val result = p("x")
     result.successful shouldBe false
     result should matchPattern { case m.Error(_) => }
@@ -317,17 +316,17 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     sb.toString() shouldBe ""
   }
 
-  // CONSIDER eliminating the namedMatcher method.
-  behavior of "namedMatcher"
+  // CONSIDER eliminating the loggedMatcher method.
+  behavior of "loggedMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
     implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
-    val f: m.Parser[Int] = m.namedMatcher("one")(_ => m.Match(1))
+    val f: m.Parser[Int] = m.loggedMatcher("one")(_ => m.Match(1))
     f("1").successful shouldBe true
     sb.toString() shouldBe
-      """trying matcher one on 1...
-        |... one: Match: 1
-        |""".stripMargin
+            """trying matcher one on 1...
+              |... one: Match: 1
+              |""".stripMargin
   }
 
   behavior of "tildeOps"
@@ -448,7 +447,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     q(2).getOrElse(-1) shouldBe 0
   }
   it should "work for error situation" in {
-    val p = m.Matcher[Int, Int](_ => m.Error(new NoSuchElementException))
+    val p = m.UnnamedMatcher[Int, Int](_ => m.Error(new NoSuchElementException))
     val q = m.not(p, 0)
     p(1).successful shouldBe false
     q(1).successful shouldBe false
