@@ -1053,6 +1053,29 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "work" in {
     MatchLogger(LogInfo, classOf[MatchersSpec])("Hello")
   }
+
+  behavior of "join methods"
+  it should "combine" in {
+    def add(x: Int, y: Int) = x + y
+
+    val total: matchers.MatchResult[Int] = Match(0).combine(add)(Match(1))
+    total shouldBe Match(1)
+  }
+  it should "accumulate" in {
+    def add(x: Int, y: Int) = x + y
+
+    val start: matchers.MatchResult[Int] = Match(0)
+    val interimTotal: matchers.MatchResult[Int] = start.accumulate(add)(Match(1))
+    val total: matchers.MatchResult[Int] = interimTotal.accumulate(add)(Match(1))
+    total shouldBe Match(2)
+  }
+  it should "sum list" in {
+    def add(x: Int, y: Int) = x + y
+
+    val list = Range.inclusive(1, 10) map (Match(_))
+    val total = list.foldLeft[matchers.MatchResult[Int]](matchers.Match(0))((a, x) => a.accumulate(add)(x))
+    total shouldBe Match(55)
+  }
 }
 
 case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () })

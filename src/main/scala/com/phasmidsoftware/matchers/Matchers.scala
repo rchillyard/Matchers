@@ -1305,6 +1305,27 @@ trait Matchers {
       * @return a MatchResult[S] which is the result of calling guard(sm).
       */
     def &&[S](sm: => MatchResult[S]): MatchResult[S] = guard(sm)
+
+    /**
+      * Method to combine this MatchResult[R] with a MatchResult[S], given a function which can combine the wrapped elements.
+      *
+      * @param combiner a function of type (R, S) => U.
+      * @param sm       a MatchResult[U].
+      * @tparam S the underlying type of sm.
+      * @return a MatchResult[U].
+      */
+    def combine[S, U](combiner: (R, S) => U)(sm: => MatchResult[S]): MatchResult[U] = for (r <- this; s <- sm) yield combiner(r, s)
+
+    /**
+      * Method to accumulate this MatchResult[R] with a MatchResult[S], given a function which can combine the wrapped elements.
+      *
+      * @param accumulator a function of type (R, S) => U.
+      * @param sm          a MatchResult[S].
+      * @tparam S the underlying type of sm.
+      * @tparam U the underlying type of the result, which is a super-class of R.
+      * @return a MatchResult[U].
+      */
+    def accumulate[S, U >: R](accumulator: (R, S) => U)(sm: => MatchResult[S]): MatchResult[U] = for (r <- this; s <- sm) yield accumulator(r, s)
   }
 
   /**
