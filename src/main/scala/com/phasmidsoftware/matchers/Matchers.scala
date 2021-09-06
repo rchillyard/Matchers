@@ -865,6 +865,40 @@ trait Matchers {
   }
 
   /**
+    * Method to convert a MatchResult[~~] to a MatchResult[P].
+    *
+    * @param f method to convert a (T0, T1, T2) into a P.
+    * @return t a MatchResult[T0 ~ T1 ~ T2].
+    * @tparam T0 first of the member types.
+    * @tparam T1 second of the member types.
+    * @tparam T2 third of the member types.
+    * @tparam P  the product type.
+    * @return a MatchResult[T0 ~ T1 ~ T2, P].
+    */
+  def matchResultTilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(t: MatchResult[T0 ~ T1 ~ T2]): MatchResult[P] = t match {
+    case Match(t0 ~ t1 ~ t2) => Match(f(t0, t1, t2))
+    case Miss(s, t) => Miss(s, t)
+  }
+
+  /**
+    * Method to create a Matcher, of three MatchResults whose result is a P.
+    *
+    * @param f method to convert a (T0, T1, T2) into a P.
+    * @return r0 a MatchResult[T0].
+    * @return r1 a MatchResult[T1].
+    * @return r2 a MatchResult[T2].
+    * @tparam T0 first of the member types.
+    * @tparam T1 second of the member types.
+    * @tparam T2 third of the member types.
+    * @tparam P  the product type.
+    * @return a MatchResult[T0 ~ T1 ~ T2, P].
+    */
+  def matchResult3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(r0: MatchResult[T0], r1: MatchResult[T1], r2: MatchResult[T2]): MatchResult[P] = (r0, r1, r2) match {
+    case (Match(t0), Match(t1), Match(t2)) => Match(f(t0, t1, t2))
+    case _ => Miss("matchResult3FromTilde: not all inputs match", r0 ~ r1 ~ r2)
+  }
+
+  /**
     * Not sure why we need this but it's here.
     *
     * @param q a control value.
@@ -1305,6 +1339,27 @@ trait Matchers {
       * @return a MatchResult[S] which is the result of calling guard(sm).
       */
     def &&[S](sm: => MatchResult[S]): MatchResult[S] = guard(sm)
+
+    /**
+      * Method to combine this MatchResult[R] with a MatchResult[S], given a function which can combine the wrapped elements.
+      *
+      * @param combiner a function of type (R, S) => U.
+      * @param sm       a MatchResult[U].
+      * @tparam S the underlying type of sm.
+      * @return a MatchResult[U].
+      */
+    def combine[S, U](combiner: (R, S) => U)(sm: => MatchResult[S]): MatchResult[U] = for (r <- this; s <- sm) yield combiner(r, s)
+
+    /**
+      * Method to accumulate this MatchResult[R] with a MatchResult[S], given a function which can combine the wrapped elements.
+      *
+      * @param accumulator a function of type (R, S) => U.
+      * @param sm          a MatchResult[S].
+      * @tparam S the underlying type of sm.
+      * @tparam U the underlying type of the result, which is a super-class of R.
+      * @return a MatchResult[U].
+      */
+    def accumulate[S, U >: R](accumulator: (R, S) => U)(sm: => MatchResult[S]): MatchResult[U] = for (r <- this; s <- sm) yield accumulator(r, s)
   }
 
   /**

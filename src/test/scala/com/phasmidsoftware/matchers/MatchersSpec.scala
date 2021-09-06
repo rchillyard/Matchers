@@ -1,10 +1,11 @@
 package com.phasmidsoftware.matchers
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.NoSuchElementException
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -1052,6 +1053,45 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "MatchLogger"
   it should "work" in {
     MatchLogger(LogInfo, classOf[MatchersSpec])("Hello")
+  }
+
+  behavior of "join methods"
+  it should "combine" in {
+    def add(x: Int, y: Int) = x + y
+
+    val total: matchers.MatchResult[Int] = Match(0).combine(add)(Match(1))
+    total shouldBe Match(1)
+  }
+  it should "accumulate" in {
+    def add(x: Int, y: Int) = x + y
+
+    val start: matchers.MatchResult[Int] = Match(0)
+    val interimTotal: matchers.MatchResult[Int] = start.accumulate(add)(Match(1))
+    val total: matchers.MatchResult[Int] = interimTotal.accumulate(add)(Match(1))
+    total shouldBe Match(2)
+  }
+  it should "sum list" in {
+    def add(x: Int, y: Int) = x + y
+
+    val list = Range.inclusive(1, 10) map (Match(_))
+    val total = list.foldLeft[matchers.MatchResult[Int]](matchers.Match(0))((a, x) => a.accumulate(add)(x))
+    total shouldBe Match(55)
+  }
+
+  behavior of "matchResultTilde3"
+  it should "invoke matchResultTilde3" in {
+    import matchers.TildeOps
+    case class Triple(x: Int, y: String, z: Double)
+    val triple = Match(1 ~ "Hello" ~ 3.14)
+    val builder: matchers.MatchResult[Int ~ String ~ Double] => matchers.MatchResult[Triple] = matchers.matchResultTilde3(Triple)
+    builder(triple) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
+    builder(Miss("not a match", Triple(1, "Hello", 3.14))) should matchPattern { case Miss(_, _) => }
+  }
+  it should "invoke matchResult3" in {
+    case class Triple(x: Int, y: String, z: Double)
+    val builder: (matchers.MatchResult[Int], matchers.MatchResult[String], matchers.MatchResult[Double]) => matchers.MatchResult[Triple] = matchers.matchResult3(Triple)
+    builder(Match(1), Match("Hello"), Match(3.14)) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
+    builder(Miss("", 1), Match("Hello"), Match(3.14)) should matchPattern { case Miss(_, _) => }
   }
 }
 

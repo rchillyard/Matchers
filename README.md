@@ -1,4 +1,5 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/454847cac6214df8986ef2dec68e5049)](https://www.codacy.com/gh/rchillyard/Matchers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rchillyard/Matchers&amp;utm_campaign=Badge_Grade)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.phasmidsoftware/matchers_2.13/badge.svg?color=blue)](https://maven-badges.herokuapp.com/maven-central/com.phasmidsoftware_2.13/matchers/)
 [![CircleCI](https://circleci.com/gh/rchillyard/Matchers.svg?style=svg)](https://circleci.com/gh/rchillyard/Matchers)
 ![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Matchers)
 ![GitHub](https://img.shields.io/github/license/rchillyard/Matchers)
@@ -133,6 +134,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.5 Added combine and accumulate methods to MatchResult...
 * 1.0.4 Make logging more consistent and easier to use.
 * 1.0.3 Replaced most tuples with tildes.
 * 1.0.2 Support regex parsers
