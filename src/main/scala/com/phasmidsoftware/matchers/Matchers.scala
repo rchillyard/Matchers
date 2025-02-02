@@ -895,7 +895,7 @@ trait Matchers {
     */
   def matchResult3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(r0: MatchResult[T0], r1: MatchResult[T1], r2: MatchResult[T2]): MatchResult[P] = (r0, r1, r2) match {
     case (Match(t0), Match(t1), Match(t2)) => Match(f(t0, t1, t2))
-    case _ => Miss("matchResult3FromTilde: not all inputs match", r0 ~ r1 ~ r2)
+    case _ => Miss("matchResult3: not all inputs match", r0 ~ r1 ~ r2)
   }
 
   /**
