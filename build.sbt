@@ -2,19 +2,19 @@ organization := "com.phasmidsoftware"
 
 name := "Matchers"
 
-version := "1.0.5"
+version := "1.0.6"
 
-scalaVersion := "2.13.6"
+scalaVersion := "2.13.16"
 
 scalacOptions ++= Seq( "-target:jvm-1.8", "-encoding", "UTF-8", "-unchecked", "-deprecation", "-Ywarn-dead-code", "-Ywarn-value-discard", "-Ywarn-unused" )
 
-val scalaTestVersion = "3.2.9"
+val scalaTestVersion = "3.2.19"
 
-libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.31"
+libraryDependencies += "org.slf4j" % "slf4j-api" % "2.0.16"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 
-libraryDependencies +="ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
+libraryDependencies +="ch.qos.logback" % "logback-classic" % "1.5.16" % "test"
 
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 
