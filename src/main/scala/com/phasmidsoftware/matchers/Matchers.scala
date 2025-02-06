@@ -163,15 +163,34 @@ trait Matchers {
     * @tparam T both the type of the input and the underlying type of the output.
     * @return a Matcher[T, T]
     */
-  def alt[T](m: Matcher[T, T]): Matcher[T, T] = Matcher("alt") {
+  def alt[T](m: Matcher[T, T]): Matcher[T, T] = Matcher[T, T]("alt") {
     t =>
-      m(t) match {
+      (m(t) match {
         case z@Match(_) => z
         case Miss(_, _) => Match(t)
         case Error(x) => Error(x)
         case _ => throw MatcherException("this case not possible")
-      }
+      }).asInstanceOf[MatchResult[T]] // CONSIDER why do we need this asInstanceOf?
   }
+
+  /**
+    * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
+    *
+    * @param m A matcher function that checks elements of type T and returns a Matcher result.
+    * @return A new matcher that validates sequences of type Seq[T].
+    *         The matcher succeeds if all elements in the sequence satisfy the given matcher,
+    *         otherwise it returns a miss with the name "matchAll" and the unmatched sequence.
+    */
+  def matchAll[T](m: Matcher[T, T]): Matcher[Seq[T], Seq[T]] = (ts: Seq[T]) => if (ts.forall(m(_).successful)) Match(ts) else Miss("matchAll", ts)
+
+  /**
+    * Creates a matcher that checks if any element in a sequence satisfies the provided matcher.
+    *
+    * @param m a matcher function that takes an element of type T and returns a Matcher result
+    * @return a matcher function that takes a sequence of type T and returns a Matcher result
+    *         indicating whether at least one element in the sequence satisfies the given matcher
+    */
+  def matchAny[T](m: Matcher[T, T]): Matcher[Seq[T], Seq[T]] = (ts: Seq[T]) => if (ts.exists(m(_).successful)) Match(ts) else Miss("matchAny", ts)
 
   /**
     * Matcher whose success depends on the application of a function f to the input,
@@ -184,7 +203,7 @@ trait Matchers {
     * @tparam Q the "control" type.
     * @tparam T the "input" type.
     * @tparam R the result type.
-    * @return a Matcher[(Q,R), T].
+    * @return a `Matcher[(Q, R), T]`.
     */
   def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean)(implicit logger: MatchLogger): Matcher[(Q, T), R] = Matcher("valve") {
     // CONSIDER redesign this in terms of other Matchers, not MatchResult
@@ -200,7 +219,7 @@ trait Matchers {
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
     * @tparam Q the "control" type.
     * @tparam T the "input" type.
-    * @return a Matcher[(Q,R), T].
+    * @return a `Matcher[(Q, R), T]`.
     */
   def valve[Q, T](p: (Q, T) => Boolean): Matcher[(Q, T), T] = Matcher("valve") {
     case (q, t) => MatchResult.create(p)(q, t, t)
@@ -878,6 +897,7 @@ trait Matchers {
   def matchResultTilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(t: MatchResult[T0 ~ T1 ~ T2]): MatchResult[P] = t match {
     case Match(t0 ~ t1 ~ t2) => Match(f(t0, t1, t2))
     case Miss(s, t) => Miss(s, t)
+    case Error(e) => Error(e)
   }
 
   /**
@@ -991,6 +1011,7 @@ trait Matchers {
       * Basically a convenience to avoid having to depend on Scala Parser Combinators for simple
       * regular expressions.
       * Use this method rather than regex if you need to process the matched groups individually.
+      * TODO fix deprecation of `RegexGroups(s.r())`
       *
       * @return Parser[List of Strings]
       */
@@ -1040,7 +1061,7 @@ trait Matchers {
     def flatMap[U <: T, S](f: R => MatchResult[S]): Matcher[U, S] = this (_) flatMap f
 
     /**
-      * Method to transform a MatchResult.
+      * Method to transform a `MatchResult`.
       *
       * `p ^^ f` succeeds if `p` succeeds; it returns `f` applied to the result of `p`.
       *
@@ -1461,7 +1482,9 @@ trait Matchers {
   }
 
   /**
-    * Unsuccessful match of type dependent on X.
+    * Unsuccessful match of type dependent on `X`.
+    *
+    * TODO eliminate `X` (or `R`?) from the type signature.
     *
     * @param x either a String or a Throwable.
     * @tparam X the type of x.
@@ -1774,6 +1797,8 @@ trait Matchers {
     * Any other non-fatal exception results in an Error.
     * Fatal exceptions are not caught.
     *
+    * The purpose of this method is really just so we catch any `MatchError`s.
+    *
     * @param f the function which takes an input value of T and returns a MatchResult[R].
     * @param t the (call-by-name) value of T to be passed to f.
     * @tparam T the input type to f.
@@ -1866,11 +1891,11 @@ trait Matchers {
       }
   }
 
-  lazy val wholeNumber: Parser[String] = parser("""-?\d+""")
+  private lazy val wholeNumber: Parser[String] = parser("""-?\d+""")
 
   lazy val decimalNumber: Parser[String] = parser("""(\d+(\.\d*)?|\d*\.\d+)""")
 
-  lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
+  private lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
 
 }
 

@@ -1,11 +1,9 @@
 package com.phasmidsoftware.matchers
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
-
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.NoSuchElementException
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 import scala.util.{Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
@@ -1092,6 +1090,53 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val builder: (matchers.MatchResult[Int], matchers.MatchResult[String], matchers.MatchResult[Double]) => matchers.MatchResult[Triple] = matchers.matchResult3(Triple)
     builder(Match(1), Match("Hello"), Match(3.14)) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
     builder(Miss("", 1), Match("Hello"), Match(3.14)) should matchPattern { case Miss(_, _) => }
+  }
+
+  behavior of "matchAll"
+  it should "invoke matchAll match" in {
+    val target = Seq(1, 2, 3)
+    // CONSIDER using Matcher[Int,Int] (without the new)
+    val posInt = new Matcher[Int, Int] {
+      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+    }
+    val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
+    z(target) should matchPattern { case Match(List(1, 2, 3)) => }
+  }
+  it should "invoke matchAll miss" in {
+    val target = Seq(1, -2, 3)
+    val posInt = new Matcher[Int, Int] {
+      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+    }
+    val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
+    z(target) should matchPattern { case Miss(_, _) => }
+  }
+
+  behavior of "matchAny"
+  it should "invoke matchAny match 1" in {
+    val target = Seq(1, 2, 3)
+    // CONSIDER using Matcher[Int,Int] (without the new)
+    val posInt = new Matcher[Int, Int] {
+      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+    }
+    val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAny(posInt)
+    z(target) should matchPattern { case Match(List(1, 2, 3)) => }
+  }
+  it should "invoke matchAny match 2" in {
+    val target = Seq(-1, 2, -3)
+    // CONSIDER using Matcher[Int,Int] (without the new)
+    val posInt = new Matcher[Int, Int] {
+      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+    }
+    val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAny(posInt)
+    z(target) should matchPattern { case Match(`target`) => }
+  }
+  it should "invoke matchAny miss" in {
+    val target = Seq(-1, -2, -3)
+    val posInt = new Matcher[Int, Int] {
+      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+    }
+    val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
+    z(target) should matchPattern { case Miss(_, _) => }
   }
 }
 
