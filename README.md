@@ -134,6 +134,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.7 Filter method added for MatchResult.
 * 1.0.6 Match sequences.
 * 1.0.5 Added combine and accumulate methods to MatchResult...
 * 1.0.4 Make logging more consistent and easier to use.

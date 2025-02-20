@@ -360,6 +360,16 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     f(1).successful shouldBe true
   }
 
+  behavior of "filter matcher"
+  it should "filter 1 as odd" in {
+    val f = m.filter[Int](x => x % 2 == 1)
+    f(1).successful shouldBe true
+  }
+  it should "filter 1 as not even" in {
+    val f = m.filterNot[Int](x => x % 2 == 0)
+    f(1).successful shouldBe true
+  }
+
   behavior of "alt"
   it should "match 1" in {
     val f = m.alt(m.matches(1))
@@ -1137,6 +1147,21 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     }
     val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
     z(target) should matchPattern { case Miss(_, _) => }
+  }
+
+  behavior of "filter"
+
+  it should "satisfy predicate" in {
+    m.MatchResult(1) filter (r => r % 2 == 1) shouldBe m.Match(1)
+    m.MatchResult(1) filter (r => r % 2 == 0) shouldBe m.Miss("filter failed on", Match(1))
+    val miss = m.Miss[Int, Int]("miss", 0)
+    miss filter (r => r % 2 == 1) shouldBe miss
+  }
+  it should "fail to satisfy predicate in filterNot" in {
+    m.MatchResult(1) filterNot (r => r % 2 == 0) shouldBe m.Match(1)
+    m.MatchResult(1) filterNot (r => r % 2 == 1) shouldBe m.Miss("filter failed on", Match(1))
+    val miss = m.Miss[Int, Int]("miss", 0)
+    miss filterNot (r => r % 2 == 1) shouldBe miss
   }
 }
 

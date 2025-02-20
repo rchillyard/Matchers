@@ -134,7 +134,16 @@ trait Matchers {
     * @tparam R both the input type and the result type.
     * @return a Matcher[R, R] which succeeds only if p(r) is true.
     */
-  def filter[R](p: R => Boolean): Matcher[R, R] = Matcher("filter")(r => if (p(r)) Match(r) else Miss("filter", r))
+  def filter[R](p: R => Boolean): Matcher[R, R] = Matcher("filter")(r => Match(r) filter p)
+
+  /**
+    * Matcher which succeeds only if the predicate p evaluates to false.
+    *
+    * @param p a predicate on type R.
+    * @tparam R both the input type and the result type.
+    * @return a Matcher[R, R] which succeeds only if p(r) is false.
+    */
+  def filterNot[R](p: R => Boolean): Matcher[R, R] = Matcher("filterNot")(r => Match(r) filterNot p)
 
   /**
     * Matcher which succeeds only if the predicate p evaluates to true.
@@ -1381,6 +1390,34 @@ trait Matchers {
       * @return a MatchResult[U].
       */
     def accumulate[S, U >: R](accumulator: (R, S) => U)(sm: => MatchResult[S]): MatchResult[U] = for (r <- this; s <- sm) yield accumulator(r, s)
+
+    /**
+      * Filters the current `MatchResult` (if successful) with the provided predicate.
+      * If the predicate evaluates to true for the result of this MatchResult,
+      * the current instance is returned.
+      * Otherwise, it returns a `Miss`.
+      * If this is a Miss then that is returned.
+      *
+      * @param p A predicate function that takes a value of type `R` and returns a `Boolean`.
+      * @return A `MatchResult[R]` which is either the current instance if the predicate matches, or a `Miss`.
+      */
+    def filter(p: R => Boolean): MatchResult[R] = this match {
+      case Match(r) if p(r) => this
+      case Match(_) => Miss(s"filter failed on", this)
+      case _ => this
+    }
+
+    /**
+      * Filters the current `MatchResult` (if successful) with the provided predicate.
+      * If the predicate evaluates to false for the result of this MatchResult,
+      * the current instance is returned.
+      * Otherwise, it returns a `Miss`.
+      * If this is a Miss then that is returned.
+      *
+      * @param p A predicate function that takes a value of type `R` and returns a `Boolean`.
+      * @return A `MatchResult[R]` which is either the current instance if the predicate matches, or a `Miss`.
+      */
+    def filterNot(p: R => Boolean): MatchResult[R] = filter(!p(_))
   }
 
   /**
