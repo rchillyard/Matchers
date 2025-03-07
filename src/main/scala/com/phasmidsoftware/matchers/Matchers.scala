@@ -6,6 +6,9 @@ import scala.util.{Failure, Success, Try}
 /**
   * This trait defines a set of Matchers which operate in a parallel fashion to the Parsers of the Scala
   * Parser Combinator library.
+  *
+  * The major difference is that the input type to any `Matcher` is defined by a parametric type,
+  * that's to say, in input is not always a `CharSequence`.
   */
 trait Matchers {
 
@@ -950,6 +953,14 @@ trait Matchers {
     def :|(name: => String)(implicit ml: MatchLogger): Matcher[T, R] = new LoggingMatcher[T, R](p, name)(ml)
   }
 
+  /**
+    * Provides an implicit class to enable the tilde (`~`) operator for combining two values of
+    * types `R` and `S` into a single instance of the case class `~`.
+    *
+    * @tparam R the type of the first value
+    * @tparam S the type of the second value
+    * @param r the value of type `R` to be combined
+    */
   implicit class TildeOps[R, S](r: R) {
     def ~(s: S): R ~ S = new ~(r, s)
   }
@@ -1198,6 +1209,11 @@ trait Matchers {
       override val name: String = n
     }
 
+    /**
+      * Returns a string representation of the Matcher instance.
+      *
+      * @return the name of the Matcher.
+      */
     override def toString: String = name
 
     protected val name: String = ""
@@ -1718,6 +1734,10 @@ trait Matchers {
     override def toString: String = s"Error: ${e.getLocalizedMessage}"
   }
 
+  /**
+    * Companion object for the `MatchResult` type.
+    * Provides utility methods for constructing and aggregating `MatchResult` values.
+    */
   object MatchResult {
     /**
       * Method to construct a MatchResult based on r.
@@ -1784,6 +1804,55 @@ trait Matchers {
       * @return a MatchResult[R].
       */
     def apply[Q, T, R](f: T => R, p: (Q, R) => Boolean)(q: Q, t: T): MatchResult[R] = MatchResult.create(p)(q, t, f(t))
+
+    /**
+      * Aggregates a sequence of MatchResult objects into a single MatchResult containing
+      * a sequence of the matched results.
+      * This method processes the provided sequence and:
+      * - Combines successful Match instances by collecting all their matched values.
+      * - Propagates the first encountered Error instance, if any.
+      * - Preserves Miss instances if no Error is present.
+      *
+      * If the result is a `Match`, then at least one element of `rms` was a `Match`.
+      * If the result is a `Miss`, then each of the elements of `rms` was a `Miss`.
+      *
+      * @param rms the sequence of MatchResult objects to be processed.
+      * @tparam R the type of the matched value.
+      * @return a MatchResult containing a sequence of matched results, the first Error encountered,
+      *         or a sequence reflecting Miss instances if no Error is present.
+      */
+    def sequence[R](rms: Seq[MatchResult[R]]): MatchResult[Seq[R]] =
+      rms.foldLeft[MatchResult[Seq[R]]](Miss("empty", Seq[R]())) {
+        case (Match(rs), Match(r)) => Match(rs :+ r)
+        case (Miss(_, rs: Seq[R]), Match(r)) => Match(rs :+ r)
+        case (Match(rs: Seq[R]), Miss(_, r: R)) => Match(rs :+ r)
+        case (Miss(_, rs: Seq[R]), Miss(w, r)) => Miss(w, rs :+ r)
+        case (_, Error(e)) => Error(e)
+        case (Error(e), _) => Error(e)
+      }
+
+    /**
+      * Aggregates a sequence of MatchResult objects into a single MatchResult containing
+      * a sequence of the matched results.
+      * If all `MatchResult`s in the provided sequence are successful `Match` instances,
+      * the resulting MatchResult will also be successful,
+      * containing a sequence of all matched values.
+      * If any MatchResult in the sequence represents a failure,
+      * the aggregation stops at the first failure and returns that.
+      *
+      * @param rms the sequence of MatchResult objects to be aggregated.
+      * @tparam R the type of the matched value.
+      * @return a MatchResult containing a sequence of matched results or
+      *         the first failure encountered.
+      */
+    def sequenceStrict[R](rms: Seq[MatchResult[R]]): MatchResult[Seq[R]] =
+      rms.foldLeft[MatchResult[Seq[R]]](Match(Seq[R]())) {
+        case (Match(rs), Match(r)) => Match(rs :+ r)
+        case (Match(_), Miss(w, r)) => Miss(w, Seq(r))
+        case (m@Miss(_, _), _) => m
+        case (_, Error(e)) => Error(e)
+        case (Error(e), _) => Error(e)
+      }
   }
 
   /**
@@ -1799,13 +1868,20 @@ trait Matchers {
     * @tparam R the underlying type of the result of the matcher.
     */
   class LoggingMatcher[T, R](f: T => MatchResult[R], matcherName: String = "")(logger: MatchLogger) extends Matcher[T, R] {
+    /**
+      * Applies the matcher to the given input and returns the result, with optional logging based on the logger's log level.
+      *
+      * @param t the input value of type T to match against.
+      * @return a MatchResult of type R containing the outcome of the match operation.
+      */
     def apply(t: T): MatchResult[R] = logger.logLevel match {
       case LogDebug =>
         logger(s"trying matcher $name on $t...")
         tryMatch(f, t) ::- (r => logger(s"... $name: Match: $r"), w => logger(s"... $name($t): $w"))
 
       case LogInfo =>
-        tryMatch(f, t) :- (_ => logger(s"$name: matched $t"))
+        // CONSIDER that `t` and `r` are of disparate types in general
+        tryMatch(f, t) :- (r => if (t != r) logger(s"$name: matched $t as $r"))
 
       case _ => tryMatch(f, t)
     }
@@ -1928,11 +2004,41 @@ trait Matchers {
       }
   }
 
+  /**
+    * A parser that matches a whole number, which may optionally be negative.
+    * The whole number is defined by the regular expression `-?\d+`.
+    * Returns the matched string representation of the number.
+    */
   private lazy val wholeNumber: Parser[String] = parser("""-?\d+""")
 
+  /**
+    * A parser that matches a decimal number.
+    * The parser matches numbers with optional leading digits, a decimal point,
+    * and optional trailing digits.
+    *
+    * Examples of matched patterns include:
+    * - Whole numbers: "123"
+    * - Floating-point numbers with leading digits: "123.456"
+    * - Floating-point numbers without leading digits: ".456"
+    * - Floating-point numbers with trailing decimal point: "123."
+    */
   lazy val decimalNumber: Parser[String] = parser("""(\d+(\.\d*)?|\d*\.\d+)""")
 
-  private lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
+  /**
+    * A parser for matching floating-point numbers in string format.
+    * This parser identifies numbers with optional signs, decimal points,
+    * optional scientific notation (e/E with an optional sign), and optional
+    * floating-point type suffixes (f/F/d/D).
+    *
+    * The recognized pattern includes:
+    * - Optional leading negative sign (-).
+    * - Digits before and/or after a decimal point.
+    * - Scientific notation with an optional positive or negative sign.
+    * - Optional floating-point suffix (f, F, d, D).
+    *
+    * The parsing is performed using a provided regular expression pattern.
+    */
+  lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
 
 }
 
@@ -1940,8 +2046,21 @@ trait Matchers {
   * Companion object to Matchers.
   */
 object Matchers {
-  // NOTE: this is a default instance of Matchers. In general, applications should construct their own.
+  /**
+    * Provides a default instance of the `Matchers` class.
+    *
+    * This instance is pre-configured with a `MatchLogger` obtained implicitly.
+    * It is recommended for applications to create their own custom instances of `Matchers`
+    * tailored to their specific needs rather than using this default instance.
+    */
   val matchers: Matchers = new Matchers {
+    /**
+      * A value of type `MatchLogger` that provides a default logger instance.
+      * This instance is resolved using Scala's implicit mechanism.
+      *
+      * The `MatchLogger` is responsible for managing logging with the specified `LogLevel`.
+      * It can either log messages or remain disabled based on the defined logging level.
+      */
     val logger: MatchLogger = implicitly[MatchLogger]
   }
 }

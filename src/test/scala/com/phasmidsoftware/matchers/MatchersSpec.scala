@@ -296,15 +296,26 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
         |... success(1): Match: 1
         |""".stripMargin
   }
-  it should "log success with LogInfo" in {
+  it should "log success with LogInfo same match" in {
     import m.MatcherOps
     val sb = new StringBuilder
     implicit val logger: MatchLogger = SBLogger(LogInfo, sb)
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe
-      """success(1): matched 1
-        |""".stripMargin
+            """""".stripMargin
+  }
+  it should "log success with LogInfo different match" in {
+    import m.MatcherOps
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogInfo, sb)
+    val q = new m.Matcher[String, Int] {
+      def apply(v1: String): m.MatchResult[Int] = m.Match(v1.toInt)
+    } :| "toInt"
+    q("1") shouldBe m.Match(1)
+    sb.toString() shouldBe
+            """toInt: matched 1 as 1
+              |""".stripMargin
   }
   it should "log success with LogOff" in {
     val sb = new StringBuilder
@@ -1162,6 +1173,56 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.MatchResult(1) filterNot (r => r % 2 == 1) shouldBe m.Miss("filter failed on", Match(1))
     val miss = m.Miss[Int, Int]("miss", 0)
     miss filterNot (r => r % 2 == 1) shouldBe miss
+  }
+
+  behavior of "sequence"
+  it should "handle all matches" in {
+    val target: Seq[MatchResult[Int]] = Seq(Match(1), Match(2), Match(3))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
+    result shouldBe Match(List(1, 2, 3))
+  }
+  it should "handle all misses" in {
+    val target: Seq[MatchResult[Int]] = Seq(Miss("1", 1), Miss("2", 2))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
+    result shouldBe Miss("2", List(1, 2))
+  }
+  it should "handle all mixture" in {
+    val target: Seq[MatchResult[Int]] = Seq(Miss("1", 1), Miss("2", 2), Match(3))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
+    result shouldBe Match(List(1, 2, 3))
+  }
+  it should "handle empty" in {
+    val target: Seq[MatchResult[Int]] = Seq()
+    val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
+    result shouldBe Miss("empty", Nil)
+  }
+
+
+  behavior of "sequenceStrict"
+  it should "handle all matches" in {
+    val target: Seq[MatchResult[Int]] = Seq(Match(1), Match(2), Match(3))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
+    result shouldBe Match(List(1, 2, 3))
+  }
+  it should "handle all misses" in {
+    val target: Seq[MatchResult[Int]] = Seq(Miss("1", 1), Miss("2", 2))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
+    result shouldBe Miss("1", List(1))
+  }
+  it should "handle all mixture 1" in {
+    val target: Seq[MatchResult[Int]] = Seq(Miss("1", 1), Miss("2", 2), Match(3))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
+    result shouldBe Miss("1", List(1))
+  }
+  it should "handle all mixture 2" in {
+    val target: Seq[MatchResult[Int]] = Seq(Match(3), Miss("1", 1), Miss("2", 2))
+    val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
+    result shouldBe Miss("1", List(1))
+  }
+  it should "handle empty" in {
+    val target: Seq[MatchResult[Int]] = Seq()
+    val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
+    result shouldBe Match(Nil)
   }
 }
 
