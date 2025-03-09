@@ -1,10 +1,11 @@
 package com.phasmidsoftware.matchers
 
+import com.phasmidsoftware.matchers.Matchers.TildeOps
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
 /**
-  * This trait defines a set of Matchers which operate in a parallel fashion to the Parsers of the Scala
+  * This trait defines a set of `Matcher`s which operate in a parallel fashion to the parsers of the Scala
   * Parser Combinator library.
   *
   * The major difference is that the input type to any `Matcher` is defined by a parametric type,
@@ -15,192 +16,197 @@ trait Matchers {
   matchers =>
 
   /**
-    * Method to create a Matcher, based on the given function f of form T => MatchResult[R].
+    * Method to create a `Matcher`, based on the given function `f` of form `T => MatchResult[R]`.
     * Unusually, this method's identifier has a capital first letter.
-    * This is done to mimic the Parser method in the parser-combinators.
-    * It has the advantage of looking somewhat like a constructor of a Matcher.
+    * This is done to mimic the `Parser` method in the parser-combinators.
+    * It has the advantage of looking somewhat like a constructor of a `Matcher`.
     *
-    * NOTE: if you are looking for a method which takes a function f of form T => R, then you need to use the lift method.
+    * NOTE: if you are looking for a method which takes a function `f` of form `T => R`, then you need to use the `lift` method.
     *
-    * If f is a partial function, it may result in a MatchError.
-    * In such a case, this is simply treated as a Miss.
-    * However, if f throws some other non-fatal exception, then that will result in an Error.
+    * If `f` is a partial function, it may result in a `MatchError`.
+    * In such a case, this is simply treated as a `Miss`.
+    * However, if `f` throws some other non-fatal exception, then that will result in an `Error`.
     *
-    * @param f a T => MatchResult[R].
+    * @param f a `T => MatchResult[R]`.
     * @tparam T the input type.
     * @tparam R the result type.
-    * @return a Matcher[T, R] based on f.
+    * @return a `Matcher[T, R]` based on `f`.
     */
   def UnnamedMatcher[T, R](f: T => MatchResult[R]): Matcher[T, R] = constructMatcher(f)
 
   /**
-    * Method to create a named Matcher, based on the given function f of form T => MatchResult[R].
+    * Method to create a named `Matcher`, based on the given function `f` of form `T => MatchResult[R]`.
     * Unusually, this method's identifier has a capital first letter.
-    * This is done to mimic the Parser method in the parser-combinators.
-    * It has the advantage of looking somewhat like a constructor of a Matcher.
+    * This is done to mimic the `Parser` method in the parser-combinators.
+    * It has the advantage of looking somewhat like a constructor of a `Matcher`.
     *
     * NOTE: if you are looking for a method which takes a function f of form T => R, then you need to use the lift method.
     *
     * TODO: rename Matcher as UnnamedMatcher and this as Matcher.
     *
-    * If f is a partial function, it may result in a MatchError.
-    * In such a case, this is simply treated as a Miss.
-    * However, if f throws some other non-fatal exception, then that will result in an Error.
+    * If `f` is a partial function, it may result in a `MatchError`.
+    * In such a case, this is simply treated as a `Miss`.
+    * However, if `f` throws some other non-fatal exception, then that will result in an `Error`.
     *
-    * @param name the name to be used when debugging this Matcher
-    * @param f    a T => MatchResult[R].
+    * @param name the name to be used when debugging this `Matcher`
+    * @param f    a `T => MatchResult[R]`.
     * @tparam T the input type.
     * @tparam R the result type.
-    * @return a Matcher[T, R] based on f.
+    * @return a `Matcher[T, R]` based on `f`.
     */
   def Matcher[T, R](name: String)(f: T => MatchResult[R]): Matcher[T, R] = constructMatcher(f, name)
 
   /**
-    * Method to create a named Matcher, based on the given function f.
+    * Method to create a named `Matcher`, based on the given function `f`.
     *
     * CONSIDER eliminating this method.
     *
     * @param name the name for the logger to mention.
-    * @param f    a T => MatchResult[R].
+    * @param f    a `T => MatchResult[R]`.
     * @tparam T the input type.
     * @tparam R the result type.
-    * @return a Matcher[T, R] based on f.
+    * @return a `Matcher[T, R]` based on `f`.
     */
   def loggedMatcher[T, R](name: => String)(f: T => MatchResult[R])(implicit logger: MatchLogger): Matcher[T, R] = UnnamedMatcher(f) :| name
 
   /**
-    * Matcher based on the function f.
+    * Method to define a `Matcher` based on the function `f`.
     * The result will identify as "lift".
-    * Use namedLift if you want to be more specific.
+    * Use `namedLift` if you want to be more specific.
     *
-    * @param f a function of T => R
-    * @tparam T the input type to both f and the resulting Matcher.
-    * @tparam R the result type to both f and the resulting Matcher.
-    * @return a Matcher[T, R].
+    * @param f a function of type `T => R`
+    * @tparam T the input type to both `f` and the resulting `Matcher`.
+    * @tparam R the result type to both `f` and the resulting `Matcher`.
+    * @return a `Matcher[T, R]`.
     */
   def lift[T, R](f: T => R): Matcher[T, R] = Matcher("lift")(t => MatchResult(f(t)))
 
   /**
-    * Matcher based on the function f and with the given name.
+    * Method to define a named `Matcher` based on the function `f`.
     *
-    * @param name the name by which the resulting Matcher will be identified.
-    * @param f    a function of T => R
-    * @tparam T the input type to both f and the resulting Matcher.
-    * @tparam R the result type to both f and the resulting Matcher.
-    * @return a Matcher[T, R].
+    * @param name the name by which the resulting `Matcher` will be identified.
+    * @param f    a function of type `T => R`
+    * @tparam T the input type to both `f` and the resulting `Matcher`.
+    * @tparam R the result type to both `f` and the resulting `Matcher`.
+    * @return a `Matcher[T, R]`.
     */
   def namedLift[T, R](name: String)(f: T => R): Matcher[T, R] = lift[T, R](f).named(name)
 
   /**
-    * Matcher which always succeeds and creates a Match with value r.
+    * Defines a `Matcher` which always succeeds and creates a `Match` with value `r`.
     *
     * NOTE: be careful not to force evaluation of r outside MatchResult.
     *
-    * @param r the predetermined result.
+    * @param r the predetermined result (call-by-name).
     * @tparam T the input type (input is ignored).
     * @tparam R the result type.
-    * @return a Matcher[T, R]
+    * @return a `Matcher[T, R]`
     */
   def success[T, R](r: => R): Matcher[T, R] = Matcher("success")(_ => MatchResult(r))
 
   /**
-    * Matcher which always fails and creates a Miss with the value tried.
+    * Defines a `Matcher` which always fails and creates a `Miss` with the value tried.
     *
     * @param msg the message to describe this failure.
     * @tparam T the input type.
     * @tparam R the result type.
-    * @return a Matcher[T, R]
+    * @return a `Matcher[T, R]`
     */
   def fail[T, R](msg: String): Matcher[T, R] = Matcher(s"fail($msg)")(t => Miss(msg, t))
 
   /**
-    * Matcher which always fails and creates a Miss with the value tried.
+    * Defines a `Matcher` which always errs and creates an `Error` with the given exception.
     *
-    * @param e a Throwable.
+    * @param e a `Throwable`.
     * @tparam R the result type.
-    * @return a Matcher[T, R]
+    * @return a `Matcher[T, R]`
     */
   def error[R](e: Throwable): Matcher[Any, R] = Matcher("error")(_ => Error(e))
 
   /**
-    * Matcher which always succeeds and whose input type and result type are the same.
+    * Defines a `Matcher` which always succeeds and whose input type and result type are the same.
     *
     * @tparam R both the input type and the result type.
-    * @return a Matcher[R, R] which always succeeds.
+    * @return a `Matcher[R, R]` which always succeeds.
     */
   def always[R]: Matcher[R, R] = namedLift("always")(identity)
 
   /**
-    * Matcher which succeeds only if the predicate p evaluates to true.
+    * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `true`.
+    * The result will be named "filter."
     *
-    * @param p a predicate on type R.
+    * @param p a predicate on type `R`.
     * @tparam R both the input type and the result type.
-    * @return a Matcher[R, R] which succeeds only if p(r) is true.
+    * @return a `Matcher[R, R]` which succeeds only if `p(r)` is `true`.
     */
   def filter[R](p: R => Boolean): Matcher[R, R] = Matcher("filter")(r => Match(r) filter p)
 
   /**
-    * Matcher which succeeds only if the predicate p evaluates to false.
+    * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `false`.
+    * The result will be named "filterNot."
     *
-    * @param p a predicate on type R.
+    * @param p a predicate on type `R`.
     * @tparam R both the input type and the result type.
-    * @return a Matcher[R, R] which succeeds only if p(r) is false.
+    * @return a `Matcher[R, R]` which succeeds only if `p(r)` is `false`.
     */
   def filterNot[R](p: R => Boolean): Matcher[R, R] = Matcher("filterNot")(r => Match(r) filterNot p)
 
   /**
-    * Matcher which succeeds only if the predicate p evaluates to true.
+    * Defines a `Matcher` which succeeds only if `b` is true (regardless of the input to the `Matcher`).
+    * The result will be named "maybe."
     *
-    * @param b a constant Boolean value.
+    * @param b a `Boolean` value which determines whether the result succeeds.
     * @tparam R both the input type and the result type.
-    * @return a Matcher[R, R] which succeeds only if p(r) is true.
+    * @return a `Matcher[R, R]` which succeeds if `b` is true.
     */
   def maybe[R](b: Boolean): Matcher[R, R] = filter[R](_ => b).named("maybe")
 
   /**
-    * Matcher which succeeds if the input is equal to the given t.
+    * Defines `a` Matcher which succeeds if the input is equal to the given `t`.
+    * The result will be named "matches."
     *
     * @param t the value which must be matched.
-    * @tparam T the type of the input and result for Matcher.
-    * @return a Matcher[T, T].
+    * @tparam R both the input type and the result type.
+    * @return a `Matcher[R, R]`.
     */
-  def matches[T](t: T): Matcher[T, T] = filter[T](_ == t).named("matches")
+  def matches[R](t: R): Matcher[R, R] = filter[R](_ == t).named("matches")
 
   /**
-    * Matcher which tries to match the input t according to m.
+    * The `alt` method returns a `Matcher` which tries to match the input `t` according to `m`.
+    * Unless there's an error, this matcher always succeeds.
     * If it's a match, then the match will be returned.
     * If it's a miss, then we return a match based on the original t.
+    * CONSIDER there are some similarities between `alt` and `~~`.
     *
-    * @param m a Mather[T, T]
+    * @param m a `Matcher[T, T]`
     * @tparam T both the type of the input and the underlying type of the output.
-    * @return a Matcher[T, T]
+    * @return a `Matcher[T, T]`
     */
   def alt[T](m: Matcher[T, T]): Matcher[T, T] = Matcher[T, T]("alt") {
     t =>
-      (m(t) match {
-        case z@Match(_) => z
+      m(t) match {
+        case z: Match[T] => z
         case Miss(_, _) => Match(t)
         case Error(x) => Error(x)
-        case _ => throw MatcherException("this case not possible")
-      }).asInstanceOf[MatchResult[T]] // CONSIDER why do we need this asInstanceOf?
+      }
   }
 
   /**
     * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
     *
-    * @param m A matcher function that checks elements of type T and returns a Matcher result.
-    * @return A new matcher that validates sequences of type Seq[T].
-    *         The matcher succeeds if all elements in the sequence satisfy the given matcher,
+    * @param m A matcher of type `Matcher[T,T]`.
+    * @return A new matcher that validates sequences of type `Seq[T]`.
+    *         The matcher succeeds if all elements in the sequence satisfy the given matcher `m`,
     *         otherwise it returns a miss with the name "matchAll" and the unmatched sequence.
     */
   def matchAll[T](m: Matcher[T, T]): Matcher[Seq[T], Seq[T]] = (ts: Seq[T]) => if (ts.forall(m(_).successful)) Match(ts) else Miss("matchAll", ts)
 
   /**
-    * Creates a matcher that checks if any element in a sequence satisfies the provided matcher.
+    * Creates a matcher that checks if any element in a sequence satisfies the given matcher.
     *
-    * @param m a matcher function that takes an element of type T and returns a Matcher result
-    * @return a matcher function that takes a sequence of type T and returns a Matcher result
-    *         indicating whether at least one element in the sequence satisfies the given matcher
+    * @param m A matcher of type `Matcher[T,T]`.
+    * @return a new matcher that takes a sequence of type `T` and returns a a sequence of type `T`.
+    *         indicating whether at least one element in the sequence satisfies the given matcher `m`.
     */
   def matchAny[T](m: Matcher[T, T]): Matcher[Seq[T], Seq[T]] = (ts: Seq[T]) => if (ts.exists(m(_).successful)) Match(ts) else Miss("matchAny", ts)
 
@@ -954,18 +960,6 @@ trait Matchers {
   }
 
   /**
-    * Provides an implicit class to enable the tilde (`~`) operator for combining two values of
-    * types `R` and `S` into a single instance of the case class `~`.
-    *
-    * @tparam R the type of the first value
-    * @tparam S the type of the second value
-    * @param r the value of type `R` to be combined
-    */
-  implicit class TildeOps[R, S](r: R) {
-    def ~(s: S): R ~ S = new ~(r, s)
-  }
-
-  /**
     * Implicit class MatchResultOps which allows us to use the method tee on a MatchResult[R].
     *
     * @param rr a MatchResult[R].
@@ -1236,6 +1230,22 @@ trait Matchers {
     def successful: Boolean
 
     /**
+      * Identifies this `MatchResult` with a `String`.
+      * It only takes effect when `this` is a `Miss`.
+      *
+      * @param w The input string to be identified and matched.
+      * @return A `MatchResult` representing the result of the identification process.
+      */
+    def identify(w: String): MatchResult[R]
+
+    /**
+      * Inverts the result of the current `MatchResult`.
+      *
+      * @return A `MatchResult[R]` representing the inverted match outcome.
+      */
+    def invert: MatchResult[R]
+
+    /**
       * @return the result of the MatchResult.
       * @throws Throwable (a MatcherException) if this is not a Match.
       */
@@ -1249,6 +1259,15 @@ trait Matchers {
       * @return a Match[S] with value s (unless s throws an exception, in which case the result will be an Error).
       */
     def success[S](s: => S): MatchResult[S] = MatchResult(s)
+
+    /**
+      * Map method.
+      *
+      * @param f a function of R => S.
+      * @tparam S the underlying type of the returned MatchResult.
+      * @return MatchResult[S].
+      */
+    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
 
     /**
       * FlatMap method.
@@ -1314,8 +1333,8 @@ trait Matchers {
     def guard[S](sm: => MatchResult[S]): MatchResult[S]
 
     /**
-      * Alternation method which takes a Matcher as the alternative.
-      * If this MatchResult is empty then return the value of m applied to the input.
+      * Alternation method which takes a `Matcher` as the alternative.
+      * If this `MatchResult` is a miss, then return the value of `m` applied to the input.
       *
       * @param m a Matcher of Any to S.
       * @tparam S the type of the result and a super-type of R.
@@ -1335,15 +1354,6 @@ trait Matchers {
     def &[S >: R, T](m: => Matcher[S, T]): MatchResult[T]
 
     /**
-      * Map method.
-      *
-      * @param f a function of R => S.
-      * @tparam S the underlying type of the returned MatchResult.
-      * @return MatchResult[S].
-      */
-    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
-
-    /**
       * Method to determine if this is unsuccessful.
       *
       * @return the negation of successful.
@@ -1360,6 +1370,24 @@ trait Matchers {
       * @return a MatchResult[R ~ S].
       */
     def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S] = andThen(sm)
+
+    /**
+      * Method to compose this `MatchResult` with `sm`.
+      * If either this is a `Match` or sm is a `Match`, the result will be a `Match`.
+      * CONSIDER having two nested match clauses such that `sm` would not be evaluated if `this` was an `Error`.
+      *
+      * @param sm a call-by-name MatchResult[S].
+      * @tparam S the underlying type of s.
+      * @return a MatchResult[R ~ S].
+      */
+    def ~~[S](sm: => MatchResult[S]): MatchResult[R ~ S] =
+      (this, sm) match {
+        case (Match(r), Match(s)) => Match(r ~ s)
+        case (Match(r), Miss(_, s: S)) => Match(r ~ s)
+        case (Miss(_, r: R), Match(s)) => Match(r ~ s)
+        case (Miss(u, r: R), Miss(v, s: S)) => Miss(s"$u~~$v", r ~ s)
+        case _ => Error(MatcherException(s"~~: logic error (at least one miss with R and S being disparate types): $this ~~ $sm"))
+      }
 
     /**
       * Alternation method which takes a MatchResult as the alternative.
@@ -1443,6 +1471,21 @@ trait Matchers {
     * @tparam R the type of the result.
     */
   case class Match[+R](r: R) extends MatchResult[R] {
+    /**
+      * Identifies this `Match` with the given string.
+      *
+      * @param w the input string used to identify the match result.
+      * @return `this`.
+      */
+    def identify(w: String): MatchResult[R] = this
+
+    /**
+      * Inverts this `Match`, returning an unsuccessful result (`Miss`).
+      *
+      * @return A `Miss` instance with a message indicating the inversion and the original result.
+      */
+    def invert: MatchResult[R] = Miss(s"invert", r)
+
     /**
       * @return true
       */
@@ -1578,6 +1621,25 @@ trait Matchers {
     */
   case class Miss[T, +R](msg: String, t: T) extends Unsuccessful[R, String](msg) {
     /**
+      * Inverts the outcome of this `MatchResult`.
+      * Specifically, returns a `Miss` result based on the original value.
+      *
+      * @return a `Miss` result using the original value t.
+      */
+    def invert: MatchResult[R] = t match {
+      case r: R => Match(r)
+      case _ => Error(MatcherException("invert: cannot invert Miss: " + t))
+    }
+
+    /**
+      * Identifies this `Miss` with the given string.
+      *
+      * @param w the input string
+      * @return a `Miss` representing the outcome of the identification
+      */
+    def identify(w: String): MatchResult[R] = Miss(w, t)
+
+    /**
       * @param f a function of R => S (ignored)
       * @tparam S the underlying type of the returned MatchResult.
       * @return Miss(t).
@@ -1660,6 +1722,21 @@ trait Matchers {
     * @tparam R the result-type of this.
     */
   case class Error[+R](e: Throwable) extends Unsuccessful[R, Throwable](e) {
+    /**
+      * Identifies the current `MatchResult` with the given string.
+      *
+      * @param w a string value used for identification
+      * @return the current `MatchResult[R]`
+      */
+    def identify(w: String): MatchResult[R] = this
+
+    /**
+      * Returns the inversion of this `MatchResult`.
+      *
+      * @return the current `MatchResult`.
+      */
+    def invert: MatchResult[R] = Error(e)
+
     /**
       *
       * @param f a function of R => S (ignored)
@@ -1806,19 +1883,20 @@ trait Matchers {
     def apply[Q, T, R](f: T => R, p: (Q, R) => Boolean)(q: Q, t: T): MatchResult[R] = MatchResult.create(p)(q, t, f(t))
 
     /**
-      * Aggregates a sequence of MatchResult objects into a single MatchResult containing
+      * Aggregates a sequence of `MatchResult` objects into a single `MatchResult` containing
       * a sequence of the matched results.
       * This method processes the provided sequence and:
-      * - Combines successful Match instances by collecting all their matched values.
-      * - Propagates the first encountered Error instance, if any.
-      * - Preserves Miss instances if no Error is present.
+      * - Combines successful `Match` instances by collecting all their matched values.
+      * - Propagates the first encountered `Error` instance, if any.
+      * - Preserves `Miss` instances if no `Error` is present.
+      * CONSIDER using `accumulate`
       *
       * If the result is a `Match`, then at least one element of `rms` was a `Match`.
       * If the result is a `Miss`, then each of the elements of `rms` was a `Miss`.
       *
-      * @param rms the sequence of MatchResult objects to be processed.
+      * @param rms the sequence of `MatchResult` objects to be processed.
       * @tparam R the type of the matched value.
-      * @return a MatchResult containing a sequence of matched results, the first Error encountered,
+      * @return a `MatchResult` containing a sequence of matched results, the first Error encountered,
       *         or a sequence reflecting Miss instances if no Error is present.
       */
     def sequence[R](rms: Seq[MatchResult[R]]): MatchResult[Seq[R]] =
@@ -1832,17 +1910,18 @@ trait Matchers {
       }
 
     /**
-      * Aggregates a sequence of MatchResult objects into a single MatchResult containing
+      * Strictly aggregates a sequence of `MatchResult` objects into a single `MatchResult` containing
       * a sequence of the matched results.
       * If all `MatchResult`s in the provided sequence are successful `Match` instances,
-      * the resulting MatchResult will also be successful,
+      * the resulting `MatchResult` will also be successful,
       * containing a sequence of all matched values.
-      * If any MatchResult in the sequence represents a failure,
+      * If any `MatchResult` in the sequence represents a failure,
       * the aggregation stops at the first failure and returns that.
+      * CONSIDER using accumulate
       *
-      * @param rms the sequence of MatchResult objects to be aggregated.
+      * @param rms the sequence of `MatchResult` objects to be aggregated.
       * @tparam R the type of the matched value.
-      * @return a MatchResult containing a sequence of matched results or
+      * @return a `MatchResult` containing a sequence of matched results or
       *         the first failure encountered.
       */
     def sequenceStrict[R](rms: Seq[MatchResult[R]]): MatchResult[Seq[R]] =
@@ -2046,6 +2125,19 @@ trait Matchers {
   * Companion object to Matchers.
   */
 object Matchers {
+
+  /**
+    * Provides an implicit class to enable the tilde (`~`) operator for combining two values of
+    * types `R` and `S` into a single instance of the case class `~`.
+    *
+    * @tparam R the type of the first value
+    * @tparam S the type of the second value
+    * @param r the value of type `R` to be combined
+    */
+  implicit class TildeOps[R, S](r: R) {
+    def ~(s: S): R ~ S = new~(r, s)
+  }
+
   /**
     * Provides a default instance of the `Matchers` class.
     *
