@@ -16,6 +16,17 @@ trait Matchers {
   matchers =>
 
   /**
+    * Represents a type alias `Transformer` which defines a `Matcher`
+    * that transforms an input value of type `T` to an output value of the same type `T`.
+    *
+    * This type alias can be used to simplify and make the code more readable
+    * where such a transformation operation is utilized.
+    *
+    * @tparam T the type of the input and output values being transformed
+    */
+  type Transformer[T] = Matcher[T, T]
+
+  /**
     * Trait that defines the behavior of a `Matcher` as a function of type `T => MatchResult[R]`
     * together with other filter-monadic methods, etc..
     *
@@ -1041,7 +1052,7 @@ trait Matchers {
     *
     * @param e a `Throwable`.
     * @tparam R the result type.
-    * @return a `Matcher[T, R]`
+    * @return a `Matcher[Any, R]`
     */
   def error[R](e: Throwable): Matcher[Any, R] = Matcher("error")(_ => Error(e))
 
@@ -1049,9 +1060,9 @@ trait Matchers {
     * Defines a `Matcher` which always succeeds and whose input type and result type are the same.
     *
     * @tparam R both the input type and the result type.
-    * @return a `Matcher[R, R]` which always succeeds.
+    * @return a `Transformer[R]` which always succeeds.
     */
-  def always[R]: Matcher[R, R] = namedLift("always")(identity)
+  def always[R]: Transformer[R] = namedLift("always")(identity)
 
   /**
     * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `true`.
@@ -1059,9 +1070,9 @@ trait Matchers {
     *
     * @param p a predicate on type `R`.
     * @tparam R both the input type and the result type.
-    * @return a `Matcher[R, R]` which succeeds only if `p(r)` is `true`.
+    * @return a `Transformer[R]` which succeeds only if `p(r)` is `true`.
     */
-  def filter[R](p: R => Boolean): Matcher[R, R] = Matcher("filter")(r => Match(r) filter p)
+  def filter[R](p: R => Boolean): Transformer[R] = Matcher("filter")(r => Match(r) filter p)
 
   /**
     * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `false`.
@@ -1069,9 +1080,9 @@ trait Matchers {
     *
     * @param p a predicate on type `R`.
     * @tparam R both the input type and the result type.
-    * @return a `Matcher[R, R]` which succeeds only if `p(r)` is `false`.
+    * @return a `Transformer[R]` which succeeds only if `p(r)` is `false`.
     */
-  def filterNot[R](p: R => Boolean): Matcher[R, R] = Matcher("filterNot")(r => Match(r) filterNot p)
+  def filterNot[R](p: R => Boolean): Transformer[R] = Matcher("filterNot")(r => Match(r) filterNot p)
 
   /**
     * Defines a `Matcher` which succeeds only if `b` is true (regardless of the input to the `Matcher`).
@@ -1079,58 +1090,52 @@ trait Matchers {
     *
     * @param b a `Boolean` value which determines whether the result succeeds.
     * @tparam R both the input type and the result type.
-    * @return a `Matcher[R, R]` which succeeds if `b` is true.
+    * @return a `Transformer[R]` which succeeds if `b` is true.
     */
-  def maybe[R](b: Boolean): Matcher[R, R] = filter[R](_ => b).named("maybe")
+  def maybe[R](b: Boolean): Transformer[R] = filter[R](_ => b).named("maybe")
 
   /**
-    * Defines `a` Matcher which succeeds if the input is equal to the given `t`.
+    * Defines a Matcher which succeeds if the input is equal to the given `r`.
     * The result will be named "matches."
     *
-    * @param t the value which must be matched.
+    * @param r the value which must be matched.
     * @tparam R both the input type and the result type.
-    * @return a `Matcher[R, R]`.
+    * @return a `Transformer[R]`.
     */
-  def matches[R](t: R): Matcher[R, R] = filter[R](_ == t).named("matches")
+  def matches[R](r: R): Transformer[R] = filter[R](_ == r).named("matches")
 
   /**
     * The `alt` method returns a `Matcher` which tries to match the input `t` according to `m`.
     * Unless there's an error, this matcher always succeeds.
     * If it's a match, then the match will be returned.
     * If it's a miss, then we return a match based on the original t.
-    * CONSIDER there are some similarities between `alt` and `~~`.
     *
-    * @param m a `Matcher[T, T]`
+    * @param m a `Transformer[T]`
     * @tparam T both the type of the input and the underlying type of the output.
-    * @return a `Matcher[T, T]`
+    * @return a `Transformer[T]`
     */
-  def alt[T](m: Matcher[T, T]): Matcher[T, T] = Matcher[T, T]("alt") {
-    t =>
-      m(t) match {
-        case z: Match[T] => z
-        case Miss(_, _) => Match(t)
-        case Error(x) => Error(x)
-      }
+  def alt[T](m: Transformer[T]): Transformer[T] = Matcher[T, T]("alt") {
+    t => m(t) | success(t)
   }
 
   /**
     * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
     *
-    * @param m A matcher of type `Matcher[T,T]`.
+    * @param m A matcher of type `Transformer[T]`.
     * @return A new matcher that validates sequences of type `Seq[T]`.
     *         The matcher succeeds if all elements in the sequence satisfy the given matcher `m`,
     *         otherwise it returns a miss with the name "matchAll" and the unmatched sequence.
     */
-  def matchAll[T](m: Matcher[T, T]): Matcher[Seq[T], Seq[T]] = (ts: Seq[T]) => if (ts.forall(m(_).successful)) Match(ts) else Miss("matchAll", ts)
+  def matchAll[T](m: Transformer[T]): Transformer[Seq[T]] = (ts: Seq[T]) => if (ts.forall(m(_).successful)) Match(ts) else Miss("matchAll", ts)
 
   /**
     * Creates a matcher that checks if any element in a sequence satisfies the given matcher.
     *
-    * @param m A matcher of type `Matcher[T,T]`.
-    * @return a new matcher that takes a sequence of type `T` and returns a a sequence of type `T`.
+    * @param m A matcher of type `Transformer[T]`.
+    * @return a new matcher that takes a sequence of type `T` and returns a sequence of type `T`.
     *         indicating whether at least one element in the sequence satisfies the given matcher `m`.
     */
-  def matchAny[T](m: Matcher[T, T]): Matcher[Seq[T], Seq[T]] = (ts: Seq[T]) => if (ts.exists(m(_).successful)) Match(ts) else Miss("matchAny", ts)
+  def matchAny[T](m: Transformer[T]): Transformer[Seq[T]] = (ts: Seq[T]) => if (ts.exists(m(_).successful)) Match(ts) else Miss("matchAny", ts)
 
   /**
     * Matcher whose success depends on the application of a function f to the input,

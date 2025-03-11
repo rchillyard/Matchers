@@ -134,6 +134,10 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.8 Mostly documentation but also...
+  * Added methods: sequence, sequenceStrict, identify, invert, "~~";
+  * introduced Transformer type;
+  * renamed logger as matchLogger.
 * 1.0.7 Filter method added for MatchResult.
 * 1.0.6 Match sequences.
 * 1.0.5 Added combine and accumulate methods to MatchResult...
