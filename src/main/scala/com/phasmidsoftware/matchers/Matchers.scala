@@ -1871,7 +1871,7 @@ trait Matchers {
     */
   def isEqual[R](q: R, r: R): Boolean = q == r
 
-  val logger: MatchLogger
+  val matchLogger: MatchLogger
 
   /**
     * Implicit class MatcherOps which allows us to use the method :| on a Matcher[T,R].
@@ -2006,8 +2006,8 @@ trait Matchers {
     * @return a Matcher[T, R] based on f.
     */
   private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
-    if (logger.disabled) (t: T) => tryMatch(f, t)
-    else new LoggingMatcher[T, R](f, matcherName)(logger)
+    if (matchLogger.disabled) (t: T) => tryMatch(f, t)
+    else new LoggingMatcher[T, R](f, matcherName)(matchLogger)
 
   /**
     * Method to invoke the given function but protected by try/catch.
@@ -2179,6 +2179,6 @@ object Matchers {
       * The `MatchLogger` is responsible for managing logging with the specified `LogLevel`.
       * It can either log messages or remain disabled based on the defined logging level.
       */
-    val logger: MatchLogger = implicitly[MatchLogger]
+    val matchLogger: MatchLogger = implicitly[MatchLogger]
   }
 }
