@@ -528,13 +528,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "*"
   it should "work with default parameter" in {
     val t = 1 ~ 2
-    val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
     m.*(p)(t).successful shouldBe true
   }
   it should "not work with false" in {
     val t = 1 ~ 2
-    val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
     m.*(p, commutes = false)(t).successful shouldBe false
   }
@@ -542,62 +542,62 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "**"
   it should "match 1 with commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(1))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(1))
     p(t).successful shouldBe true
     m.**(p)(t).successful shouldBe true
   }
   it should "match 2 with commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
     p(t).successful shouldBe false
     m.**(p)(t).successful shouldBe true
   }
   it should "match 3 with commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(3))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(3))
     p(t).successful shouldBe false
     m.**(p)(t).successful shouldBe true
   }
   it should "fail without commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
     m.**(p, commutes = false)(t).successful shouldBe false
   }
 
   behavior of "filter"
   it should "filter2_0" in {
     val t = 1 ~ 2
-    val p1: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    val p1: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(2))
     p1(t).successful shouldBe false
-    val p2: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(1))
+    val p2: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(1))
     p2(t).successful shouldBe true
   }
   it should "filter2_1" in {
     val t = "1" ~ 2
-    val p1: m.Matcher[String ~ Int, String ~ Int] = m.filter2_1(m.matches(2))
+    val p1: m.AutoMatcher[String ~ Int] = m.filter2_1(m.matches(2))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int, String ~ Int] = m.filter2_1(m.matches(1))
+    val p2: m.AutoMatcher[String ~ Int] = m.filter2_1(m.matches(1))
     p2(t).successful shouldBe false
   }
   it should "filter3_0" in {
     val t = "1" ~ 2 ~ 3.0
-    val p1: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_0(m.matches("1"))
+    val p1: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_0(m.matches("1"))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_0(m.matches("2"))
+    val p2: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_0(m.matches("2"))
     p2(t).successful shouldBe false
   }
   it should "filter3_1" in {
     val t = "1" ~ 2 ~ 3.0
-    val p1: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_1(m.matches(2))
+    val p1: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_1(m.matches(2))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_1(m.matches(1))
+    val p2: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_1(m.matches(1))
     p2(t).successful shouldBe false
   }
   it should "filter3_2" in {
     val t = "1" ~ 2 ~ 3.0
-    val p1: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_2(m.matches(3.0))
+    val p1: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_2(m.matches(3.0))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_2(m.matches(0))
+    val p2: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_2(m.matches(0))
     p2(t).successful shouldBe false
   }
 
