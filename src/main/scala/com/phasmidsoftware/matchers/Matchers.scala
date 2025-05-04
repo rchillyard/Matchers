@@ -72,7 +72,7 @@ trait Matchers {
       * `p ^^ f` succeeds if `p` succeeds; it returns `f` applied to the result of `p`.
       *
       * @param f a function that will be applied to this matcher's result (see `map` in `MatchResult`).
-      * @return a parser that has the same behaviour as the current matcher, but whose result is
+      * @return a parser that has the same behavior as the current matcher, but whose result is
       *         transformed by `f`.
       */
     def ^^[S](f: R => S): Matcher[T, S] = map(f).named(toString + "^^")
@@ -174,10 +174,11 @@ trait Matchers {
 
     /**
       * Matcher which always succeeds (unless this causes an Error) but whose result is based on a Try[R].
-      *
+      * CONSIDER there are similarities between this and the `valve` method,
+      * as well as between this and the `matchTryFunc` method.
       * TESTME more
       *
-      * @return Matcher[T, Option of R]
+      * @return Matcher[T, Try of R]
       */
     def trial: Matcher[T, Try[R]] = Matcher("trial")(t =>
       Try(this (t)) match {
@@ -519,7 +520,7 @@ trait Matchers {
     /**
       * Alternation method which takes a MatchResult as the alternative.
       *
-      * @param sm a MatchResult (ignored)).
+      * @param sm a MatchResult (ignored).
       * @return this.
       */
     def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = this
@@ -1150,7 +1151,7 @@ trait Matchers {
     * @tparam R the result type.
     * @return a `Matcher[(Q, R), T]`.
     */
-  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean)(implicit logger: MatchLogger): Matcher[(Q, T), R] = Matcher("valve") {
+  def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = Matcher("valve") {
     // CONSIDER redesign this in terms of other Matchers, not MatchResult
     case (q, t) => MatchResult(f, p)(q, t)
   }
@@ -1876,7 +1877,11 @@ trait Matchers {
     */
   def isEqual[R](q: R, r: R): Boolean = q == r
 
-  val matchLogger: MatchLogger
+  /**
+    * A protected value that represents a logger dedicated to capturing
+    * and managing log entries related to match operations.
+    */
+  protected val matchLogger: MatchLogger
 
   /**
     * Implicit class MatcherOps which allows us to use the method :| on a Matcher[T,R].
@@ -1990,13 +1995,114 @@ trait Matchers {
         tryMatch(f, t) ::- (r => logger(s"... $name: Match: $r"), w => logger(s"... $name($t): $w"))
 
       case LogInfo =>
-        // CONSIDER that `t` and `r` are of disparate types in general
+        // CONSIDER that `t` and `r` are of disparate types in general,
+        //  but you can ignore the warning because, sometimes, `t == r`.
         tryMatch(f, t) :- (r => if (t != r) logger(s"$name: matched $t as $r"))
 
       case _ => tryMatch(f, t)
     }
 
+    /**
+      * The name of the matcher.
+      * This is used for logging purposes.
+      * It takes the value of the `matcherName` provided during the construction
+      * of the `LoggingMatcher` instance.
+      */
     override protected val name: String = matcherName
+  }
+
+  /**
+    * Method to invoke the given function but protected by try/catch.
+    * A MatchError results in a Miss.
+    * Any other non-fatal exception results in an Error.
+    * Fatal exceptions are not caught.
+    *
+    * The purpose of this method is really just so we catch any `MatchError`s.
+    *
+    * @param f the function which takes an input value of T and returns a MatchResult[R].
+    * @param t the (call-by-name) value of T to be passed to f.
+    * @tparam T the input type to f.
+    * @tparam R the output type of f.
+    * @return a MatchResult[R].
+    */
+  def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] = try f(t) catch {
+    case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
+    case scala.util.control.NonFatal(e) => Error(e)
+  }
+
+  /**
+    * Matches the result of a Try operation and produces a MatchResult.
+    *
+    * @param ry the Try instance representing a successful or failed computation
+    * @param t  the input value to be used in case of a failure
+    * @return a MatchResult containing the success value if the Try is successful,
+    *         or a failure message along with the input value if the Try is a failure
+    */
+  def matchIfSuccess[T, R](ry: Try[R])(t: T): MatchResult[R] = ry match {
+    case Success(x) => Match(x)
+    case Failure(e) => Miss(e.getMessage, t)
+  }
+
+  /**
+    * Matches the result of applying a given function to a value encapsulated in a Try,
+    * ensuring it is successful.
+    * NOTE that, whether it's a `Match` or a `Miss`, the result will always be based on `t` and not `f(t)`.
+    *
+    * @param f a function that takes a value of type T and returns a Try[T]
+    * @param t the input value of type T to which the function f is applied
+    * @return a MatchResult[T] representing the match results based on the success of the Try.
+    */
+  def matchTryFunc[T](f: T => Try[T])(t: T): MatchResult[T] = matchIfSuccess(f(t))(t)
+
+  /**
+    * Matches the input wrapped in an Option and returns a corresponding MatchResult.
+    *
+    * @param ry an optional value of type R to be matched
+    * @param t  the value of type T used when the optional value is not defined
+    * @return a MatchResult of type R. Returns a Match wrapping the value when the optional is defined,
+    *         otherwise returns a Miss with a message and the provided value t.
+    */
+  def matchIfDefined[T, R](ry: Option[R])(t: T): MatchResult[R] = ry match {
+    case Some(x) => Match(x)
+    case None => Miss("matchIfDefined: not defined", t)
+  }
+
+  /**
+    * Matches and processes a given input using a function that returns an Option.
+    * NOTE that, whether it's a `Match` or a `Miss`, the result will always be based on `t` and not `f(t)`.
+    *
+    * @param f a function that takes an input of type `T` and returns an `Option[T]`.
+    *          The function defines whether the match succeeds or fails based on
+    *          whether the returned Option is defined.
+    * @param t the input value of type `T` to be matched using the provided function `f`.
+    * @return a `MatchResult[T]` that represents the result of the match operation,
+    *         which encapsulates the input and the outcome of the match.
+    */
+  def matchOptionFunc[T](f: T => Option[T])(t: T): MatchResult[T] = matchIfDefined(f(t))(t)
+
+  /**
+    * Method to convert an Option of MatchResult[R] into a MatchResult of Option[R].
+    *
+    * @param rmo an optional MatchResult[R].
+    * @tparam R the underlying result type.
+    * @return a MatchResult of Option[R].
+    */
+  def sequence[R](rmo: Option[MatchResult[R]]): MatchResult[Option[R]] = rmo match {
+    case Some(rm) => rm.map(Some(_))
+    case None => Match(None)
+  }
+
+  /**
+    * Method to convert a MatchResult of Option[R] into a MatchResult[R].
+    * NOTE this was formerly called `sequence`.
+    *
+    * @param rom a MatchResult of Option[R].
+    * @tparam R the underlying result type.
+    * @return a Match[R] if rom is a Match(Some(r)) otherwise a Miss.
+    */
+  def unpack[R](rom: MatchResult[Option[R]]): MatchResult[R] = rom match {
+    case Match(Some(r)) => Match(r)
+    case _ => Miss("unpack: no match defined", rom)
   }
 
   /**
@@ -2013,37 +2119,6 @@ trait Matchers {
   private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
     if (matchLogger.disabled) (t: T) => tryMatch(f, t)
     else new LoggingMatcher[T, R](f, matcherName)(matchLogger)
-
-  /**
-    * Method to invoke the given function but protected by try/catch.
-    * A MatchError results in a Miss.
-    * Any other non-fatal exception results in an Error.
-    * Fatal exceptions are not caught.
-    *
-    * The purpose of this method is really just so we catch any `MatchError`s.
-    *
-    * @param f the function which takes an input value of T and returns a MatchResult[R].
-    * @param t the (call-by-name) value of T to be passed to f.
-    * @tparam T the input type to f.
-    * @tparam R the output type of f.
-    * @return a MatchResult[R].
-    */
-  private def tryMatch[T, R](f: T => MatchResult[R], t: => T) = try f(t) catch {
-    case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-    case scala.util.control.NonFatal(e) => Error(e)
-  }
-
-  /**
-    * Method to convert an Option of MatchResult[R] into a MatchResult of Option[R].
-    *
-    * @param rmo an optional MatchResult[R].
-    * @tparam R the underlying result type.
-    * @return a MatchResult of Option[R].
-    */
-  private def sequence[R](rmo: Option[MatchResult[R]]): MatchResult[Option[R]] = rmo match {
-    case Some(rm) => rm.map(Some(_))
-    case None => Match(None)
-  }
 
   /**
     * Method to parse the String w according to the given regex and group indexes.
@@ -2149,7 +2224,6 @@ trait Matchers {
     * The parsing is performed using a provided regular expression pattern.
     */
   lazy val floatingPointNumber: Parser[String] = parser("""-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""")
-
 }
 
 /**

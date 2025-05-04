@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
@@ -183,7 +183,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result.successful shouldBe false
   }
   it should "support map" in {
-    val result = m.fail[String, Int]("")("").map(_.toString)
+    val result: m.MatchResult[String] = m.fail[String, Int]("")("").map(_.toString)
     result.successful shouldBe false
     a[MatcherException] shouldBe thrownBy(result.get)
   }
@@ -1209,7 +1209,16 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
     result shouldBe Miss("empty", Nil)
   }
-
+  it should "handle Match(Some(1))" in {
+    unpack(Match(Some(1))) shouldBe Match(1)
+    val value1 = unpack(Match(None))
+    // NOTE not sure that I really like the following behavior!
+    value1 shouldBe Miss("unpack: no match defined", Match(None))
+  }
+  it should "handle Some(Match(1))" in {
+    sequence(Some(Match(1))) shouldBe Match(Some(1))
+    sequence(None) shouldBe Match(None)
+  }
 
   behavior of "sequenceStrict"
   it should "handle all matches" in {
@@ -1236,6 +1245,24 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target: Seq[MatchResult[Int]] = Seq()
     val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
     result shouldBe Match(Nil)
+  }
+
+  behavior of "Try and Option matchers"
+  it should "matchIfDefined" in {
+    matchIfDefined(Some(1))(42) should matchPattern { case Match(1) => }
+    matchIfDefined(None)(42) should matchPattern { case Miss(_, 42) => }
+  }
+  it should "matchIfSuccess" in {
+    matchIfSuccess(Success(1))(42) should matchPattern { case Match(1) => }
+    matchIfSuccess(Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
+  }
+  it should "matchOptionFunc" in {
+    matchOptionFunc(Option[Int])(1) should matchPattern { case Match(1) => }
+    matchOptionFunc[Int](_ => None)(1) should matchPattern { case Miss(_, 1) => }
+  }
+  it should "matchTryFunc" in {
+    matchTryFunc(Success[Int])(1) should matchPattern { case Match(1) => }
+    matchTryFunc[Int](_ => Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
   }
 }
 

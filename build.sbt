@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Matchers"
 
-version := "1.0.8"
+version := "1.0.9-SNAPSHOT"
 
 scalaVersion := "2.13.16"
 
@@ -14,7 +14,7 @@ libraryDependencies += "org.slf4j" % "slf4j-api" % "2.0.17"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 
-libraryDependencies +="ch.qos.logback" % "logback-classic" % "1.5.17" % "test"
+libraryDependencies +="ch.qos.logback" % "logback-classic" % "1.5.18" % "test"
 
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 

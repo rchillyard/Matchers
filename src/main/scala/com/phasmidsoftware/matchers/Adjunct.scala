@@ -11,8 +11,23 @@ import scala.util.matching.Regex
   *               NOTE that the group indexes start at 1.
   */
 case class RegexGroups(regex: Regex, groups: Seq[Int]) {
+  /**
+    * Attempts to match a given `CharSequence` against the regular expression
+    * and extract the selected groups if the match is successful.
+    *
+    * @param s the input `CharSequence` to be matched against the regular expression.
+    * @return an `Option` containing a `List` of the selected group strings
+    *         if the match is successful, or `None` if no match is found.
+    */
   def unapplySeq(s: CharSequence): Option[List[String]] = regex.unapplySeq(s) map selectGroups
 
+  /**
+    * Selects a subset of strings from the provided list based on the pre-defined group indexes.
+    * If no group indexes are defined (i.e., the group list is empty), all elements in the input list are returned.
+    *
+    * @param ws the input list of strings to select groups from.
+    * @return a list of strings corresponding to the selected group indexes, or all strings when no group indexes are specified.
+    */
   private def selectGroups(ws: List[String]): List[String] = groups match {
     case Nil => ws
     case groups => (for (group <- groups) yield ws(group - 1)).toList
@@ -191,6 +206,11 @@ case object LogOff extends LogLevel
   * which defines different logging levels.
   */
 object LogLevel {
+  /**
+    * Implicit value representing the log-off level.
+    * Used as a default log level to disable logging where a `LogLevel`
+    * is required implicitly within the application.
+    */
   implicit val ll: LogLevel = LogOff
 }
 
