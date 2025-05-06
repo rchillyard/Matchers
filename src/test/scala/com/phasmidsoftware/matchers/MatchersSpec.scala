@@ -435,6 +435,35 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     f(1).successful shouldBe true
   }
 
+  behavior of "eitherOr"
+  it should "match 1" in {
+    val m1 = m.namedLift[Int, Int]("m1")(_ * 2)
+    val m2 = m.namedLift[Int, Int]("m2")(_ + 2)
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Match(4) => }
+  }
+
+  it should "match 2" in {
+    val m1 = m.fail("not so fast!")
+    val m2 = m.namedLift[Int, Int]("m2")(_ + 2)
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Match(3) => }
+  }
+
+  it should "match 3" in {
+    val m1 = m.namedLift[Int, Int]("m2")(_ * 2)
+    val m2 = m.fail("not so fast!")
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Match(2) => }
+  }
+
+  it should "miss" in {
+    val m1 = m.fail[Int, Int]("not today!")
+    val m2 = m.fail("not so fast!")
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Miss("not so fast!", 1) => }
+  }
+
   behavior of "valve (1)"
   it should "match 1" in {
     val p: (Int, Int) => Boolean = {

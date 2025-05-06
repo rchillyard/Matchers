@@ -1126,6 +1126,30 @@ trait Matchers {
   }
 
   /**
+    * Combines two `AutoMatcher` instances, attempting to apply the first matcher,
+    * and if it results in a match, passing the result to the second matcher.
+    * If the first matcher fails, the second matcher is applied directly to the input.
+    *
+    * @param m1 The first `AutoMatcher` to be applied to the input.
+    * @param m2 The second `AutoMatcher` to be applied if the first succeeds or fails.
+    * @return A new `AutoMatcher` that represents the combination of the two input matchers.
+    */
+  def eitherOr[R](m1: AutoMatcher[R], m2: AutoMatcher[R]): AutoMatcher[R] = Matcher[R, R]("eitherOr") {
+    r =>
+      m1(r) match {
+        case Match(s1) =>
+          m2(s1) match {
+            case Match(s2) => Match(s2)
+            case Miss(_, _) => Match(s1)
+          }
+        case Miss(_, _) =>
+          m2(r)
+        case Error(x) =>
+          Error(x)
+      }
+  }
+
+  /**
     * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
     *
     * @param m A matcher of type `AutoMatcher[T]`.
