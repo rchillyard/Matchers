@@ -120,7 +120,7 @@ trait Matchers {
       * @tparam S the underlying type of the resulting Matcher.
       * @return a Matcher[T, S] which will match in composition on both this and m.
       */
-    def &[S](m: Matcher[R, S]): Matcher[T, S] = Matcher("|")(t => this (t) & m)
+    def &[S](m: Matcher[R, S]): Matcher[T, S] = Matcher("&")(t => this (t) & m)
 
     /**
       * Method to combine `Matcher`s `this` and `m` such that the resulting `Matcher` takes a ~ and results in a ~.
@@ -1134,20 +1134,8 @@ trait Matchers {
     * @param m2 The second `AutoMatcher` to be applied if the first succeeds or fails.
     * @return A new `AutoMatcher` that represents the combination of the two input matchers.
     */
-  def eitherOr[R](m1: AutoMatcher[R], m2: AutoMatcher[R]): AutoMatcher[R] = Matcher[R, R]("eitherOr") {
-    r =>
-      m1(r) match {
-        case Match(s1) =>
-          m2(s1) match {
-            case Match(s2) => Match(s2)
-            case Miss(_, _) => Match(s1)
-          }
-        case Miss(_, _) =>
-          m2(r)
-        case Error(x) =>
-          Error(x)
-      }
-  }
+  def eitherOr[R](m1: AutoMatcher[R], m2: AutoMatcher[R]): AutoMatcher[R] =
+    m1 & m2 | m1 | m2
 
   /**
     * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
