@@ -1444,6 +1444,26 @@ trait Matchers {
   def opt[T, R](m: Matcher[T, R]): Matcher[T, Option[R]] = Matcher("opt")(t => sequence(Option(t) map m))
 
   /**
+    * Transforms (lifts) a matcher for individual elements into a matcher for sequences of those elements.
+    *
+    * This method applies the provided matcher to each element of the input sequence and aggregates the results.
+    *
+    * @param m the matcher to apply to each element of the sequence
+    * @return a matcher that processes a sequence of elements and matches them based on the provided matcher
+    */
+  def sequence[T, R](m: Matcher[T, R]): Matcher[Seq[T], Seq[R]] = Matcher("sequence")(ts => MatchResult.sequence(for (t <- ts) yield m(t)))
+
+  /**
+    * Transforms (lifts) a matcher for individual elements into a matcher for sequences of those elements.
+    * The returned `Matcher` ensures that all elements in the input sequence are matched using the provided `Matcher`.
+    *
+    * @param m The `Matcher` to apply to each element of the sequence.
+    * @return A `Matcher` that matches a sequence of elements using the provided `Matcher`.
+    * @see MatchResult#sequenceStrict
+    */
+  def sequenceStrict[T, R](m: Matcher[T, R]): Matcher[Seq[T], Seq[R]] = Matcher("sequenceStrict")(ts => MatchResult.sequenceStrict(for (t <- ts) yield m(t)))
+
+  /**
     * Method to match a T, resulting in an R, where the match is indirectly determined by
     * the given lens function.
     *

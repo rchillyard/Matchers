@@ -950,6 +950,38 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     mr should matchPattern { case m.Miss(_, _) => }
   }
 
+  behavior of "Matchers.sequence"
+  it should "succeed with a perfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.lift(w => w.toInt)
+    val strings = Seq("1", "2", "3")
+    m.sequence(matcher)(strings) should matchPattern { case m.Match(Seq(1, 2, 3)) => }
+  }
+  it should "succeed with an imperfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.Matcher("parse Integers")(w => w.toIntOption match {
+      case Some(i) => m.Match(i)
+      case None => m.Miss(s"$w is not an integer", w)
+    })
+    val strings = Seq("1", "X", "3")
+    m.sequence(matcher)(strings) should matchPattern { case m.Match(Seq(1, "X", 3)) => }
+  }
+
+  behavior of "Matchers.sequenceStrict"
+  it should "succeed with a perfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.lift(w => w.toInt)
+    val strings = Seq("1", "2", "3")
+    m.sequenceStrict(matcher)(strings) should matchPattern { case m.Match(Seq(1, 2, 3)) => }
+  }
+  it should "fail with an imperfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.Matcher("parse Integers")(w => w.toIntOption match {
+      case Some(i) => m.Match(i)
+      case None => m.Miss(s"$w is not an integer", w)
+    })
+    val strings = Seq("1", "X", "3")
+    val result = m.sequenceStrict(matcher)(strings)
+    result.successful shouldBe false
+    result should matchPattern { case m.Miss("X is not an integer", Seq("X")) => }
+  }
+
   behavior of "?"
   it should "succeed with a match" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
@@ -1217,7 +1249,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     miss filterNot (r => r % 2 == 1) shouldBe miss
   }
 
-  behavior of "sequence"
+  behavior of "MatchResult.sequence"
   it should "handle all matches" in {
     val target: Seq[MatchResult[Int]] = Seq(Match(1), Match(2), Match(3))
     val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
