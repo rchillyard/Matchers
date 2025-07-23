@@ -2158,6 +2158,21 @@ trait Matchers {
     if (matchLogger.disabled) (t: T) => tryMatch(f, t)
     else new LoggingMatcher[T, R](f, matcherName)(matchLogger)
 
+//  /**
+//    * Private method to construct a Matcher.
+//    * The class of the resulting Matcher is dependent on the value
+//    * of logger (defined by trait Matchers).
+//    *
+//    * @param f           a T => MatchResult[R].
+//    * @param matcherName the name to use for the Matcher (defaults to empty).
+//    * @tparam T the input type.
+//    * @tparam R the result type.
+//    * @return a Matcher[T, R] based on f.
+//    */
+//  private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
+//    if (matchLogger.disabled) (t: T) => tryMatch(f, t)
+//    else new LoggingMatcher[T, R](f, matcherName)(matchLogger)
+
   /**
     * Method to parse the String w according to the given regex and group indexes.
     *

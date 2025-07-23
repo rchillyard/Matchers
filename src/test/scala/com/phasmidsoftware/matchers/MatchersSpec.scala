@@ -1270,15 +1270,17 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
     result shouldBe Miss("empty", Nil)
   }
+  it should "handle Some(Match(1))" in {
+    sequence(Some(Match(1))) shouldBe Match(Some(1))
+    sequence(None) shouldBe Match(None)
+  }
+
+  behavior of "MatchResult.unpack"
   it should "handle Match(Some(1))" in {
     unpack(Match(Some(1))) shouldBe Match(1)
     val value1 = unpack(Match(None))
     // NOTE not sure that I really like the following behavior!
     value1 shouldBe Miss("unpack: no match defined", Match(None))
-  }
-  it should "handle Some(Match(1))" in {
-    sequence(Some(Match(1))) shouldBe Match(Some(1))
-    sequence(None) shouldBe Match(None)
   }
 
   behavior of "sequenceStrict"
