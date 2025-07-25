@@ -19,7 +19,8 @@ case class RegexGroups(regex: Regex, groups: Seq[Int]) {
     * @return an `Option` containing a `List` of the selected group strings
     *         if the match is successful, or `None` if no match is found.
     */
-  def unapplySeq(s: CharSequence): Option[List[String]] = regex.unapplySeq(s) map selectGroups
+  def unapplySeq(s: CharSequence): Option[List[String]] =
+    regex.unapplySeq(s) map selectGroups
 
   /**
     * Selects a subset of strings from the provided list based on the pre-defined group indexes.
@@ -29,8 +30,10 @@ case class RegexGroups(regex: Regex, groups: Seq[Int]) {
     * @return a list of strings corresponding to the selected group indexes, or all strings when no group indexes are specified.
     */
   private def selectGroups(ws: List[String]): List[String] = groups match {
-    case Nil => ws
-    case groups => (for (group <- groups) yield ws(group - 1)).toList
+    case Nil =>
+      ws
+    case groups =>
+      (for (group <- groups) yield ws(group - 1)).toList
   }
 }
 
@@ -242,7 +245,8 @@ class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String =>
     */
   override def apply(w: String): Unit =
     logLevel match {
-      case LogInfo | LogDebug => f(w)
+      case LogInfo | LogDebug =>
+        f(w)
       case _ =>
     }
 }
@@ -266,8 +270,10 @@ class MatchLogger(val logLevel: LogLevel, f: String => Unit) extends ((String =>
   */
 case class Slf4jLogger(override val logLevel: LogLevel, logger: Logger) extends MatchLogger(logLevel, w => {
   logLevel match {
-    case LogInfo => logger.info(w)
-    case LogDebug => logger.debug(w)
+    case LogInfo =>
+      logger.info(w)
+    case LogDebug =>
+      logger.debug(w)
     case _ =>
   }
 })
@@ -309,7 +315,8 @@ object MatchLogger {
     * @param clazz    The class for which the logger will be created, linking log messages to it.
     * @return A `MatchLogger` instance configured with the given log level and class-based logger.
     */
-  def apply(logLevel: LogLevel, clazz: Class[_]): MatchLogger = Slf4jLogger(logLevel, LoggerFactory.getLogger(clazz))
+  def apply(logLevel: LogLevel, clazz: Class[_]): MatchLogger =
+    Slf4jLogger(logLevel, LoggerFactory.getLogger(clazz))
 
   /**
     * Creates a `MatchLogger` instance with the `LogInfo` log level
@@ -319,5 +326,6 @@ object MatchLogger {
     * @return A `MatchLogger` instance configured to log at the `LogInfo` level and
     *         utilize the given SLF4J `Logger` for logging operations.
     */
-  def apply(logger: Logger): MatchLogger = Slf4jLogger(LogInfo, logger)
+  def apply(logger: Logger): MatchLogger =
+    Slf4jLogger(LogInfo, logger)
 }
