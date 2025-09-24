@@ -88,7 +88,7 @@ object RegexGroups {
 }
 
 /**
-  * The tilde class which is basically a Tuple (i.e. Product) with a few extra methods.
+  * The tilde class which is basically a Tuple (i.e., Product) with a few extra methods.
   *
   * @param l the left value.
   * @param r the right value.
@@ -315,7 +315,7 @@ object MatchLogger {
     * @param clazz    The class for which the logger will be created, linking log messages to it.
     * @return A `MatchLogger` instance configured with the given log level and class-based logger.
     */
-  def apply(logLevel: LogLevel, clazz: Class[_]): MatchLogger =
+  def apply(logLevel: LogLevel, clazz: Class[?]): MatchLogger =
     Slf4jLogger(logLevel, LoggerFactory.getLogger(clazz))
 
   /**
