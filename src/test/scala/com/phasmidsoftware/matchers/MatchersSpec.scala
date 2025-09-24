@@ -29,7 +29,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.MatchResult.create[Int, String, Int](m.isEqual)(1, "1", 2) shouldBe m.Miss("create", "1")
   }
   it should "implement apply(T=>R, (Q,R) => Boolean))" in {
-    val v1: m.MatchResult[Int] = m.MatchResult[Int, String, Int]({ s: String => s.toInt }, m.isEqual)(1, "1")
+    val v1: m.MatchResult[Int] = m.MatchResult[Int, String, Int]({ (s: String) => s.toInt }, m.isEqual)(1, "1")
     v1 shouldBe m.Match(1)
     m.MatchResult.create[Int, String, Int](m.isEqual)(1, "1", 2) shouldBe m.Miss("create", "1")
   }

@@ -949,6 +949,7 @@ trait Matchers {
         case (Miss(_, rs: Seq[R]), Miss(w, r)) => Miss(w, rs :+ r)
         case (_, Error(e)) => Error(e)
         case (Error(e), _) => Error(e)
+        case _ => Error(MatcherException("sequence: logic error"))
       }
 
     /**
@@ -973,6 +974,7 @@ trait Matchers {
         case (m@Miss(_, _), _) => m
         case (_, Error(e)) => Error(e)
         case (Error(e), _) => Error(e)
+        case _ => Error(MatcherException("sequenceStrict: logic error"))
       }
   }
 
@@ -1935,6 +1937,7 @@ trait Matchers {
     case Match(t0 ~ t1 ~ t2) => Match(f(t0, t1, t2))
     case Miss(s, t) => Miss(s, t)
     case Error(e) => Error(e)
+    case _ => Error(MatcherException("matchResultTilde3: logic error"))
   }
 
   /**
