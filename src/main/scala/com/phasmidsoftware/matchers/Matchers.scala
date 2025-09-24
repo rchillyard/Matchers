@@ -41,7 +41,8 @@ trait Matchers {
       * @tparam S the result type for the resulting Matcher.
       * @return a Matcher[T, S].
       */
-    def unit[S](s: S): Matcher[T, S] = _ => Match(s)
+    def unit[S](s: S): Matcher[T, S] =
+      _ => Match(s)
 
     /**
       * Map method which transforms this Matcher[T, R] into a Matcher[T, S].
@@ -51,7 +52,8 @@ trait Matchers {
       * @tparam S the result type for the resulting Matcher.
       * @return a Matcher[U, S].
       */
-    def map[U <: T, S](f: R => S): Matcher[U, S] = this (_) map f
+    def map[U <: T, S](f: R => S): Matcher[U, S] =
+      this (_) map f
 
     /**
       * Map method which transforms this Matcher[T, R] into a Matcher[U, S].
@@ -61,7 +63,8 @@ trait Matchers {
       * @tparam S the result type for the resulting Matcher.
       * @return a Matcher[T, S].
       */
-    def flatMap[U <: T, S](f: R => MatchResult[S]): Matcher[U, S] = this (_) flatMap f
+    def flatMap[U <: T, S](f: R => MatchResult[S]): Matcher[U, S] =
+      this (_) flatMap f
 
     /**
       * Method to transform a `MatchResult`.
@@ -82,7 +85,8 @@ trait Matchers {
       * @tparam S the type of both s and the result (a super-type of R).
       * @return a Matcher[T, R] which works in the opposite sense to this.
       */
-    def ![S >: R](s: => S): Matcher[T, S] = not(this, s)
+    def ![S >: R](s: => S): Matcher[T, S] =
+      not(this, s)
 
     /**
       * Defines a `Matcher` that optionally matches what `this` `Matcher` matches.
@@ -303,7 +307,8 @@ trait Matchers {
       * @tparam S the underlying type of the returned MatchResult.
       * @return MatchResult[S].
       */
-    def map[S](f: R => S): MatchResult[S] = flatMap(r => success(f(r)))
+    def map[S](f: R => S): MatchResult[S] =
+      flatMap(r => success(f(r)))
 
     /**
       * FlatMap method.
@@ -426,7 +431,8 @@ trait Matchers {
           Match(r ~ s)
         case (Miss(u, r: R), Miss(v, s: S)) =>
           Miss(s"$u~~$v", r ~ s)
-        case _ => Error(MatcherException(s"~~: logic error (at least one miss with R and S being disparate types): $this ~~ $sm"))
+        case _ =>
+          Error(MatcherException(s"~~: logic error (at least one miss with R and S being disparate types): $this ~~ $sm"))
       }
 
     /**
@@ -488,9 +494,12 @@ trait Matchers {
       * @return A `MatchResult[R]` which is either the current instance if the predicate matches, or a `Miss`.
       */
     def filter(p: R => Boolean): MatchResult[R] = this match {
-      case Match(r) if p(r) => this
-      case Match(_) => Miss(s"filter failed on", this)
-      case _ => this
+      case Match(r) if p(r) =>
+        this
+      case Match(_) =>
+        Miss(s"filter failed on", this)
+      case _ =>
+        this
     }
 
     /**
@@ -503,7 +512,8 @@ trait Matchers {
       * @param p A predicate function that takes a value of type `R` and returns a `Boolean`.
       * @return A `MatchResult[R]` which is either the current instance if the predicate matches, or a `Miss`.
       */
-    def filterNot(p: R => Boolean): MatchResult[R] = filter(!p(_))
+    def filterNot(p: R => Boolean): MatchResult[R] =
+      filter(!p(_))
   }
 
   /**
@@ -559,7 +569,8 @@ trait Matchers {
       * @tparam S the underlying type of s.
       * @return a MatchResult[(R,S)].
       */
-    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = sm.flatMap(z => Match(r ~ z))
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] =
+      sm.flatMap(z => Match(r ~ z))
 
     /**
       * Returns the result of invoking f on r.
@@ -641,9 +652,12 @@ trait Matchers {
       * @throws Throwable (a MatcherException) or other Throwable (e).
       */
     def get: R = x match {
-      case x: Throwable => throw x
-      case w: String => throw MatcherException(s"Unsuccessful: cannot call get: $w")
-      case x => throw MatcherException(s"Unsuccessful: cannot call get: $x")
+      case x: Throwable =>
+        throw x
+      case w: String =>
+        throw MatcherException(s"Unsuccessful: cannot call get: $w")
+      case x =>
+        throw MatcherException(s"Unsuccessful: cannot call get: $x")
     }
 
     /**
@@ -669,8 +683,10 @@ trait Matchers {
       * @return a `Miss` result using the original value t.
       */
     def invert: MatchResult[R] = t match {
-      case r: R => Match(r)
-      case _ => Error(MatcherException("invert: cannot invert Miss: " + t))
+      case r: R =>
+        Match(r)
+      case _ =>
+        Error(MatcherException("invert: cannot invert Miss: " + t))
     }
 
     /**
@@ -715,21 +731,24 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a Miss(msg, t).
       */
-    def guard[S](sm: => MatchResult[S]): MatchResult[S] = Miss(msg, t)
+    def guard[S](sm: => MatchResult[S]): MatchResult[S] =
+      Miss(msg, t)
 
     /**
       * @param sm a MatchResult[S] (ignored).
       * @tparam S the underlying type of s.
       * @return Miss(t).
       */
-    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Miss(msg, t)
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] =
+      Miss(msg, t)
 
     /**
       * @param f a function of R => MatchResult[S] (ignored).
       * @tparam S the underlying type of the returned MatchResult.
       * @return Miss(t).
       */
-    def flatMap[S](f: R => MatchResult[S]): MatchResult[S] = Miss(msg, t)
+    def flatMap[S](f: R => MatchResult[S]): MatchResult[S] =
+      Miss(msg, t)
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -749,12 +768,14 @@ trait Matchers {
       * @tparam U the underlying type of the returned value.
       * @return a MatchResult[T].
       */
-    def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] = Miss(msg, t)
+    def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] =
+      Miss(msg, t)
 
     /**
       * @return a String representing this Miss.
       */
-    override def toString: String = s"Miss: $msg: $t"
+    override def toString: String =
+      s"Miss: $msg: $t"
   }
 
   /**
@@ -850,7 +871,8 @@ trait Matchers {
       */
     def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] = Error(e)
 
-    override def toString: String = s"Error: ${e.getLocalizedMessage}"
+    override def toString: String =
+      s"Error: ${e.getLocalizedMessage}"
   }
 
   /**
@@ -866,8 +888,10 @@ trait Matchers {
       * @return either a Match[R] or an Error[R].
       */
     def apply[R](r: => R): MatchResult[R] = Try(r) match {
-      case Success(x) => Match(x)
-      case Failure(e) => Error(e)
+      case Success(x) =>
+        Match(x)
+      case Failure(e) =>
+        Error(e)
     }
 
     /**
@@ -881,7 +905,11 @@ trait Matchers {
       * @tparam R result type.
       * @return MatchResult[R].
       */
-    def apply[T, R](b: Boolean, t: T, r: R): MatchResult[R] = if (b) Match(r) else Miss("false", t)
+    def apply[T, R](b: Boolean, t: T, r: R): MatchResult[R] =
+      if (b)
+        Match(r)
+      else
+        Miss("false", t)
 
     /**
       * Construct a MatchResult[R] based on an Either[T, R].
@@ -892,8 +920,10 @@ trait Matchers {
       * @return a MatchResult[R]
       */
     def apply[T, R](e: Either[T, R]): MatchResult[R] = e match {
-      case Right(r) => Match(r)
-      case Left(t) => Miss("left", t)
+      case Right(r) =>
+        Match(r)
+      case Left(t) =>
+        Miss("left", t)
     }
 
     /**
@@ -907,7 +937,11 @@ trait Matchers {
       * @tparam R the result type.
       * @return a MatchResult[R].
       */
-    def create[Q, T, R](p: (Q, R) => Boolean)(q: Q, t: T, r: R): MatchResult[R] = if (p(q, r)) Match(r) else Miss("create", t)
+    def create[Q, T, R](p: (Q, R) => Boolean)(q: Q, t: T, r: R): MatchResult[R] =
+      if (p(q, r))
+        Match(r)
+      else
+        Miss("create", t)
 
     /**
       * Yield a MatchResult[R] based on an input value t, a function f, and a predicate p.
@@ -922,7 +956,8 @@ trait Matchers {
       * @tparam R the result type.
       * @return a MatchResult[R].
       */
-    def apply[Q, T, R](f: T => R, p: (Q, R) => Boolean)(q: Q, t: T): MatchResult[R] = MatchResult.create(p)(q, t, f(t))
+    def apply[Q, T, R](f: T => R, p: (Q, R) => Boolean)(q: Q, t: T): MatchResult[R] =
+      MatchResult.create(p)(q, t, f(t))
 
     /**
       * Aggregates a sequence of `MatchResult` objects into a single `MatchResult` containing
@@ -943,12 +978,20 @@ trait Matchers {
       */
     def sequence[R](rms: Seq[MatchResult[R]]): MatchResult[Seq[R]] =
       rms.foldLeft[MatchResult[Seq[R]]](Miss("empty", Seq[R]())) {
-        case (Match(rs), Match(r)) => Match(rs :+ r)
-        case (Miss(_, rs: Seq[R]), Match(r)) => Match(rs :+ r)
-        case (Match(rs: Seq[R]), Miss(_, r: R)) => Match(rs :+ r)
-        case (Miss(_, rs: Seq[R]), Miss(w, r)) => Miss(w, rs :+ r)
-        case (_, Error(e)) => Error(e)
-        case (Error(e), _) => Error(e)
+        case (Match(rs), Match(r)) =>
+          Match(rs :+ r)
+        case (Miss(_, rs: Seq[R]), Match(r)) =>
+          Match(rs :+ r)
+        case (Match(rs: Seq[R]), Miss(_, r: R)) =>
+          Match(rs :+ r)
+        case (Miss(_, rs: Seq[R]), Miss(w, r)) =>
+          Miss(w, rs :+ r)
+        case (_, Error(e)) =>
+          Error(e)
+        case (Error(e), _) =>
+          Error(e)
+        case _ =>
+          Error(MatcherException("sequence: logic error"))
       }
 
     /**
@@ -968,11 +1011,18 @@ trait Matchers {
       */
     def sequenceStrict[R](rms: Seq[MatchResult[R]]): MatchResult[Seq[R]] =
       rms.foldLeft[MatchResult[Seq[R]]](Match(Seq[R]())) {
-        case (Match(rs), Match(r)) => Match(rs :+ r)
-        case (Match(_), Miss(w, r)) => Miss(w, Seq(r))
-        case (m@Miss(_, _), _) => m
-        case (_, Error(e)) => Error(e)
-        case (Error(e), _) => Error(e)
+        case (Match(rs), Match(r)) =>
+          Match(rs :+ r)
+        case (Match(_), Miss(w, r)) =>
+          Miss(w, Seq(r))
+        case (m@Miss(_, _), _) =>
+          m
+        case (_, Error(e)) =>
+          Error(e)
+        case (Error(e), _) =>
+          Error(e)
+        case _ =>
+          Error(MatcherException("sequenceStrict: logic error"))
       }
   }
 
@@ -1041,7 +1091,8 @@ trait Matchers {
     * @tparam R the result type to both `f` and the resulting `Matcher`.
     * @return a `Matcher[T, R]`.
     */
-  def namedLift[T, R](name: String)(f: T => R): Matcher[T, R] = lift[T, R](f).named(name)
+  def namedLift[T, R](name: String)(f: T => R): Matcher[T, R] =
+    lift[T, R](f).named(name)
 
   /**
     * Defines a `Matcher` which always succeeds and creates a `Match` with value `r`.
@@ -1053,7 +1104,8 @@ trait Matchers {
     * @tparam R the result type.
     * @return a `Matcher[T, R]`
     */
-  def success[T, R](r: => R): Matcher[T, R] = Matcher("success")(_ => MatchResult(r))
+  def success[T, R](r: => R): Matcher[T, R] =
+    Matcher("success")(_ => MatchResult(r))
 
   /**
     * Defines a `Matcher` which always fails and creates a `Miss` with the value tried.
@@ -1063,7 +1115,8 @@ trait Matchers {
     * @tparam R the result type.
     * @return a `Matcher[T, R]`
     */
-  def fail[T, R](msg: String): Matcher[T, R] = Matcher(s"fail($msg)")(t => Miss(msg, t))
+  def fail[T, R](msg: String): Matcher[T, R] =
+    Matcher(s"fail($msg)")(t => Miss(msg, t))
 
   /**
     * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `false`.
@@ -1082,7 +1135,8 @@ trait Matchers {
     * @tparam R both the input type and the result type.
     * @return a `AutoMatcher[R]` which always succeeds.
     */
-  def always[R]: AutoMatcher[R] = namedLift("always")(identity)
+  def always[R]: AutoMatcher[R] =
+    namedLift("always")(identity)
 
   /**
     * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `true`.
@@ -1092,7 +1146,8 @@ trait Matchers {
     * @tparam R both the input type and the result type.
     * @return a `AutoMatcher[R]` which succeeds only if `p(r)` is `true`.
     */
-  def filter[R](p: R => Boolean): AutoMatcher[R] = Matcher("filter")(r => Match(r) filter p)
+  def filter[R](p: R => Boolean): AutoMatcher[R] =
+    Matcher("filter")(r => Match(r) filter p)
 
   /**
     * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
@@ -1117,7 +1172,8 @@ trait Matchers {
     * @tparam R both the input type and the result type.
     * @return a `AutoMatcher[R]` which succeeds if `b` is true.
     */
-  def maybe[R](b: Boolean): AutoMatcher[R] = filter[R](_ => b).named("maybe")
+  def maybe[R](b: Boolean): AutoMatcher[R] =
+    filter[R](_ => b).named("maybe")
 
   /**
     * Defines a Matcher which succeeds if the input is equal to the given `r`.
@@ -1127,7 +1183,8 @@ trait Matchers {
     * @tparam R both the input type and the result type.
     * @return a `AutoMatcher[R]`.
     */
-  def matches[R](r: R): AutoMatcher[R] = filter[R](_ == r).named("matches")
+  def matches[R](r: R): AutoMatcher[R] =
+    filter[R](_ == r).named("matches")
 
   /**
     * The `alt` method returns a `Matcher` which tries to match the input `t` according to `m`.
@@ -1139,7 +1196,8 @@ trait Matchers {
     * @tparam T both the type of the input and the underlying type of the output.
     * @return a `AutoMatcher[T]`
     */
-  def alt[T](m: AutoMatcher[T]): AutoMatcher[T] = Matcher[T, T]("alt") {
+  def alt[T](m: AutoMatcher[T]): AutoMatcher[T] =
+    Matcher[T, T]("alt") {
     t => m(t) | success(t)
   }
 
@@ -1196,7 +1254,8 @@ trait Matchers {
     */
   def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = Matcher("valve") {
     // CONSIDER redesign this in terms of other Matchers, not MatchResult
-    case (q, t) => MatchResult(f, p)(q, t)
+    case (q, t) =>
+      MatchResult(f, p)(q, t)
   }
 
   /**
@@ -1211,7 +1270,8 @@ trait Matchers {
     * @return a `Matcher[(Q, R), T]`.
     */
   def valve[Q, T](p: (Q, T) => Boolean): Matcher[(Q, T), T] = Matcher("valve") {
-    case (q, t) => MatchResult.create(p)(q, t, t)
+    case (q, t) =>
+      MatchResult.create(p)(q, t, t)
   }
 
   /**
@@ -1273,7 +1333,8 @@ trait Matchers {
     * @tparam R the underlying type of resulting Parser.
     * @return a Parser[R]
     */
-  def parseWithParser[R](regex: String)(p: Parser[R]): Parser[R] = parseWithParser(regex.r)(p)
+  def parseWithParser[R](regex: String)(p: Parser[R]): Parser[R] =
+    parseWithParser(regex.r)(p)
 
   /**
     * Method to yield a parser af R from a regular expression and groups.
@@ -1284,10 +1345,13 @@ trait Matchers {
     * @tparam R the underlying type of resulting Parser.
     * @return a Parser[R]
     */
-  def parserGroup[R](regexGroups: RegexGroups)(p: Parser[R]): Parser[R] = doParseGroupsWithFunction(regexGroups, "parserGroup") {
-    case List(x) => p(x)
-    case _ => throw MatcherException("parserGroup: no match")
-  }
+  def parserGroup[R](regexGroups: RegexGroups)(p: Parser[R]): Parser[R] =
+    doParseGroupsWithFunction(regexGroups, "parserGroup") {
+      case List(x) =>
+        p(x)
+      case _ =>
+        throw MatcherException("parserGroup: no match")
+    }
 
   /**
     * Method to yield a parser af R from a regular expression and groups.
@@ -1299,7 +1363,8 @@ trait Matchers {
     * @tparam R the underlying type of resulting Parser.
     * @return a Parser[R]
     */
-  def parserGroup[R](regex: Regex, group: Int*)(p: Parser[R]): Parser[R] = parserGroup(RegexGroups(regex, group))(p)
+  def parserGroup[R](regex: Regex, group: Int*)(p: Parser[R]): Parser[R] =
+    parserGroup(RegexGroups(regex, group))(p)
 
   /**
     * Method to yield a parser af R from a regular expression and groups.
@@ -1311,7 +1376,8 @@ trait Matchers {
     * @tparam R the underlying type of resulting Parser.
     * @return a Parser[R]
     */
-  def parserGroup[R](regex: String, group: Int*)(p: Parser[R]): Parser[R] = parserGroup(regex.r, group: _*)(p)
+  def parserGroup[R](regex: String, group: Int*)(p: Parser[R]): Parser[R] =
+    parserGroup(regex.r, group: _*)(p)
 
   /**
     * Method to parse two Strings from a regular expression.
@@ -1319,10 +1385,13 @@ trait Matchers {
     * @param regexGroups an instance of RegexGroups.
     * @return a Parser[String ~ String]
     */
-  def parserTilde(regexGroups: RegexGroups): Parser[String ~ String] = doParseGroupsWithFunction(regexGroups, "parserTilde") {
-    case List(x, y) => Match(x) ~ Match(y)
-    case _ => throw MatcherException("parserTilde: no match")
-  }
+  def parserTilde(regexGroups: RegexGroups): Parser[String ~ String] =
+    doParseGroupsWithFunction(regexGroups, "parserTilde") {
+      case List(x, y) =>
+        Match(x) ~ Match(y)
+      case _ =>
+        throw MatcherException("parserTilde: no match")
+    }
 
   /**
     * Method to parse two Strings from a regular expression.
@@ -1331,7 +1400,8 @@ trait Matchers {
     * @param groups a list of required group indexes, starting at 1 (if empty, then all groups are selected).
     * @return a Parser[String ~ String]
     */
-  def parserTilde(regex: Regex, groups: Int*): Parser[String ~ String] = parserTilde(RegexGroups.create(regex, groups: _*))
+  def parserTilde(regex: Regex, groups: Int*): Parser[String ~ String] =
+    parserTilde(RegexGroups.create(regex, groups: _*))
 
   /**
     * Method to parse two Strings from a regular expression.
@@ -1340,7 +1410,8 @@ trait Matchers {
     * @param groups a list of required group indexes, starting at 1 (if empty, then all groups are selected).
     * @return a Parser[String ~ String]
     */
-  def parserTilde(regex: String, groups: Int*): Parser[String ~ String] = parserTilde(regex.r, groups: _*)
+  def parserTilde(regex: String, groups: Int*): Parser[String ~ String] =
+    parserTilde(regex.r, groups: _*)
 
   /**
     * Parser which succeeds if the input matches the given regular expression.
@@ -1349,7 +1420,8 @@ trait Matchers {
     * @param rg an instance of RegexGroups.
     * @return a Parser[List of Strings].
     */
-  def parserList(rg: RegexGroups): Parser[List[String]] = doParseGroups(rg, _)
+  def parserList(rg: RegexGroups): Parser[List[String]] =
+    doParseGroups(rg, _)
 
   /**
     * Parser which succeeds if the input matches the given regular expression.
@@ -1359,7 +1431,8 @@ trait Matchers {
     * @param groups a list of required group indexes, starting at 1 (if empty, then all groups are selected).
     * @return a Parser[List of Strings].
     */
-  def parserList(regex: Regex, groups: Int*): Parser[List[String]] = parserList(RegexGroups(regex, groups))
+  def parserList(regex: Regex, groups: Int*): Parser[List[String]] =
+    parserList(RegexGroups(regex, groups))
 
   /**
     * Parser which succeeds if the input matches the given regular expression.
@@ -1369,7 +1442,8 @@ trait Matchers {
     * @param groups a list of required group indexes, starting at 1 (if empty, then all groups are selected).
     * @return a Parser[List of Strings].
     */
-  def parserList(regex: String, groups: Int*): Parser[List[String]] = parserList(regex.r, groups: _*)
+  def parserList(regex: String, groups: Int*): Parser[List[String]] =
+    parserList(regex.r, groups: _*)
 
   /**
     * Method to yield a Parser[Z] using the given regex, a function String=>P0 and a function P0=>Z.
@@ -1387,8 +1461,10 @@ trait Matchers {
     */
   def parser1[P0, Z](regex: String, groups: Int*)(p0: Parser[P0])(construct: P0 => Z): Parser[Z] =
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser1") {
-      case List(x) => p0(x) map construct
-      case _ => throw MatcherException("parser1: no match")
+      case List(x) =>
+        p0(x) map construct
+      case _ =>
+        throw MatcherException("parser1: no match")
     }
 
   /**
@@ -1407,10 +1483,13 @@ trait Matchers {
     */
   def parser2[P0, P1, Z](regex: String, groups: Int*)(p0: Parser[P0], p1: Parser[P1])(construct: (P0, P1) => Z): Parser[Z] =
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser2") {
-      case List(x, y) => p0(x) ~ p1(y) map {
-        case u ~ v => construct(u, v)
-      }
-      case _ => throw MatcherException("parser2: no match")
+      case List(x, y) =>
+        p0(x) ~ p1(y) map {
+          case u ~ v =>
+            construct(u, v)
+        }
+      case _ =>
+        throw MatcherException("parser2: no match")
     }
 
   /**
@@ -1431,10 +1510,13 @@ trait Matchers {
     */
   def parser3[P0, P1, P2, Z](regex: String, groups: Int*)(p0: Parser[P0], p1: Parser[P1], p2: Parser[P2])(construct: (P0, P1, P2) => Z): Parser[Z] =
     doParseGroupsWithFunction(RegexGroups.create(regex, groups: _*), "parser3") {
-      case List(x, y, z) => p0(x) ~ p1(y) ~ p2(z) map {
-        case u ~ v ~ w => construct(u, v, w)
-      }
-      case _ => throw MatcherException("parser3: no match")
+      case List(x, y, z) =>
+        p0(x) ~ p1(y) ~ p2(z) map {
+          case u ~ v ~ w =>
+            construct(u, v, w)
+        }
+      case _ =>
+        throw MatcherException("parser3: no match")
     }
 
   /**
@@ -1449,12 +1531,17 @@ trait Matchers {
     * @tparam R the result type of m.
     * @return a `Matcher[T, R]` which works in the opposite sense to this.
     */
-  def not[T, R](m: Matcher[T, R], r: => R): Matcher[T, R] = Matcher("not")(t => m(t) match {
-    case Match(_) => Miss("not", t)
-    case Miss(_, _) => Match(r)
-    case Error(e) => Error(e)
-    case x => throw MatcherException(s"not: logic error: $x")
-  })
+  def not[T, R](m: Matcher[T, R], r: => R): Matcher[T, R] =
+    Matcher("not")(t => m(t) match {
+      case Match(_) =>
+        Miss("not", t)
+      case Miss(_, _) =>
+        Match(r)
+      case Error(e) =>
+        Error(e)
+      case x =>
+        throw MatcherException(s"not: logic error: $x")
+    })
 
   /**
     * `Matcher` which always succeeds but whose result is an `Option[R]`.
@@ -1466,7 +1553,8 @@ trait Matchers {
     * @tparam R the result type of m.
     * @return Matcher[T, Option of R]
     */
-  def opt[T, R](m: Matcher[T, R]): Matcher[T, Option[R]] = Matcher("opt")(t => sequence(Option(t) map m))
+  def opt[T, R](m: Matcher[T, R]): Matcher[T, Option[R]] =
+    Matcher("opt")(t => sequence(Option(t) map m))
 
   /**
     * Transforms (lifts) a matcher for individual elements into a matcher for sequences of those elements.
@@ -1476,7 +1564,8 @@ trait Matchers {
     * @param m the matcher to apply to each element of the sequence
     * @return a matcher that processes a sequence of elements and matches them based on the provided matcher
     */
-  def sequence[T, R](m: Matcher[T, R]): Matcher[Seq[T], Seq[R]] = Matcher("sequence")(ts => MatchResult.sequence(for (t <- ts) yield m(t)))
+  def sequence[T, R](m: Matcher[T, R]): Matcher[Seq[T], Seq[R]] =
+    Matcher("sequence")(ts => MatchResult.sequence(for (t <- ts) yield m(t)))
 
   /**
     * Transforms (lifts) a matcher for individual elements into a matcher for sequences of those elements.
@@ -1486,7 +1575,8 @@ trait Matchers {
     * @return A `Matcher` that matches a sequence of elements using the provided `Matcher`.
     * @see MatchResult#sequenceStrict
     */
-  def sequenceStrict[T, R](m: Matcher[T, R]): Matcher[Seq[T], Seq[R]] = Matcher("sequenceStrict")(ts => MatchResult.sequenceStrict(for (t <- ts) yield m(t)))
+  def sequenceStrict[T, R](m: Matcher[T, R]): Matcher[Seq[T], Seq[R]] =
+    Matcher("sequenceStrict")(ts => MatchResult.sequenceStrict(for (t <- ts) yield m(t)))
 
   /**
     * Method to create a named `Matcher`, based on the given function `f` of form `T => MatchResult[R]`.
@@ -1540,7 +1630,8 @@ trait Matchers {
     * @tparam R the result type.
     * @return a Matcher[T ~ T, R].
     */
-  def *[T, R](m: Matcher[T ~ T, R], commutes: Boolean = true): Matcher[T ~ T, R] = Matcher("*")(m | (maybe[T ~ T](commutes) & swap & m))
+  def *[T, R](m: Matcher[T ~ T, R], commutes: Boolean = true): Matcher[T ~ T, R] =
+    Matcher("*")(m | (maybe[T ~ T](commutes) & swap & m))
 
   /**
     * Matcher which tries m on the given (~~) input.
@@ -1567,9 +1658,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T0]
     */
-  def select2_0[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0] = namedLift("select2_0")(
-    p => p.productElement(0).asInstanceOf[T0]
-  )
+  def select2_0[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0] =
+    namedLift("select2_0")(
+      p => p.productElement(0).asInstanceOf[T0]
+    )
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T1, based on the second element of P.
@@ -1580,9 +1672,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T1]
     */
-  def select2_1[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T1] = namedLift("select2_1")(
-    p => p.productElement(1).asInstanceOf[T1]
-  )
+  def select2_1[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T1] =
+    namedLift("select2_1")(
+      p => p.productElement(1).asInstanceOf[T1]
+    )
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T0, based on the first element of P.
@@ -1594,9 +1687,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T0]
     */
-  def select3_0[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0] = namedLift("select3_0")(
-    p => p.productElement(0).asInstanceOf[T0]
-  )
+  def select3_0[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0] =
+    namedLift("select3_0")(
+      p => p.productElement(0).asInstanceOf[T0]
+    )
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T1, based on the second element of P.
@@ -1608,9 +1702,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T1]
     */
-  def select3_1[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T1] = namedLift("select3_1")(
-    p => p.productElement(1).asInstanceOf[T1]
-  )
+  def select3_1[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T1] =
+    namedLift("select3_1")(
+      p => p.productElement(1).asInstanceOf[T1]
+    )
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a T2, based on the third element of P.
@@ -1622,9 +1717,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T1]
     */
-  def select3_2[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T2] = namedLift("select3_2")(
-    p => p.productElement(2).asInstanceOf[T2]
-  )
+  def select3_2[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T2] =
+    namedLift("select3_2")(
+      p => p.productElement(2).asInstanceOf[T2]
+    )
 
   /**
     * Method to create a Matcher which operates on a similar, but inverted, ~ as m.
@@ -1701,9 +1797,11 @@ trait Matchers {
     * @tparam T1 the second element type.
     * @return a Matcher from T0 ~ T1 to T1 ~ T0.
     */
-  def swap[T0, T1]: Matcher[T0 ~ T1, T1 ~ T0] = namedLift("swap") {
-    case t0 ~ t1 => t1 ~ t0
-  }
+  def swap[T0, T1]: Matcher[T0 ~ T1, T1 ~ T0] =
+    namedLift("swap") {
+      case t0 ~ t1 =>
+        t1 ~ t0
+    }
 
   /**
     * Method to rotate the order of elements in a ~~.
@@ -1713,9 +1811,11 @@ trait Matchers {
     * @tparam T2 the third element type.
     * @return a Matcher[T0 ~ T1 ~ T2, T1 ~ T2 ~ T0].
     */
-  def rotate3[T0, T1, T2]: Matcher[T0 ~ T1 ~ T2, T1 ~ T2 ~ T0] = namedLift("rotate3") {
-    case t0 ~ t1 ~ t2 => t1 ~ t2 ~ t0
-  }
+  def rotate3[T0, T1, T2]: Matcher[T0 ~ T1 ~ T2, T1 ~ T2 ~ T0] =
+    namedLift("rotate3") {
+      case t0 ~ t1 ~ t2 =>
+        t1 ~ t2 ~ t0
+    }
 
   /**
     * Method to create a Matcher of ~~, which succeeds if the third member matches the given Matcher.
@@ -1740,9 +1840,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P, T0 ~ T1].
     */
-  def tilde2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0 ~ T1] = namedLift("tilde2")(
-    p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1]
-  )
+  def tilde2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0 ~ T1] =
+    namedLift("tilde2")(
+      p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1]
+    )
 
   /**
     * Method to create a Matcher, which always succeeds, of a P whose result is a ~~.
@@ -1754,9 +1855,10 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P, T0 ~ T1 ~ T2].
     */
-  def tilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0 ~ T1 ~ T2] = namedLift("tilde3")(
-    p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1] ~ p.productElement(2).asInstanceOf[T2]
-  )
+  def tilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0 ~ T1 ~ T2] =
+    namedLift("tilde3")(
+      p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1] ~ p.productElement(2).asInstanceOf[T2]
+    )
 
   /**
     * Method to create a Matcher, which always succeeds, of a ~ whose result is a P.
@@ -1768,9 +1870,11 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[T0 ~ T1, P].
     */
-  def product2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[T0 ~ T1, P] = namedLift("product2") {
-    case x ~ y => f(x, y)
-  }
+  def product2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[T0 ~ T1, P] =
+    namedLift("product2") {
+      case x ~ y =>
+        f(x, y)
+    }
 
   /**
     * Method to create a Matcher, which always succeeds, of a ~~ whose result is a P.
@@ -1782,9 +1886,11 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[T0 ~ T1 ~ T2, P].
     */
-  def product3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[T0 ~ T1 ~ T2, P] = namedLift("product3") {
-    case x ~ y ~ z => f(x, y, z)
-  }
+  def product3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[T0 ~ T1 ~ T2, P] =
+    namedLift("product3") {
+      case x ~ y ~ z =>
+        f(x, y, z)
+    }
 
   /**
     * Method to invert the order of elements in a ~~.
@@ -1794,10 +1900,11 @@ trait Matchers {
     * @tparam T2 the third element type.
     * @return a Matcher[T0 ~ T1 ~ T2, T2 ~ T1 ~ T0].
     */
-  def invert3[T0, T1, T2]: Matcher[T0 ~ T1 ~ T2, T2 ~ T1 ~ T0] = namedLift("invert3") {
-    case t0 ~ t1 ~ t2 =>
-      t2 ~ t1 ~ t0
-  }
+  def invert3[T0, T1, T2]: Matcher[T0 ~ T1 ~ T2, T2 ~ T1 ~ T0] =
+    namedLift("invert3") {
+      case t0 ~ t1 ~ t2 =>
+        t2 ~ t1 ~ t0
+    }
 
   /**
     * Method to match any element of a Product with two elements.
@@ -1811,8 +1918,9 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R] that matches at least one of the elements of the given P.
     */
-  def matchProduct2Any[T0, T1, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R])(f: (T0, T1) => P): Matcher[P, R] = Matcher("matchProduct2Any")(p =>
-    m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]))
+  def matchProduct2Any[T0, T1, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R])(f: (T0, T1) => P): Matcher[P, R] =
+    Matcher("matchProduct2Any")(p =>
+      m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]))
 
   /**
     * Method to match any element of a ~.
@@ -1828,7 +1936,7 @@ trait Matchers {
     Matcher("match2Any") {
       case t0 ~ t1 =>
         matchProduct2Any(m0, m1)(->.apply)(t0 -> t1)
-  }
+    }
 
   /**
     * Method to match any element of a Product with two elements.
@@ -1844,8 +1952,9 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R] that matches at least one of the elements of the given P.
     */
-  def matchProduct3Any[T0, T1, T2, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R], m2: => Matcher[T2, R])(f: (T0, T1, T2) => P): Matcher[P, R] = Matcher("matchProduct3Any")(p =>
-    m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]) || m2(p.productElement(2).asInstanceOf[T2]))
+  def matchProduct3Any[T0, T1, T2, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R], m2: => Matcher[T2, R])(f: (T0, T1, T2) => P): Matcher[P, R] =
+    Matcher("matchProduct3Any")(p =>
+      m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]) || m2(p.productElement(2).asInstanceOf[T2]))
 
   /**
     * Method to match any element of a Product with two elements.
@@ -1860,8 +1969,9 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R0 ~ R1] that matches at least one of the elements of the given P.
     */
-  def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(f: (T0, T1) => P): Matcher[P, R0 ~ R1] = Matcher("matchProduct2All")(p =>
-    m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]))
+  def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(f: (T0, T1) => P): Matcher[P, R0 ~ R1] =
+    Matcher("matchProduct2All")(p =>
+      m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]))
 
   /**
     * Method to match any element of a Product with two elements.
@@ -1879,8 +1989,9 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R0 ~ R1 ~ R2] that matches at least one of the elements of the given P.
     */
-  def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, R0 ~ R1 ~ R2] = Matcher("matchProduct3All")(p =>
-    m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]) ~ m2(p.productElement(2).asInstanceOf[T2]))
+  def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, R0 ~ R1 ~ R2] =
+    Matcher("matchProduct3All")(p =>
+      m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]) ~ m2(p.productElement(2).asInstanceOf[T2]))
 
   /**
     * Method to match any element of a Tuple3.
@@ -1901,7 +2012,7 @@ trait Matchers {
       case (t0, t1, t2) =>
         val f: (T0, T1, T2) => (T0, T1, T2) = (t0, t1, t2) => Tuple3(t0, t1, t2)
         matchProduct3Any(m0, m1, m2)(f)(t0, t1, t2)
-  }
+    }
 
   /**
     * Method to match all elements of a ~.
@@ -1918,7 +2029,7 @@ trait Matchers {
     Matcher("match2All") {
       case t0 ~ t1 =>
         m0(t0) ~ m1(t1)
-  }
+    }
 
   /**
     * Method to convert a MatchResult[~~] to a MatchResult[P].
@@ -1932,9 +2043,14 @@ trait Matchers {
     * @return a MatchResult[T0 ~ T1 ~ T2, P].
     */
   def matchResultTilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(t: MatchResult[T0 ~ T1 ~ T2]): MatchResult[P] = t match {
-    case Match(t0 ~ t1 ~ t2) => Match(f(t0, t1, t2))
-    case Miss(s, t) => Miss(s, t)
-    case Error(e) => Error(e)
+    case Match(t0 ~ t1 ~ t2) =>
+      Match(f(t0, t1, t2))
+    case Miss(s, t) =>
+      Miss(s, t)
+    case Error(e) =>
+      Error(e)
+    case _ =>
+      Error(MatcherException("matchResultTilde3: logic error"))
   }
 
   /**
@@ -1950,10 +2066,13 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a MatchResult[T0 ~ T1 ~ T2, P].
     */
-  def matchResult3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(r0: MatchResult[T0], r1: MatchResult[T1], r2: MatchResult[T2]): MatchResult[P] = (r0, r1, r2) match {
-    case (Match(t0), Match(t1), Match(t2)) => Match(f(t0, t1, t2))
-    case _ => Miss("matchResult3: not all inputs match", r0 ~ r1 ~ r2)
-  }
+  def matchResult3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P)(r0: MatchResult[T0], r1: MatchResult[T1], r2: MatchResult[T2]): MatchResult[P] =
+    (r0, r1, r2) match {
+      case (Match(t0), Match(t1), Match(t2)) =>
+        Match(f(t0, t1, t2))
+      case _ =>
+        Miss("matchResult3: not all inputs match", r0 ~ r1 ~ r2)
+    }
 
   /**
     * Not sure why we need this but it's here.
@@ -1979,7 +2098,17 @@ trait Matchers {
     * @tparam R the result type of p.
     */
   implicit class MatcherOps[T, R](p: Matcher[T, R]) {
-    def :|(name: => String)(implicit ml: MatchLogger): Matcher[T, R] = new LoggingMatcher[T, R](p, name)(ml)
+    /**
+      * Enhances a Matcher with logging functionality. This method wraps an existing Matcher in a
+      * LoggingMatcher, associating it with a descriptive name and using an implicit `MatchLogger`
+      * to handle logging operations.
+      *
+      * @param name A descriptive name for the matcher, supplied lazily.
+      * @param ml   An instance of `MatchLogger` used for managing logging behavior.
+      * @return A new `Matcher[T, R]` instance enhanced with logging capabilities.
+      */
+    def :|(name: => String)(implicit ml: MatchLogger): Matcher[T, R] =
+      new LoggingMatcher[T, R](p, name)(ml)
   }
 
   /**
@@ -2013,8 +2142,10 @@ trait Matchers {
       */
     def ::-(f: R => Unit, g: String => Unit): MatchResult[R] = {
       rr match {
-        case Match(r) => f(r)
-        case m => g(m.toString)
+        case Match(r) =>
+          f(r)
+        case m =>
+          g(m.toString)
       }
       rr
     }
@@ -2053,8 +2184,10 @@ trait Matchers {
       * @return Parser[List of Strings]
       */
     def regexGroups: Parser[List[String]] = Try(RegexGroups(s.r())) map parserList match {
-      case Success(m) => m
-      case Failure(x) => _ => Error(x)
+      case Success(m) =>
+        m
+      case Failure(x) =>
+        _ => Error(x)
     }
   }
 
@@ -2087,7 +2220,8 @@ trait Matchers {
         //  but you can ignore the warning because, sometimes, `t == r`.
         tryMatch(f, t) :- (r => if (t != r) logger(s"$name: matched $t as $r"))
 
-      case _ => tryMatch(f, t)
+      case _ =>
+        tryMatch(f, t)
     }
 
     /**
@@ -2113,10 +2247,13 @@ trait Matchers {
     * @tparam R the output type of f.
     * @return a MatchResult[R].
     */
-  def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] = try f(t) catch {
-    case e: MatchError => Miss(s"matchError: ${e.getLocalizedMessage}", t)
-    case scala.util.control.NonFatal(e) => Error(e)
-  }
+  def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] =
+    try f(t) catch {
+      case e: MatchError =>
+        Miss(s"matchError: ${e.getLocalizedMessage}", t)
+      case scala.util.control.NonFatal(e) =>
+        Error(e)
+    }
 
   /**
     * Matches the result of a Try operation and produces a MatchResult.
@@ -2127,8 +2264,10 @@ trait Matchers {
     *         or a failure message along with the input value if the Try is a failure
     */
   def matchIfSuccess[T, R](ry: Try[R])(t: T): MatchResult[R] = ry match {
-    case Success(x) => Match(x)
-    case Failure(e) => Miss(e.getMessage, t)
+    case Success(x) =>
+      Match(x)
+    case Failure(e) =>
+      Miss(e.getMessage, t)
   }
 
   /**
@@ -2140,7 +2279,8 @@ trait Matchers {
     * @param t the input value of type T to which the function f is applied
     * @return a MatchResult[T] representing the match results based on the success of the Try.
     */
-  def matchTryFunc[T](f: T => Try[T])(t: T): MatchResult[T] = matchIfSuccess(f(t))(t)
+  def matchTryFunc[T](f: T => Try[T])(t: T): MatchResult[T] =
+    matchIfSuccess(f(t))(t)
 
   /**
     * Matches the input wrapped in an Option and returns a corresponding MatchResult.
@@ -2151,8 +2291,10 @@ trait Matchers {
     *         otherwise returns a Miss with a message and the provided value t.
     */
   def matchIfDefined[T, R](ry: Option[R])(t: T): MatchResult[R] = ry match {
-    case Some(x) => Match(x)
-    case None => Miss("matchIfDefined: not defined", t)
+    case Some(x) =>
+      Match(x)
+    case None =>
+      Miss("matchIfDefined: not defined", t)
   }
 
   /**
@@ -2166,7 +2308,8 @@ trait Matchers {
     * @return a `MatchResult[T]` that represents the result of the match operation,
     *         which encapsulates the input and the outcome of the match.
     */
-  def matchOptionFunc[T](f: T => Option[T])(t: T): MatchResult[T] = matchIfDefined(f(t))(t)
+  def matchOptionFunc[T](f: T => Option[T])(t: T): MatchResult[T] =
+    matchIfDefined(f(t))(t)
 
   /**
     * Method to convert an Option of MatchResult[R] into a MatchResult of Option[R].
@@ -2176,8 +2319,10 @@ trait Matchers {
     * @return a MatchResult of Option[R].
     */
   def sequence[R](rmo: Option[MatchResult[R]]): MatchResult[Option[R]] = rmo match {
-    case Some(rm) => rm.map(Some(_))
-    case None => Match(None)
+    case Some(rm) =>
+      rm.map(Some(_))
+    case None =>
+      Match(None)
   }
 
   /**
@@ -2189,8 +2334,10 @@ trait Matchers {
     * @return a Match[R] if rom is a Match(Some(r)) otherwise a Miss.
     */
   def unpack[R](rom: MatchResult[Option[R]]): MatchResult[R] = rom match {
-    case Match(Some(r)) => Match(r)
-    case _ => Miss("unpack: no match defined", rom)
+    case Match(Some(r)) =>
+      Match(r)
+    case _ =>
+      Miss("unpack: no match defined", rom)
   }
 
   /**
@@ -2235,8 +2382,10 @@ trait Matchers {
     */
   private def doParse(regex: Regex, w: String): MatchResult[String] = {
     val matcher = regex.pattern.matcher(w)
-    if (matcher.matches()) Match(matcher.group())
-    else Miss(s"String $w did not match regex $regex", w)
+    if (matcher.matches())
+      Match(matcher.group())
+    else
+      Miss(s"String $w did not match regex $regex", w)
   }
 
   /**
@@ -2302,12 +2451,13 @@ trait Matchers {
     * @param w  a String to be parsed (in its entirety).
     * @return a MatchResult of a List[String].
     */
-  private def doParseGroups(rg: RegexGroups, w: String): MatchResult[List[String]] = rg.unapplySeq(w) match {
-    case Some(ws) =>
-      Match(ws)
-    case None =>
-      Miss(s"String $w did not match regex ${rg.regex}", w)
-  }
+  private def doParseGroups(rg: RegexGroups, w: String): MatchResult[List[String]] =
+    rg.unapplySeq(w) match {
+      case Some(ws) =>
+        Match(ws)
+      case None =>
+        Miss(s"String $w did not match regex ${rg.regex}", w)
+    }
 
   /**
     * A parser that matches a whole number, which may optionally be negative.
