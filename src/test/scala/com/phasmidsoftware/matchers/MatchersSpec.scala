@@ -1310,6 +1310,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result shouldBe Match(Nil)
   }
 
+  behavior of "lens functions"
+  it should "lens" in {
+    val maybeTheAnswer = Some(42)
+    lens[Option[Int]](_.isDefined)(maybeTheAnswer) shouldBe Match(maybeTheAnswer)
+    lens[Option[Int]](_.isEmpty)(maybeTheAnswer) shouldBe Miss("lens: f evaluates false", maybeTheAnswer)
+  }
+
   behavior of "Try and Option matchers"
   it should "matchIfDefined" in {
     matchIfDefined(Some(1))(42) should matchPattern { case Match(1) => }

@@ -134,7 +134,8 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
-* 1.0.10 Restore CircleCI working
+* 1.0.11 Added lens matching method.
+* 1.0.10 Restore CircleCI working; also implemented Scala 3 version.
 * 1.0.9 
   * Renamed Transformer as AutoMatcher;
   * added a few new methods: eitherOr, sequence, matchIfSuccess, matchIfDefined, unpack, etc. ; 

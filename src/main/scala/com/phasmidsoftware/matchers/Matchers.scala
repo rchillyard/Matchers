@@ -1119,17 +1119,6 @@ trait Matchers {
     Matcher(s"fail($msg)")(t => Miss(msg, t))
 
   /**
-    * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `false`.
-    * The result will be named "filterNot."
-    *
-    * @param p a predicate on type `R`.
-    * @tparam R both the input type and the result type.
-    * @return a `AutoMatcher[R]` which succeeds only if `p(r)` is `false`.
-    */
-  def filterNot[R](p: R => Boolean): AutoMatcher[R] =
-    Matcher("filterNot")(r => Match(r).filterNot(p))
-
-  /**
     * Defines a `Matcher` which always succeeds and whose input type and result type are the same.
     *
     * @tparam R both the input type and the result type.
@@ -1148,6 +1137,17 @@ trait Matchers {
     */
   def filter[R](p: R => Boolean): AutoMatcher[R] =
     Matcher("filter")(r => Match(r).filter(p))
+
+  /**
+    * Defines a `Matcher` which succeeds only if the predicate `p` evaluates to `false`.
+    * The result will be named "filterNot."
+    *
+    * @param p a predicate on type `R`.
+    * @tparam R both the input type and the result type.
+    * @return a `AutoMatcher[R]` which succeeds only if `p(r)` is `false`.
+    */
+  def filterNot[R](p: R => Boolean): AutoMatcher[R] =
+    Matcher("filterNot")(r => Match(r) filterNot p)
 
   /**
     * Creates a matcher that checks if all elements in a sequence satisfy the given matcher.
@@ -2296,6 +2296,18 @@ trait Matchers {
     case None =>
       Miss("matchIfDefined: not defined", t)
   }
+
+  /**
+    * Evaluates a predicate function on a value of type `R` and returns a result
+    * indicating whether the predicate was satisfied.
+    *
+    * @param f a predicate function that takes an argument of type `R` and returns a boolean.
+    * @param r the value of type `R` to be evaluated by the predicate function.
+    * @return a `MatchResult[R]` which is a `Match` if the predicate evaluates to true,
+    *         or a `Miss` containing a message and the evaluated value if the predicate evaluates to false.
+    */
+  def lens[R](f: R => Boolean)(r: R): MatchResult[R] =
+    if (f(r)) Match(r) else Miss("lens: f evaluates false", r)
 
   /**
     * Matches and processes a given input using a function that returns an Option.
