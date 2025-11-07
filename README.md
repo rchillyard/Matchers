@@ -10,7 +10,7 @@
 # Matchers
 A library of composable matchers.
 If you're familiar with the _Parsers_ class from the Scala parser-combinators library, you should be fairly
-comfortable with the **Matchers**.
+comfortable with **Matchers**.
 
 The chief difference between _Parsers_ and **Matchers** is that, whereas _Parsers_ defines two parametric types via
 the type alias mechanism and one parametric type of the _ParseResult_ type.
@@ -134,6 +134,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.12 Minor changes including making the code more idiomatic for Scala 3.
 * 1.0.11 Added lens matching method.
 * 1.0.10 Restore CircleCI working; also implemented Scala 3 version.
 * 1.0.9 
