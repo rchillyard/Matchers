@@ -388,6 +388,7 @@ trait Matchers {
     /**
       * Composition method.
       * If this `MatchResult` is a success, then return the value of matcher `m` applied to the result.
+      * If this is a `Miss`, then return this.
       *
       * @param m a call-by-name Matcher of S to T.
       * @tparam S the underlying type of the input to m (S is a super-class of R).
@@ -634,6 +635,17 @@ trait Matchers {
   }
 
   /**
+    * Companion object for the `Match` class providing factory methods.
+    *
+    * This object allows the creation of `MatchResult` instances by comparing two
+    * values of type `R`. If the two values are equal, a `Match` is constructed, and
+    * a message indicating the match result is printed to the standard error stream.
+    *
+    */
+  object Match {
+  }
+
+  /**
     * Unsuccessful match of type dependent on `X`.
     *
     * TODO eliminate `X` (or `R`?) from the type signature.
@@ -764,15 +776,14 @@ trait Matchers {
 
     /**
       * Composition method.
-      * If this MatchResult is successful then return the value of m applied to the result.
       *
       * @param m a Matcher of S to T.
       * @tparam S the underlying type of the input to m (S is a super-class of R).
       * @tparam U the underlying type of the returned value.
-      * @return a MatchResult[T].
+      * @return a Miss[U] with the same message as this.
       */
     def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] =
-      Miss(msg, t)
+      Miss(msg, t) // NOTE essentially, `this`.
 
     /**
       * @return a String representing this Miss.
@@ -927,6 +938,21 @@ trait Matchers {
         Match(r)
       case Left(t) =>
         Miss("left", t)
+    }
+
+    /**
+      * Compares two input values of the same type and returns a `MatchResult` based on their equality.
+      * There is a side-effect of printing a message to the standard error stream indicating the match result.
+      * This method is intended primarily for debugging purposes.
+      *
+      * @param r The first value to compare.
+      * @param o The second value to compare.
+      * @tparam R the type of the values being compared to create the match result.
+      * @return A `MatchResult` containing the first value if the comparison succeeds.
+      */
+    def apply[R](r: R, o: R): MatchResult[R] = {
+      if (r == o) System.err.println(s"Match: $r (unchanged)")
+      Match(r)
     }
 
     /**
@@ -1341,13 +1367,13 @@ trait Matchers {
     parseWithParser(regex.r)(p)
 
   /**
-    * Method to yield a parser af R from a regular expression and groups.
+    * Method to yield a parser af `R` from a regular expression and groups.
     * There must be only one matching group.
     *
     * @param regexGroups an instance of RegexGroups.
-    * @param p           a Parser[R].
-    * @tparam R the underlying type of resulting Parser.
-    * @return a Parser[R]
+    * @param p           a `Parser[R]`.
+    * @tparam R the underlying type of the resulting `Parser`.
+    * @return a `Parser[R]`
     */
   def parserGroup[R](regexGroups: RegexGroups)(p: Parser[R]): Parser[R] =
     doParseGroupsWithFunction(regexGroups, "parserGroup") {
@@ -2275,15 +2301,15 @@ trait Matchers {
   }
 
   /**
-    * Matches the result of applying a given function to a value encapsulated in a Try,
-    * ensuring it is successful.
-    * NOTE that, whether it's a `Match` or a `Miss`, the result will always be based on `t` and not `f(t)`.
+    * Creates a `MatchResult[R]` from applying a given `T => Try[R]` function to a value of T.
+    * NOTE this replaces the previous (1.0.12) version which had only one parametric type (`T`).
+    * It will be backwards-compatible but providing the types are not explicitly specified.
     *
-    * @param f a function that takes a value of type T and returns a Try[T]
-    * @param t the input value of type T to which the function f is applied
-    * @return a MatchResult[T] representing the match results based on the success of the Try.
+    * @param f A function that takes an input of type `T` and returns a `Try` of type `R`.
+    * @param t The input value of type `T` to be processed by the function `f`.
+    * @return A `MatchResult` of type `R`, which represents the result of matching the successful outcome of `f(t)`.
     */
-  def matchTryFunc[T](f: T => Try[T])(t: T): MatchResult[T] =
+  def matchTryFunc[T, R](f: T => Try[R])(t: T): MatchResult[R] =
     matchIfSuccess(f(t))(t)
 
   /**
@@ -2314,17 +2340,15 @@ trait Matchers {
     if f(r) then Match(r) else Miss("lens: f evaluates false", r)
 
   /**
-    * Matches and processes a given input using a function that returns an Option.
-    * NOTE that, whether it's a `Match` or a `Miss`, the result will always be based on `t` and not `f(t)`.
+    * Creates a `MatchResult[R]` from applying a given `T => Option[R]` function to a value of `T`.
+    * NOTE this replaces the previous (1.0.12) version which had only one parametric type (`T`).
+    * It will be backwards-compatible but providing the types are not explicitly specified.
     *
-    * @param f a function that takes an input of type `T` and returns an `Option[T]`.
-    *          The function defines whether the match succeeds or fails based on
-    *          whether the returned Option is defined.
-    * @param t the input value of type `T` to be matched using the provided function `f`.
-    * @return a `MatchResult[T]` that represents the result of the match operation,
-    *         which encapsulates the input and the outcome of the match.
+    * @param f A function that takes an input of type `T` and returns an `Option[R]`.
+    * @param t The input of type `T` to which the function `f` is applied.
+    * @return A `MatchResult[R]` based on the result of applying the function `f` to the input `t`.
     */
-  def matchOptionFunc[T](f: T => Option[T])(t: T): MatchResult[T] =
+  def matchOptionFunc[T, R](f: T => Option[R])(t: T): MatchResult[R] =
     matchIfDefined(f(t))(t)
 
   /**

@@ -31,7 +31,7 @@ Perhaps the simplest place to start is with the || method:
 
 If _this_ is successful, then it is returned as is.
 Otherwise, _sm_ will be returned.
-Note that _MatchResult[R]_ is a subtype of _MatchResult[S]_ because the parametric type of _MatchResult_ is covariant,
+Note that _MatchResult[R]_ is a subtype of _MatchResult[S]_ because the parametric type of _MatchResult_ is covariant
 and because _R_ is a subtype of _S_.
 
 There is a similar method defined as |:
@@ -47,7 +47,7 @@ type must include two values of two disparate types:
     def &&[S](sm: => MatchResult[S]): MatchResult[R ~ S]
 
 The result of the && method will be successful only if _sm_ is also successful.
-In this case, the result will a tuple of the two results.
+In this case, the result will be a tuple of the two results.
 
 # Parsing
 Any _Matcher_ whose input is a _String_ can be referred to as a _Parser_ (a type alias).
@@ -57,7 +57,7 @@ There are simple numeric parsers, for example:
     val p = m.parserInt
     p("12345") shouldBe m.Match(12345)
 
-It is easy to create matchers which parse regular expressions (without having to depend on Scala Parser Combinators).
+It is easy to create matchers that parse regular expressions (without having to depend on Scala Parser Combinators).
 For example:
 
     import matchers._
@@ -99,13 +99,13 @@ This can be interpreted as defining a matcher which takes an _Expression_ and re
 If _matchBiFunction_ succeeds,
 AND if one of the following matchers succeeds (tried in sequence), then a _Match[Expression]_ will result.
 The intermediate result is a Tuple3.
-The final _:| "biFunctionSimplifier"_ is a logging matcher which can be turned on for easier debugging but otherwise does not affect
+The final _:| "biFunctionSimplifier"_ is a logging matcher that can be turned on for easier debugging but otherwise does not affect
 the result.
 
     def matchSimplifyPlus: Matcher[(ExpressionBiFunction, Expression, Expression), Expression] =
       matchDyadicBranches(Sum) & *(matchBiFunctionConstantResult(Product, Number(-1), Number.zero)) :| "matchSimplifyPlus"
 
-This can be interpreted as defining a matcher which takes the tuple returned by the _matchBiFunction_ above,
+This can be interpreted as defining a matcher which takes the tuple returned by the _matchBiFunction_ above
 and returns an _Expression_.
 If _matchDyadicBranches(Sum)_ succeeds (where _Sum_ is basically the "plus" operator),
 AND if the following matcher succeeds, then a _Match[Expression]_ will result.
@@ -117,14 +117,14 @@ Debugging/Logging
 =================
 By default, matchers are not named (the default name is "").
 it is easy to name matchers, either by using the _Matchers_ method (with name parameter) or the following mechanism:
-After any matcher reference, you can invoke the :| operator with a String representing the name and this will
-turn on logging for just that .
+After any matcher reference, you can invoke the `:|` operator with a String representing the name and this will
+turn on logging for just that.
 For example,
 
     import m.MatcherOps
     val p = m.success(1) :| "success(1)"
 
-Note that somewhere you will have to import the _MatcherOps_ in order to make the :| operator available.
+Note that somewhere you will have to import the _MatcherOps_ in order to make the `:|` operator available.
 
 The second change you need to make to enable debugging/logging is to set the _LogLevel_ by defining an implicit val of that type.
 The default value is _LogOff_, but you also have _LogDebug_ and _LogInfo_ available.
@@ -134,6 +134,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.13 Changed the signatures of _matchTryFunc_ and _matchOptionFunc_.
 * 1.0.12 Minor changes including making the code more idiomatic for Scala 3.
 * 1.0.11 Added lens matching method.
 * 1.0.10 Restore CircleCI working; also implemented Scala 3 version.
@@ -142,7 +143,7 @@ Version
   * added a few new methods: eitherOr, sequence, matchIfSuccess, matchIfDefined, unpack, etc. ; 
 * 1.0.8 Mostly documentation but also...
   * Added methods: sequence, sequenceStrict, identify, invert, "~~";
-  * introduced Transformer type;
+  * introduced the Transformer type;
   * renamed logger as matchLogger.
 * 1.0.7 Filter method added for MatchResult.
 * 1.0.6 Match sequences.

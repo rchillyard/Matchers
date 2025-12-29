@@ -103,9 +103,14 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result = m.success(0)("") || m.fail("")("")
     result.successful shouldBe true
   }
-  it should "support &" in {
+  it should "support & (1)" in {
     val result = m.success(0)("") & m.success[Any, Int](0)
     result.successful shouldBe true
+  }
+  it should "support & (2)" in {
+    val result = m.fail("")(1) & m.success[Any, Int](0)
+    result.successful shouldBe false
+    result should matchPattern { case m.Miss("fail: ", _) => }
   }
   it should "support &&" in {
     val result = m.success(0)("") ~ m.success(1)("")
@@ -140,6 +145,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result: m.MatchResult[String ~ Int] = m.Miss("", "") ~~ m.Match(0)
     result.successful shouldBe true
     result.get shouldBe "" ~ 0
+  }
+  it should "warn when original is the same" in {
+    val x = 1
+    val m1 = m.MatchResult(x, x) // should complain in Console
+    m1 should matchPattern { case m.Match(1) => }
+    val m2 = m.MatchResult(x, 2)
+    m1 should matchPattern { case m.Match(1) => }
   }
 
   behavior of "Miss"
@@ -1342,11 +1354,11 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
   it should "matchOptionFunc" in {
     matchOptionFunc(Option[Int])(1) should matchPattern { case Match(1) => }
-    matchOptionFunc[Int](_ => None)(1) should matchPattern { case Miss(_, 1) => }
+    matchOptionFunc[Int, Int](_ => None)(1) should matchPattern { case Miss(_, 1) => }
   }
   it should "matchTryFunc" in {
     matchTryFunc(Success[Int])(1) should matchPattern { case Match(1) => }
-    matchTryFunc[Int](_ => Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
+    matchTryFunc[Int, Int](_ => Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
   }
 }
 
