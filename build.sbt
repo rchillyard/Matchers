@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Matchers"
 
-version := "1.0.13"
+version := "1.0.14"
 
 scalaVersion := "3.7.3"
 
@@ -14,7 +14,7 @@ val scalaTestVersion = "3.2.19"
 libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-api" % "2.0.17",
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-    "ch.qos.logback" % "logback-classic" % "1.5.23" % "test"
+    "ch.qos.logback" % "logback-classic" % "1.5.32" % "test"
 )
 
 libraryDependencies += "org.slf4j" % "slf4j-api" % "2.0.17"

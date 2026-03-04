@@ -24,6 +24,11 @@ There are three subclasses of _MatchResult_[_R_]:
 * case class Miss[T, R](msg: String, t: T)
 * case class Error[R](e: Throwable)
 
+## Safe creation of Match
+The _Match_ class has a "of" method which takes a value of type _R_ and returns a _MatchResult_[_R]_.
+The parameter of type _R_ is call-by-name and if an exception is thrown, that exception will be thrown (and not converted to an Error).
+This is useful for situations where the expression being passed into Match throws an exception, which otherwise would tend to disappear.
+
 # Composition of MatchResult
 Perhaps the simplest place to start is with the || method:
 
@@ -134,6 +139,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.0.14 Added safe "of" method for creating a Match.
 * 1.0.13 Changed the signatures of _matchTryFunc_ and _matchOptionFunc_.
 * 1.0.12 Minor changes including making the code more idiomatic for Scala 3.
 * 1.0.11 Added lens matching method.

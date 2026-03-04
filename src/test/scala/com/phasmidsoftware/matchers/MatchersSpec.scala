@@ -1,5 +1,6 @@
 package com.phasmidsoftware.matchers
 
+import com.phasmidsoftware.matchers.Matchers.matchers
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import org.scalatest.flatspec.AnyFlatSpec
@@ -279,6 +280,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.Error[Int](noSuchElementException) ~~ m.Miss("empty", "") should matchPattern { case m.Error(_) => }
     m.Miss("empty", "") ~~ m.Error[Int](noSuchElementException) should matchPattern { case m.Error(_) => }
     m.Error[Int](noSuchElementException) ~~ m.Error[Int](noSuchElementException) should matchPattern { case m.Error(_) => }
+  }
+
+  behavior of "Match.of"
+  it should "throw an exception on a bad expression" in {
+    intercept[MatcherException] {
+      m.Match.of(1 / 0)
+    }
   }
 
   behavior of "Matcher class"
@@ -577,6 +585,15 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val u: m.MatchResult[String ~ Int] = m.swap(t)
     u shouldBe m.Match("1" ~ 1)
   }
+
+  behavior of "commutative"
+//  it should "work with | 1 or 2" in {
+//    val f = m.matches((1,2))
+//    val g = m.matches((2,1))
+//    val matcher: matchers.Matcher[(Int, Int), (Int, Int)] = commutative(f, g)
+//    matcher(1 -> 2).successful shouldBe true
+//    matcher(2 -> 1).successful shouldBe true
+//  }
 
   behavior of "*"
   it should "work with default parameter" in {

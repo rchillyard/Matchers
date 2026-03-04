@@ -643,6 +643,24 @@ trait Matchers {
     *
     */
   object Match {
+    /**
+      * Evaluates a lazily-provided block of code and returns a `MatchResult` encapsulating
+      * the value if evaluation is successful. If the evaluation fails with an exception,
+      * the exception is wrapped and rethrown as a `MatcherException`.
+      *
+      * CONSIDER whether we should return an Error instead of throwing an exception.
+      *
+      * @param t The lazily-evaluated block of code whose result is to be encapsulated in a `MatchResult`.
+      * @return A `MatchResult` encapsulating the successfully evaluated value of `t`.
+      * @throws MatcherException If the evaluation of the block `t` throws an exception.
+      */
+    def of[T](t: => T): MatchResult[T] =
+      Try(t) match {
+        case Success(value) =>
+          new Match(value)
+        case Failure(e) =>
+          throw MatcherException("Exception thrown in evaluation of parameter t", e)  // don't swallow it — let it surface
+      }
   }
 
   /**
@@ -1644,9 +1662,32 @@ trait Matchers {
     */
   private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
     if matchLogger.disabled then
-      (t: T) => tryMatch(f, t)
+      (t: T) =>
+//        if (matcherName.nonEmpty) System.err.println(s"Matcher: $matcherName applied to: $t")
+        tryMatch(f, t)
     else
       new LoggingMatcher[T, R](f, matcherName)(matchLogger)
+
+  /**
+    * Combines two `Matcher` instances to create a commutative matcher.
+    * The resulting matcher succeeds if either the first matcher or the second matcher succeeds
+    * when tested with the input in either order.
+    *
+    * @param ma the first `Matcher` to be combined.
+    * @param mb the second `Matcher` to be combined.
+    * @tparam U the type of the input elements for the matchers.
+    * @tparam S the result type of the matchers.
+    * @return   */
+//  def commutative[U, S](ma: Matcher[(U, U), S], mb: Matcher[(U, U), S]): Matcher[(U, U), S] = Matcher("commutative") {
+//    (t1, t2) =>
+//      val mu1: Matcher(U ~ U, S) = Matcher{u1 ~ u2 => ma(u1 -> u2)}
+//
+//      val matcher: Matcher[U ~ U , S] = (
+//              *(ma, mb, true)
+//      )
+//
+//  }
+//    ma(t1, t2) || mb(t2, t1))
 
   /**
     * Matcher which tries m on the given (~) input.
@@ -2279,6 +2320,7 @@ trait Matchers {
     */
   def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] =
     try f(t) catch {
+      case e: MatcherException => throw e  // let these surface for now, at least. CONSIDER what to do with them.
       case e: MatchError =>
         Miss(s"matchError: ${e.getLocalizedMessage}", t)
       case scala.util.control.NonFatal(e) =>
