@@ -672,7 +672,7 @@ trait Matchers {
     * @tparam X the type of x.
     * @tparam R the result-type of this.
     */
-  abstract class Unsuccessful[+R, X](x: X) extends MatchResult[R] {
+  sealed abstract class Unsuccessful[+R, X](x: X) extends MatchResult[R] {
     /**
       *
       * @return false.
@@ -699,6 +699,22 @@ trait Matchers {
       * @param f a function of R => Unit (ignored).
       */
     def foreach(f: R => Unit): Unit = ()
+  }
+
+  /**
+    * Extractor object for matching unsuccessful `MatchResult` values.
+    *
+    * The `Unsuccessful` object serves as a pattern to extract information 
+    * from instances of `MatchResult` that represent an unsuccessful match. 
+    * It matches error cases and provides access to the underlying details 
+    * (either an exception or a message) wrapped in a `Left` or `Right`.
+    */
+  object Unsuccessful {
+    def unapply(x: MatchResult[?]): Option[Either[Throwable, String]] = x match {
+      case Error(e) => Some(Left(e))
+      case Miss(msg, _) => Some(Right(msg))
+      case _ => None
+    }
   }
 
   /**
@@ -2320,7 +2336,6 @@ trait Matchers {
     */
   def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] =
     try f(t) catch {
-      case e: MatcherException => throw e  // let these surface for now, at least. CONSIDER what to do with them.
       case e: MatchError =>
         Miss(s"matchError: ${e.getLocalizedMessage}", t)
       case scala.util.control.NonFatal(e) =>

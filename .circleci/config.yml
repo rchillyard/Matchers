@@ -1,8 +1,8 @@
-# Scala CircleCI 2.0 configuration file
+# Scala CircleCI 2.1 configuration file for Matchers
 #
 # Check https://circleci.com/docs/2.0/sample-config/ for more details
 #
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
@@ -31,12 +31,30 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
-      - run: cat /dev/null | sbt test:compile
+      # Compile
+      - run:
+          name: Compile
+          command: cat /dev/null | sbt compile
 
+      # Save dependency cache
       - save_cache:
           paths:
-            - ~/.m2
-          key: v1-dependencies--{{ checksum "build.sbt" }}
+            - ~/.sbt
+            - ~/.ivy2/cache
+            - ~/.cache/coursier
+          key: v1-dependencies-{{ checksum "build.sbt" }}
 
-      # run tests!
-      - run: cat /dev/null | sbt test:test
+      # Run tests
+      - run:
+          name: Test
+          command: cat /dev/null | sbt test
+
+      # Generate scaladoc (catches doc warnings in CI)
+      - run:
+          name: Doc
+          command: cat /dev/null | sbt doc
+
+workflows:
+  build-and-test:
+    jobs:
+      - build

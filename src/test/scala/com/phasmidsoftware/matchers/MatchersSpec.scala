@@ -282,10 +282,36 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.Error[Int](noSuchElementException) ~~ m.Error[Int](noSuchElementException) should matchPattern { case m.Error(_) => }
   }
 
+  behavior of "Unsuccessful"
+
+  it should "match exception" in {
+    val target = m.error[Unit](noSuchElementException)
+    target(()) should matchPattern { case m.Unsuccessful(Left(e: NoSuchElementException)) => }
+  }
+
+  it should "match string" in {
+    val target = m.fail("error")
+    val value = target(1)
+    value should matchPattern { case m.Unsuccessful(Right("fail: error")) => }
+  }
+
+
   behavior of "Match.of"
   it should "throw an exception on a bad expression" in {
     intercept[MatcherException] {
       m.Match.of(1 / 0)
+    }
+  }
+  it should "throw an exception on a bad pattern" in {
+    intercept[MatcherException] {
+      m.Match.of(1 / 0)
+    }
+  }
+
+  behavior of "Match.apply"
+  it should "throw an exception on a bad expression" in {
+    intercept[ArithmeticException] {
+      m.Match(1 / 0)
     }
   }
 
@@ -1381,3 +1407,9 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
 case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () })
 
+object BadPattern {
+  def unapply(s: Any): Option[String] = s match {
+    case s: String => Some(s)
+    case _ => None
+  }
+}
