@@ -1403,6 +1403,18 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     matchTryFunc(Success[Int])(1) should matchPattern { case Match(1) => }
     matchTryFunc[Int, Int](_ => Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
   }
+
+  behavior of "recursive matchers"
+  it should "throw MatcherException when a matcher is directly recursive via |" in {
+    pending // Issue #14 fully resolved.
+    lazy val recursive: AutoMatcher[Int] = recursive | success(42)
+    an[MatcherException] should be thrownBy recursive(0)
+  }
+  it should "not throw when two different matchers are combined with |" in {
+    val m1: AutoMatcher[Int] = filter(_ > 0)
+    val m2: AutoMatcher[Int] = success(42)
+    noException should be thrownBy (m1 | m2)(0)
+  }
 }
 
 case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () })

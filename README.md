@@ -1,6 +1,6 @@
+![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/matchers_3/badge.svg?color=blue)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/454847cac6214df8986ef2dec68e5049)](https://www.codacy.com/gh/rchillyard/Matchers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rchillyard/Matchers&amp;utm_campaign=Badge_Grade)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.phasmidsoftware/matchers_2.13/badge.svg?color=blue)](https://maven-badges.herokuapp.com/maven-central/com.phasmidsoftware_2.13/matchers/)
-[![CircleCI](https://circleci.com/gh/rchillyard/Matchers.svg?style=svg)](https://circleci.com/gh/rchillyard/Matchers)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Matchers/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Matchers/tree/main)
 ![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Matchers)
 ![GitHub](https://img.shields.io/github/license/rchillyard/Matchers)
 ![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Matchers)
@@ -139,7 +139,9 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
-* 1.0.14 Added safe "of" method for creating a Match.
+* 1.0.16 Redundant evaluations in `eitherOr` method resolved.
+* 1.0.15 Reverted throwing of exceptions wrapped in `Error` (such exceptions properly propagate now).
+* 1.0.14 Added safe `of` method for constructing a `Match`, with throwing of any exception wrapped in `Error`.
 * 1.0.13 Changed the signatures of _matchTryFunc_ and _matchOptionFunc_.
 * 1.0.12 Minor changes including making the code more idiomatic for Scala 3.
 * 1.0.11 Added lens matching method.
