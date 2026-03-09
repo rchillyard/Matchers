@@ -282,10 +282,36 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.Error[Int](noSuchElementException) ~~ m.Error[Int](noSuchElementException) should matchPattern { case m.Error(_) => }
   }
 
+  behavior of "Unsuccessful"
+
+  it should "match exception" in {
+    val target = m.error[Unit](noSuchElementException)
+    target(()) should matchPattern { case m.Unsuccessful(Left(e: NoSuchElementException)) => }
+  }
+
+  it should "match string" in {
+    val target = m.fail("error")
+    val value = target(1)
+    value should matchPattern { case m.Unsuccessful(Right("fail: error")) => }
+  }
+
+
   behavior of "Match.of"
   it should "throw an exception on a bad expression" in {
     intercept[MatcherException] {
       m.Match.of(1 / 0)
+    }
+  }
+  it should "throw an exception on a bad pattern" in {
+    intercept[MatcherException] {
+      m.Match.of(1 / 0)
+    }
+  }
+
+  behavior of "Match.apply"
+  it should "throw an exception on a bad expression" in {
+    intercept[ArithmeticException] {
+      m.Match(1 / 0)
     }
   }
 
@@ -1377,7 +1403,25 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     matchTryFunc(Success[Int])(1) should matchPattern { case Match(1) => }
     matchTryFunc[Int, Int](_ => Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
   }
+
+  behavior of "recursive matchers"
+  it should "throw MatcherException when a matcher is directly recursive via |" in {
+    pending // Issue #14 fully resolved.
+    lazy val recursive: AutoMatcher[Int] = recursive | success(42)
+    an[MatcherException] should be thrownBy recursive(0)
+  }
+  it should "not throw when two different matchers are combined with |" in {
+    val m1: AutoMatcher[Int] = filter(_ > 0)
+    val m2: AutoMatcher[Int] = success(42)
+    noException should be thrownBy (m1 | m2)(0)
+  }
 }
 
 case class SBLogger(override val logLevel: LogLevel, sb: StringBuilder) extends MatchLogger(logLevel, { w => sb.append(s"$w\n"); () })
 
+object BadPattern {
+  def unapply(s: Any): Option[String] = s match {
+    case s: String => Some(s)
+    case _ => None
+  }
+}

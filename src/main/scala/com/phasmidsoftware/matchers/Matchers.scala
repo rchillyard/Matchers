@@ -106,6 +106,8 @@ trait Matchers {
       * NOTE: if equals is not properly implemented for type `T`, it is possible to get into an infinite recursion.
       * This is actually Issue #14.
       *
+      * NOTE: self-referential matchers via | will cause a StackOverflowError; no lightweight fix is known
+      *
       * @param m the alternative Matcher.
       * @return a Matcher[T, R] which will match either on this or on m.
       */
@@ -114,11 +116,8 @@ trait Matchers {
         this (t) match {
           case x@Match(_) =>
             x
-          // CONSIDER this is an attempt to avoid infinite recursion. No idea if it works.
-          case _ if m != this =>
-            m(t)
           case _ =>
-            throw MatcherException("recursive matcher")
+            m(t)
         }
     )
 
@@ -672,7 +671,7 @@ trait Matchers {
     * @tparam X the type of x.
     * @tparam R the result-type of this.
     */
-  abstract class Unsuccessful[+R, X](x: X) extends MatchResult[R] {
+  sealed abstract class Unsuccessful[+R, X](x: X) extends MatchResult[R] {
     /**
       *
       * @return false.
@@ -699,6 +698,30 @@ trait Matchers {
       * @param f a function of R => Unit (ignored).
       */
     def foreach(f: R => Unit): Unit = ()
+
+    /** Cast this `Unsuccessful` to an `Unsuccessful` of a different result type.
+      * This is safe because `Unsuccessful` is a failed result — the result type `R` is phantom
+      * (no value of type `R` is ever produced). Since `MatchResult` is covariant in `R`,
+      * the cast is logically sound even though it cannot be verified at compile time
+      * due to erasure.
+      */
+    protected def retype[S]: MatchResult[S] = this.asInstanceOf[MatchResult[S]]
+  }
+
+  /**
+    * Extractor object for matching unsuccessful `MatchResult` values.
+    *
+    * The `Unsuccessful` object serves as a pattern to extract information
+    * from instances of `MatchResult` that represent an unsuccessful match.
+    * It matches error cases and provides access to the underlying details
+    * (either an exception or a message) wrapped in a `Left` or `Right`.
+    */
+  object Unsuccessful {
+    def unapply(x: MatchResult[?]): Option[Either[Throwable, String]] = x match {
+      case Error(e) => Some(Left(e))
+      case Miss(msg, _) => Some(Right(msg))
+      case _ => None
+    }
   }
 
   /**
@@ -731,13 +754,6 @@ trait Matchers {
     def identify(w: String): MatchResult[R] = Miss(w, t)
 
     /**
-      * @param f a function of R => S (ignored)
-      * @tparam S the underlying type of the returned MatchResult.
-      * @return Miss(t).
-      */
-    override def map[S](f: R => S): MatchResult[S] = Miss(msg, t)
-
-    /**
       * Method to get the value of this MatchResult, otherwise return the parameter s.
       *
       * @param s a call-by-name value to be used if this is unsuccessful.
@@ -764,24 +780,21 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a Miss(msg, t).
       */
-    def guard[S](sm: => MatchResult[S]): MatchResult[S] =
-      Miss(msg, t)
+    def guard[S](sm: => MatchResult[S]): MatchResult[S] = retype
 
     /**
       * @param sm a MatchResult[S] (ignored).
       * @tparam S the underlying type of s.
       * @return Miss(t).
       */
-    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] =
-      Miss(msg, t)
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = retype
 
     /**
       * @param f a function of R => MatchResult[S] (ignored).
       * @tparam S the underlying type of the returned MatchResult.
       * @return Miss(t).
       */
-    def flatMap[S](f: R => MatchResult[S]): MatchResult[S] =
-      Miss(msg, t)
+    def flatMap[S](f: R => MatchResult[S]): MatchResult[S] = retype
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -800,8 +813,7 @@ trait Matchers {
       * @tparam U the underlying type of the returned value.
       * @return a Miss[U] with the same message as this.
       */
-    def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] =
-      Miss(msg, t) // NOTE essentially, `this`.
+    def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] = retype
 
     /**
       * @return a String representing this Miss.
@@ -830,7 +842,7 @@ trait Matchers {
       *
       * @return the current `MatchResult`.
       */
-    def invert: MatchResult[R] = Error(e)
+    def invert: MatchResult[R] = retype
 
     /**
       *
@@ -838,7 +850,7 @@ trait Matchers {
       * @tparam S the underlying type of the returned MatchResult.
       * @return Error(e).
       */
-    override def map[S](f: R => S): MatchResult[S] = Error(e)
+    override def map[S](f: R => S): MatchResult[S] = retype
 
     /**
       * Method to get the value of this MatchResult, otherwise return the parameter s.
@@ -856,7 +868,7 @@ trait Matchers {
       * @tparam S the underlying type of the result and a super-class of R.
       * @return sm.
       */
-    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+    def orElse[S >: R](sm: => MatchResult[S]): MatchResult[S] = retype
 
     /**
       * Method to compose this MatchResult with sm.
@@ -867,21 +879,21 @@ trait Matchers {
       * @tparam S the type of the resulting MatchResult.
       * @return a MatchResult[S].
       */
-    def guard[S](sm: => MatchResult[S]): MatchResult[S] = Error(e)
+    def guard[S](sm: => MatchResult[S]): MatchResult[S] = retype
 
     /**
       * @param sm a MatchResult[S] (ignored).
       * @tparam S the underlying type of s.
       * @return Error(t).
       */
-    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = Error(e)
+    def andThen[S](sm: => MatchResult[S]): MatchResult[R ~ S] = retype
 
     /**
       * @param f a function of R => MatchResult[S].
       * @tparam S the underlying type of the returned MatchResult.
       * @return Error(e).
       */
-    def flatMap[S](f: R => MatchResult[S]): MatchResult[S] = Error(e)
+    def flatMap[S](f: R => MatchResult[S]): MatchResult[S] = retype
 
     /**
       * Alternation method which takes a Matcher as the alternative.
@@ -890,7 +902,7 @@ trait Matchers {
       * @param m a Matcher of Any to R.
       * @return m(t).
       */
-    def |[S >: R](m: => Matcher[Any, S]): MatchResult[S] = Error(e)
+    def |[S >: R](m: => Matcher[Any, S]): MatchResult[S] = retype
 
     /**
       * Composition method.
@@ -901,7 +913,7 @@ trait Matchers {
       * @tparam U the underlying type of the returned value.
       * @return a MatchResult[T].
       */
-    def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] = Error(e)
+    def &[S >: R, U](m: => Matcher[S, U]): MatchResult[U] = retype
 
     override def toString: String =
       s"Error: ${e.getLocalizedMessage}"
@@ -1254,12 +1266,24 @@ trait Matchers {
     * and if it results in a match, passing the result to the second matcher.
     * If the first matcher fails, the second matcher is applied directly to the input.
     *
+    * The logic is essentially `m1 & m2 | m1 | m2` but that results in over-evaluation.
+    *
     * @param m1 The first `AutoMatcher` to be applied to the input.
     * @param m2 The second `AutoMatcher` to be applied if the first succeeds or fails.
     * @return A new `AutoMatcher` that represents the combination of the two input matchers.
     */
   def eitherOr[R](m1: AutoMatcher[R], m2: AutoMatcher[R]): AutoMatcher[R] =
-    m1 & m2 | m1 | m2
+    Matcher("eitherOr") { t =>
+      m1(t) match {
+        case r1@Match(v) =>
+          m2(v) match {
+            case r2@Match(_) => r2   // both matched
+            case _ => r1   // only m1
+          }
+        case _ =>
+          m2(t)                      // m1 missed, try m2 on original
+      }
+    }
 
   /**
     * Creates a matcher that checks if any element in a sequence satisfies the given matcher.
@@ -2074,7 +2098,7 @@ trait Matchers {
     * @param m2 the Matcher corresponding to the third element.
     * @tparam T0 the input type for the first Matcher.
     * @tparam T1 the input type for the second Matcher.
-    * @tparam T2 the input type for the second Matcher.
+    * @tparam T2 the input type for the third Matcher.
     * @tparam R  the MatchResult type.
     * @return a Matcher[(T0, T1, T2), R] that matches at least one of the elements of the given tuple.
     */
@@ -2145,13 +2169,21 @@ trait Matchers {
         Miss("matchResult3: not all inputs match", r0 ~ r1 ~ r2)
     }
 
-  /**
-    * Not sure why we need this but it's here.
+  /** Convenience predicate for use with `create` and similar methods that require
+    * a `(Q, R) => Boolean` argument.
+    *
+    * Example:
+    * {{{
+    *   MatchResult.create(isEqual)(expectedValue, inputValue, resultValue)
+    * }}}
+    *
+    * This is equivalent to `_ == _` but can be passed by name where a
+    * named function reference is cleaner than a lambda.
     *
     * @param q a control value.
     * @param r a result value.
     * @tparam R the common type.
-    * @return true if they are the same.
+    * @return true if q == r.
     */
   def isEqual[R](q: R, r: R): Boolean = q == r
 
@@ -2305,29 +2337,6 @@ trait Matchers {
   }
 
   /**
-    * Method to invoke the given function but protected by try/catch.
-    * A MatchError results in a Miss.
-    * Any other non-fatal exception results in an Error.
-    * Fatal exceptions are not caught.
-    *
-    * The purpose of this method is really just so we catch any `MatchError`s.
-    *
-    * @param f the function which takes an input value of T and returns a MatchResult[R].
-    * @param t the (call-by-name) value of T to be passed to f.
-    * @tparam T the input type to f.
-    * @tparam R the output type of f.
-    * @return a MatchResult[R].
-    */
-  def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] =
-    try f(t) catch {
-      case e: MatcherException => throw e  // let these surface for now, at least. CONSIDER what to do with them.
-      case e: MatchError =>
-        Miss(s"matchError: ${e.getLocalizedMessage}", t)
-      case scala.util.control.NonFatal(e) =>
-        Error(e)
-    }
-
-  /**
     * Matches the result of a Try operation and produces a MatchResult.
     *
     * @param ry the Try instance representing a successful or failed computation
@@ -2454,6 +2463,28 @@ trait Matchers {
 //  private def constructMatcher[T, R](f: T => MatchResult[R], matcherName: String = ""): Matcher[T, R] =
 //    if (matchLogger.disabled) (t: T) => tryMatch(f, t)
 //    else new LoggingMatcher[T, R](f, matcherName)(matchLogger)
+
+  /**
+    * Method to invoke the given function but protected by try/catch.
+    * A MatchError results in a Miss.
+    * Any other non-fatal exception results in an Error.
+    * Fatal exceptions are not caught.
+    *
+    * The purpose of this method is really just so we catch any `MatchError`s.
+    *
+    * @param f the function which takes an input value of T and returns a MatchResult[R].
+    * @param t the (call-by-name) value of T to be passed to f.
+    * @tparam T the input type to f.
+    * @tparam R the output type of f.
+    * @return a MatchResult[R].
+    */
+  private def tryMatch[T, R](f: T => MatchResult[R], t: => T): MatchResult[R] =
+    try f(t) catch {
+      case e: MatchError =>
+        Miss(s"matchError: ${e.getLocalizedMessage}", t)
+      case scala.util.control.NonFatal(e) =>
+        Error(e)
+    }
 
   /**
     * Method to parse the String w according to the given regex and group indexes.

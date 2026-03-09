@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Matchers"
 
-version := "1.0.14"
+version := "1.0.16-SNAPSHOT"
 
 scalaVersion := "3.7.3"
 
@@ -20,6 +20,3 @@ libraryDependencies ++= Seq(
 libraryDependencies += "org.slf4j" % "slf4j-api" % "2.0.17"
 
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
-
-//libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
-
