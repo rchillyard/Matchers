@@ -1,14 +1,15 @@
 package com.phasmidsoftware.matchers
 
+import com.phasmidsoftware.matchers.Matchers.matchers
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
-  import Matchers._
+  import Matchers.*
 
   private val m = matchers
 
@@ -29,7 +30,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.MatchResult.create[Int, String, Int](m.isEqual)(1, "1", 2) shouldBe m.Miss("create", "1")
   }
   it should "implement apply(T=>R, (Q,R) => Boolean))" in {
-    val v1: m.MatchResult[Int] = m.MatchResult[Int, String, Int]({ s: String => s.toInt }, m.isEqual)(1, "1")
+    val v1: m.MatchResult[Int] = m.MatchResult[Int, String, Int]({ (s: String) => s.toInt }, m.isEqual)(1, "1")
     v1 shouldBe m.Match(1)
     m.MatchResult.create[Int, String, Int](m.isEqual)(1, "1", 2) shouldBe m.Miss("create", "1")
   }
@@ -103,9 +104,14 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result = m.success(0)("") || m.fail("")("")
     result.successful shouldBe true
   }
-  it should "support &" in {
+  it should "support & (1)" in {
     val result = m.success(0)("") & m.success[Any, Int](0)
     result.successful shouldBe true
+  }
+  it should "support & (2)" in {
+    val result = m.fail("")(1) & m.success[Any, Int](0)
+    result.successful shouldBe false
+    result should matchPattern { case m.Miss("fail: ", _) => }
   }
   it should "support &&" in {
     val result = m.success(0)("") ~ m.success(1)("")
@@ -141,6 +147,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result.successful shouldBe true
     result.get shouldBe "" ~ 0
   }
+  it should "warn when original is the same" in {
+    val x = 1
+    val m1 = m.MatchResult(x, x) // should complain in Console
+    m1 should matchPattern { case m.Match(1) => }
+    val m2 = m.MatchResult(x, 2)
+    m1 should matchPattern { case m.Match(1) => }
+  }
 
   behavior of "Miss"
 
@@ -148,7 +161,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   it should "support toString" in {
     val target = m.fail("error")
-    target(1).toString shouldBe "Miss: error: 1"
+    target(1).toString shouldBe "Miss: fail: error: 1"
   }
   it should "support successful" in {
     m.fail("error")("").successful shouldBe false
@@ -183,7 +196,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     result.successful shouldBe false
   }
   it should "support map" in {
-    val result = m.fail[String, Int]("")("").map(_.toString)
+    val result: m.MatchResult[String] = m.fail[String, Int]("")("").map(_.toString)
     result.successful shouldBe false
     a[MatcherException] shouldBe thrownBy(result.get)
   }
@@ -269,13 +282,20 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     m.Error[Int](noSuchElementException) ~~ m.Error[Int](noSuchElementException) should matchPattern { case m.Error(_) => }
   }
 
+  behavior of "Match.of"
+  it should "throw an exception on a bad expression" in {
+    intercept[MatcherException] {
+      m.Match.of(1 / 0)
+    }
+  }
+
   behavior of "Matcher class"
 
   it should "support map" in {
     val target = new m.Matcher[String, Int] {
       def apply(v1: String): m.MatchResult[Int] = m.Match(v1.toInt)
     }
-    val q: m.Parser[Double] = target map (_.toDouble)
+    val q: m.Parser[Double] = target.map(_.toDouble)
     q("1") shouldBe m.Match(1.0)
   }
   it should "support flatMap" in {
@@ -426,13 +446,54 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
 
   behavior of "alt"
-  it should "match 1" in {
+  it should "match 1/1: 1" in {
     val f = m.alt(m.matches(1))
     f(1).successful shouldBe true
+    f(1).get shouldBe 1
   }
-  it should "match 2" in {
+  it should "match 1/2: 2" in {
+    val f = m.alt(m.matches(1))
+    f(2).successful shouldBe true
+    f(2).get shouldBe 2
+  }
+  it should "match 2/1: 1" in {
     val f = m.alt(m.matches(2))
     f(1).successful shouldBe true
+    f(1).get shouldBe 1
+  }
+  it should "match 2/2: 2" in {
+    val f = m.alt(m.matches(2))
+    f(2).successful shouldBe true
+    f(2).get shouldBe 2
+  }
+
+  behavior of "eitherOr"
+  it should "match 1" in {
+    val m1 = m.namedLift[Int, Int]("m1")(_ * 2)
+    val m2 = m.namedLift[Int, Int]("m2")(_ + 2)
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Match(4) => }
+  }
+
+  it should "match 2" in {
+    val m1 = m.fail("not so fast!")
+    val m2 = m.namedLift[Int, Int]("m2")(_ + 2)
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Match(3) => }
+  }
+
+  it should "match 3" in {
+    val m1 = m.namedLift[Int, Int]("m2")(_ * 2)
+    val m2 = m.fail("not so fast!")
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Match(2) => }
+  }
+
+  it should "miss" in {
+    val m1 = m.fail[Int, Int]("not today!")
+    val m2 = m.fail("not so fast!")
+    val f = m.eitherOr(m1, m2)
+    f(1) should matchPattern { case m.Miss("fail: not so fast!", 1) => }
   }
 
   behavior of "valve (1)"
@@ -483,13 +544,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "work for first form" in {
     val target = m.lift[String, Int](_.toInt)
     val p = m.valve[Int, Int] { case (q, r) => q == r }
-    val z = target chain p
+    val z = target.chain(p)
     z(1, "1").successful shouldBe true
   }
   it should "work for second form" in {
     val target = m.lift[String, Int](_.toInt)
     val p = m.matches[(String, Int)](("1", 1))
-    val z = target chain p
+    val z = target.chain(p)
     z("1", "1") shouldBe m.Match(("1", 1))
   }
 
@@ -525,16 +586,25 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     u shouldBe m.Match("1" ~ 1)
   }
 
+  behavior of "commutative"
+//  it should "work with | 1 or 2" in {
+//    val f = m.matches((1,2))
+//    val g = m.matches((2,1))
+//    val matcher: matchers.Matcher[(Int, Int), (Int, Int)] = commutative(f, g)
+//    matcher(1 -> 2).successful shouldBe true
+//    matcher(2 -> 1).successful shouldBe true
+//  }
+
   behavior of "*"
   it should "work with default parameter" in {
     val t = 1 ~ 2
-    val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
     m.*(p)(t).successful shouldBe true
   }
   it should "not work with false" in {
     val t = 1 ~ 2
-    val p: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(2))
     p(t).successful shouldBe false
     m.*(p, commutes = false)(t).successful shouldBe false
   }
@@ -542,62 +612,62 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "**"
   it should "match 1 with commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(1))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(1))
     p(t).successful shouldBe true
     m.**(p)(t).successful shouldBe true
   }
   it should "match 2 with commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
     p(t).successful shouldBe false
     m.**(p)(t).successful shouldBe true
   }
   it should "match 3 with commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(3))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(3))
     p(t).successful shouldBe false
     m.**(p)(t).successful shouldBe true
   }
   it should "fail without commuting" in {
     val t = 1 ~ 2 ~ 3
-    val p: m.Matcher[Int ~ Int ~ Int, Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
+    val p: m.AutoMatcher[Int ~ Int ~ Int] = m.filter3_0(m.matches(2))
     m.**(p, commutes = false)(t).successful shouldBe false
   }
 
   behavior of "filter"
   it should "filter2_0" in {
     val t = 1 ~ 2
-    val p1: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(2))
+    val p1: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(2))
     p1(t).successful shouldBe false
-    val p2: m.Matcher[Int ~ Int, Int ~ Int] = m.filter2_0(m.matches(1))
+    val p2: m.AutoMatcher[Int ~ Int] = m.filter2_0(m.matches(1))
     p2(t).successful shouldBe true
   }
   it should "filter2_1" in {
     val t = "1" ~ 2
-    val p1: m.Matcher[String ~ Int, String ~ Int] = m.filter2_1(m.matches(2))
+    val p1: m.AutoMatcher[String ~ Int] = m.filter2_1(m.matches(2))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int, String ~ Int] = m.filter2_1(m.matches(1))
+    val p2: m.AutoMatcher[String ~ Int] = m.filter2_1(m.matches(1))
     p2(t).successful shouldBe false
   }
   it should "filter3_0" in {
     val t = "1" ~ 2 ~ 3.0
-    val p1: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_0(m.matches("1"))
+    val p1: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_0(m.matches("1"))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_0(m.matches("2"))
+    val p2: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_0(m.matches("2"))
     p2(t).successful shouldBe false
   }
   it should "filter3_1" in {
     val t = "1" ~ 2 ~ 3.0
-    val p1: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_1(m.matches(2))
+    val p1: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_1(m.matches(2))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_1(m.matches(1))
+    val p2: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_1(m.matches(1))
     p2(t).successful shouldBe false
   }
   it should "filter3_2" in {
     val t = "1" ~ 2 ~ 3.0
-    val p1: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_2(m.matches(3.0))
+    val p1: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_2(m.matches(3.0))
     p1(t).successful shouldBe true
-    val p2: m.Matcher[String ~ Int ~ Double, String ~ Int ~ Double] = m.filter3_2(m.matches(0))
+    val p2: m.AutoMatcher[String ~ Int ~ Double] = m.filter3_2(m.matches(0))
     p2(t).successful shouldBe false
   }
 
@@ -644,35 +714,35 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "select"
   it should "select2_0" in {
     case class Complex(r: Double, i: Double)
-    val z: m.Matcher[Complex, Double] = m.select2_0(Complex)
+    val z: m.Matcher[Complex, Double] = m.select2_0(Complex.apply)
     val result = z(Complex(1, 0))
     result.successful shouldBe true
     result.getOrElse(0) shouldBe 1
   }
   it should "select2_1" in {
     case class Complex(r: Double, i: Double)
-    val z: m.Matcher[Complex, Double] = m.select2_1(Complex)
+    val z: m.Matcher[Complex, Double] = m.select2_1(Complex.apply)
     val result = z(Complex(1, 0))
     result.successful shouldBe true
     result.getOrElse(Double.NaN) shouldBe 0
   }
   it should "select3_0" in {
     case class Vector(x: String, y: Int, z: Double)
-    val z: m.Matcher[Vector, Double] = m.select3_0(Vector)
+    val z: m.Matcher[Vector, Double] = m.select3_0(Vector.apply)
     val result = z(Vector("1", 0, 0.5))
     result.successful shouldBe true
     result.getOrElse("") shouldBe "1"
   }
   it should "select3_1" in {
     case class Vector(x: String, y: Int, z: Double)
-    val z: m.Matcher[Vector, Int] = m.select3_1(Vector)
+    val z: m.Matcher[Vector, Int] = m.select3_1(Vector.apply)
     val result = z(Vector("1", 0, 0.5))
     result.successful shouldBe true
     result.getOrElse(-1) shouldBe 0
   }
   it should "select3_2" in {
     case class Vector(x: String, y: Int, z: Double)
-    val z: m.Matcher[Vector, Double] = m.select3_2(Vector)
+    val z: m.Matcher[Vector, Double] = m.select3_2(Vector.apply)
     val result = z(Vector("1", 0, 0.5))
     result.successful shouldBe true
     result.getOrElse(Double.NaN) shouldBe 0.5
@@ -695,28 +765,28 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "succeed with toInt and 0" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.success(0)
-    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(p, q)(StringPair)
+    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(p, q)(StringPair.apply)
     val tuple = StringPair("1", "")
     r(tuple).successful shouldBe true
   }
   it should "succeed with toInt and fail" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.fail("")
-    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(p, q)(StringPair)
+    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(p, q)(StringPair.apply)
     val tuple = StringPair("1", "")
     r(tuple).successful shouldBe true
   }
   it should "succeed with fail and toInt" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.fail("")
-    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(q, p)(StringPair)
+    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(q, p)(StringPair.apply)
     val tuple = StringPair("", "1")
     r(tuple).successful shouldBe true
   }
   it should "fail with fail and fail" in {
     val p: m.Parser[Int] = m.fail("")
     val q: m.Parser[Int] = m.fail("")
-    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(p, q)(StringPair)
+    val r: m.Matcher[StringPair, Int] = m.matchProduct2Any(p, q)(StringPair.apply)
     val tuple = StringPair("1", "")
     r(tuple).successful shouldBe false
   }
@@ -725,7 +795,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "succeed with toInt and 0" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
     val q: m.Parser[Int] = m.success(0)
-    val r: m.Matcher[StringPair, Int ~ Int] = m.matchProduct2All(p, q)(StringPair)
+    val r: m.Matcher[StringPair, Int ~ Int] = m.matchProduct2All(p, q)(StringPair.apply)
     val tuple = StringPair("1", "")
     r(tuple).successful shouldBe true
   }
@@ -754,33 +824,33 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "tilde2"
   it should "work" in {
-    val p: m.Matcher[StringPair, String ~ String] = m.tilde2(StringPair)
+    val p: m.Matcher[StringPair, String ~ String] = m.tilde2(StringPair.apply)
     p(StringPair("x", "y")) should matchPattern { case m.Match("x" ~ "y") => }
   }
 
   behavior of "tilde3"
   it should "work" in {
-    val p: m.Matcher[Triple, String ~ String ~ Int] = m.tilde3(Triple)
+    val p: m.Matcher[Triple, String ~ String ~ Int] = m.tilde3(Triple.apply)
     p(Triple("x", "y", 1)) should matchPattern { case m.Match("x" ~ "y" ~ 1) => }
   }
 
   behavior of "product2"
   it should "one-way" in {
-    val p: m.Matcher[String ~ String, StringPair] = m.product2(StringPair)
+    val p: m.Matcher[String ~ String, StringPair] = m.product2(StringPair.apply)
     p("x" ~ "y") should matchPattern { case m.Match(StringPair("x", "y")) => }
   }
   it should "round-trip" in {
-    val p: m.Matcher[StringPair, StringPair] = m.tilde2(StringPair) & m.product2(StringPair)
+    val p: m.Matcher[StringPair, StringPair] = m.tilde2(StringPair.apply) & m.product2(StringPair.apply)
     p(StringPair("x", "y")) should matchPattern { case m.Match(StringPair("x", "y")) => }
   }
 
   behavior of "product3"
   it should "one-way" in {
-    val p: m.Matcher[String ~ String ~ Int, Triple] = m.product3(Triple)
+    val p: m.Matcher[String ~ String ~ Int, Triple] = m.product3(Triple.apply)
     p("x" ~ "y" ~ 1) should matchPattern { case m.Match(Triple("x", "y", 1)) => }
   }
   it should "round-trip" in {
-    val p: m.Matcher[Triple, Triple] = m.tilde3(Triple) & m.product3(Triple)
+    val p: m.Matcher[Triple, Triple] = m.tilde3(Triple.apply) & m.product3(Triple.apply)
     p(Triple("x", "y", 1)) should matchPattern { case m.Match(Triple("x", "y", 1)) => }
   }
 
@@ -921,6 +991,38 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     mr should matchPattern { case m.Miss(_, _) => }
   }
 
+  behavior of "Matchers.sequence"
+  it should "succeed with a perfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.lift(w => w.toInt)
+    val strings = Seq("1", "2", "3")
+    m.sequence(matcher)(strings) should matchPattern { case m.Match(Seq(1, 2, 3)) => }
+  }
+  it should "succeed with an imperfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.Matcher("parse Integers")(w => w.toIntOption match {
+      case Some(i) => m.Match(i)
+      case None => m.Miss(s"$w is not an integer", w)
+    })
+    val strings = Seq("1", "X", "3")
+    m.sequence(matcher)(strings) should matchPattern { case m.Match(Seq(1, "X", 3)) => }
+  }
+
+  behavior of "Matchers.sequenceStrict"
+  it should "succeed with a perfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.lift(w => w.toInt)
+    val strings = Seq("1", "2", "3")
+    m.sequenceStrict(matcher)(strings) should matchPattern { case m.Match(Seq(1, 2, 3)) => }
+  }
+  it should "fail with an imperfect sequence" in {
+    val matcher: m.Matcher[String, Int] = m.Matcher("parse Integers")(w => w.toIntOption match {
+      case Some(i) => m.Match(i)
+      case None => m.Miss(s"$w is not an integer", w)
+    })
+    val strings = Seq("1", "X", "3")
+    val result = m.sequenceStrict(matcher)(strings)
+    result.successful shouldBe false
+    result should matchPattern { case m.Miss("X is not an integer", Seq("X")) => }
+  }
+
   behavior of "?"
   it should "succeed with a match" in {
     val p: m.Parser[Int] = m.lift(_.toInt)
@@ -1016,30 +1118,30 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
   it should "parser2 rating with two required parameters" in {
     case class Rating(code: String, age: Int)
-    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)""")(m.always, m.parserInt)(Rating)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)""")(m.always, m.parserInt)(Rating.apply)
     p("PG-13") shouldBe m.Match(Rating("PG", 13))
   }
   it should "parser2 rating with one optional parameter" in {
     case class Rating(code: String, age: Option[Int])
-    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m.opt(m.parserInt))(Rating)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)-(\d+)?""")(m.always, m.opt(m.parserInt))(Rating.apply)
     p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
     p("R-") shouldBe m.Match(Rating("R", None))
   }
   it should "parser2 rating with one optional parameter without having to match dash" in {
     case class Rating(code: String, age: Option[Int])
-    val p: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating)
+    val p: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating.apply)
     p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
     p("R") shouldBe m.Match(Rating("R", None))
   }
   it should "parser3 with three required parameters" in {
     case class Rating(code: String, age: Int, length: Double)
-    val p: m.Parser[Rating] = m.parser3("""(\w+)-(\d+) (\d+\.\d+)""")(m.always, m.parserInt, m.parserDouble)(Rating)
+    val p: m.Parser[Rating] = m.parser3("""(\w+)-(\d+) (\d+\.\d+)""")(m.always, m.parserInt, m.parserDouble)(Rating.apply)
     p("PG-13 3.1415927") shouldBe m.Match(Rating("PG", 13, 3.1415927))
   }
 
   behavior of "~"
 
-  import matchers._
+  import matchers.*
 
   it should "work" in {
     val m: matchers.Matcher[String ~ String, Int] = "1".m ~ "2".m ^^ {
@@ -1115,13 +1217,13 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "invoke matchResultTilde3" in {
     case class Triple(x: Int, y: String, z: Double)
     val triple = Match(1 ~ "Hello" ~ 3.14)
-    val builder: matchers.MatchResult[Int ~ String ~ Double] => matchers.MatchResult[Triple] = matchers.matchResultTilde3(Triple)
+    val builder: matchers.MatchResult[Int ~ String ~ Double] => matchers.MatchResult[Triple] = matchers.matchResultTilde3(Triple.apply)
     builder(triple) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
     builder(Miss("not a match", Triple(1, "Hello", 3.14))) should matchPattern { case Miss(_, _) => }
   }
   it should "invoke matchResult3" in {
     case class Triple(x: Int, y: String, z: Double)
-    val builder: (matchers.MatchResult[Int], matchers.MatchResult[String], matchers.MatchResult[Double]) => matchers.MatchResult[Triple] = matchers.matchResult3(Triple)
+    val builder: (matchers.MatchResult[Int], matchers.MatchResult[String], matchers.MatchResult[Double]) => matchers.MatchResult[Triple] = matchers.matchResult3(Triple.apply)
     builder(Match(1), Match("Hello"), Match(3.14)) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
     builder(Miss("", 1), Match("Hello"), Match(3.14)) should matchPattern { case Miss(_, _) => }
   }
@@ -1131,7 +1233,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target = Seq(1, 2, 3)
     // CONSIDER using Matcher[Int,Int] (without the new)
     val posInt = new Matcher[Int, Int] {
-      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+      def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
     val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
     z(target) should matchPattern { case Match(List(1, 2, 3)) => }
@@ -1139,7 +1241,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "invoke matchAll miss" in {
     val target = Seq(1, -2, 3)
     val posInt = new Matcher[Int, Int] {
-      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+      def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
     val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
     z(target) should matchPattern { case Miss(_, _) => }
@@ -1150,7 +1252,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target = Seq(1, 2, 3)
     // CONSIDER using Matcher[Int,Int] (without the new)
     val posInt = new Matcher[Int, Int] {
-      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+      def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
     val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAny(posInt)
     z(target) should matchPattern { case Match(List(1, 2, 3)) => }
@@ -1159,7 +1261,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target = Seq(-1, 2, -3)
     // CONSIDER using Matcher[Int,Int] (without the new)
     val posInt = new Matcher[Int, Int] {
-      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+      def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
     val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAny(posInt)
     z(target) should matchPattern { case Match(`target`) => }
@@ -1167,7 +1269,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "invoke matchAny miss" in {
     val target = Seq(-1, -2, -3)
     val posInt = new Matcher[Int, Int] {
-      def apply(x: Int): matchers.MatchResult[Int] = if (x >= 0) Match(x) else Miss("", x)
+      def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
     val z: Matcher[Seq[Int], Seq[Int]] = matchers.matchAll(posInt)
     z(target) should matchPattern { case Miss(_, _) => }
@@ -1175,20 +1277,22 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "filter"
 
+  private val mr1 = m.MatchResult(1)
+
   it should "satisfy predicate" in {
-    m.MatchResult(1) filter (r => r % 2 == 1) shouldBe m.Match(1)
-    m.MatchResult(1) filter (r => r % 2 == 0) shouldBe m.Miss("filter failed on", Match(1))
+    mr1.filter(r => r % 2 == 1) shouldBe m.Match(1)
+    mr1.filter(r => r % 2 == 0) shouldBe m.Miss("filter: predicate returned false for 1", 1)
     val miss = m.Miss[Int, Int]("miss", 0)
-    miss filter (r => r % 2 == 1) shouldBe miss
+    miss.filter(r => r % 2 == 1) shouldBe miss
   }
   it should "fail to satisfy predicate in filterNot" in {
-    m.MatchResult(1) filterNot (r => r % 2 == 0) shouldBe m.Match(1)
-    m.MatchResult(1) filterNot (r => r % 2 == 1) shouldBe m.Miss("filter failed on", Match(1))
+    mr1.filterNot(r => r % 2 == 0) shouldBe m.Match(1)
+    mr1.filterNot(r => r % 2 == 1) shouldBe m.Miss("filter: predicate returned false for 1", 1)
     val miss = m.Miss[Int, Int]("miss", 0)
-    miss filterNot (r => r % 2 == 1) shouldBe miss
+    miss.filterNot(r => r % 2 == 1) shouldBe miss
   }
 
-  behavior of "sequence"
+  behavior of "MatchResult.sequence"
   it should "handle all matches" in {
     val target: Seq[MatchResult[Int]] = Seq(Match(1), Match(2), Match(3))
     val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
@@ -1209,7 +1313,18 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val result: MatchResult[Seq[Int]] = MatchResult.sequence(target)
     result shouldBe Miss("empty", Nil)
   }
+  it should "handle Some(Match(1))" in {
+    sequence(Some(Match(1))) shouldBe Match(Some(1))
+    sequence(None) shouldBe Match(None)
+  }
 
+  behavior of "MatchResult.unpack"
+  it should "handle Match(Some(1))" in {
+    unpack(Match(Some(1))) shouldBe Match(1)
+    val value1 = unpack(Match(None))
+    // NOTE not sure that I really like the following behavior!
+    value1 shouldBe Miss("unpack: no match defined", Match(None))
+  }
 
   behavior of "sequenceStrict"
   it should "handle all matches" in {
@@ -1236,6 +1351,31 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val target: Seq[MatchResult[Int]] = Seq()
     val result: MatchResult[Seq[Int]] = MatchResult.sequenceStrict(target)
     result shouldBe Match(Nil)
+  }
+
+  behavior of "lens functions"
+  it should "lens" in {
+    val maybeTheAnswer = Some(42)
+    lens[Option[Int]](_.isDefined)(maybeTheAnswer) shouldBe Match(maybeTheAnswer)
+    lens[Option[Int]](_.isEmpty)(maybeTheAnswer) shouldBe Miss("lens: f evaluates false", maybeTheAnswer)
+  }
+
+  behavior of "Try and Option matchers"
+  it should "matchIfDefined" in {
+    matchIfDefined(Some(1))(42) should matchPattern { case Match(1) => }
+    matchIfDefined(None)(42) should matchPattern { case Miss(_, 42) => }
+  }
+  it should "matchIfSuccess" in {
+    matchIfSuccess(Success(1))(42) should matchPattern { case Match(1) => }
+    matchIfSuccess(Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
+  }
+  it should "matchOptionFunc" in {
+    matchOptionFunc(Option[Int])(1) should matchPattern { case Match(1) => }
+    matchOptionFunc[Int, Int](_ => None)(1) should matchPattern { case Miss(_, 1) => }
+  }
+  it should "matchTryFunc" in {
+    matchTryFunc(Success[Int])(1) should matchPattern { case Match(1) => }
+    matchTryFunc[Int, Int](_ => Failure(new NoSuchElementException))(42) should matchPattern { case Miss(_, 42) => }
   }
 }
 
