@@ -24,6 +24,10 @@ There are three subclasses of _MatchResult_[_R_]:
 * case class Miss[T, R](msg: String, t: T)
 * case class Error[R](e: Throwable)
 
+## API Documentation
+
+Full Scaladoc is available via [javadoc.io](https://javadoc.io/doc/com.phasmidsoftware/matchers_3).
+
 ## Safe creation of Match
 The _Match_ class has a "of" method which takes a value of type _R_ and returns a _MatchResult_[_R]_.
 The parameter of type _R_ is call-by-name and if an exception is thrown, that exception will be thrown (and not converted to an Error).
