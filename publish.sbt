@@ -1,6 +1,6 @@
 // Optional but useful
 ThisBuild / description := "Fuzzy, Lazy Scala library for numerical computation"
-ThisBuild / homepage := Some(url("https://github.com/rchillyard/Number"))
+ThisBuild / homepage := Some(url("https://github.com/rchillyard/Matchers"))
 ThisBuild / organizationName := "Phasmid Software"
 ThisBuild / organizationHomepage := Some(url("https://phasmidsoftware.com/"))
 
