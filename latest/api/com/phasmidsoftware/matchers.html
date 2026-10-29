@@ -1,0 +1,1456 @@
+<!DOCTYPE html><html data-pathToRoot="../../" data-rawLocation="com/phasmidsoftware/matchers" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>com.phasmidsoftware.matchers</title><link rel="shortcut icon" type="image/x-icon" href="../../favicon.ico"></link><script type="text/javascript" src="../../scripts/theme.js"></script><script type="text/javascript" src="../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/searchbar.css"></link><link rel="stylesheet" href="../../styles/social-links.css"></link><link rel="stylesheet" href="../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../styles/content-contributors.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="https://scastie.scala-lang.org/embedded.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../" class="logo-container"><span class="project-name h300">Matchers</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">Matchers</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 selected"><button class="ar icon-button expanded"></button><a href="#"><span class="micon pa"></span><span>com.phasmidsoftware.matchers</span></a></span><div class="ni n1 "><span class="nh "><a href="matchers/DyadicExpression.html"><span class="micon cl"></span><span>DyadicExpression</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/Expression$.html"><span class="micon ob"></span><span>Expression</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/LogDebug$.html"><span class="micon ob"></span><span>LogDebug</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/LogInfo$.html"><span class="micon ob"></span><span>LogInfo</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/LogLevel.html"><span class="micon tr"></span><span>LogLevel</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/LogLevel$.html"><span class="micon ob"></span><span>LogLevel</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/LogOff$.html"><span class="micon ob"></span><span>LogOff</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/MatchLogger$.html"><span class="micon ob"></span><span>MatchLogger</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/MatchLogger.html"><span class="micon cl"></span><span>MatchLogger</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/MatcherException$.html"><span class="micon ob"></span><span>MatcherException</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/MatcherException.html"><span class="micon cl"></span><span>MatcherException</span></a></span></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="matchers/Matchers$.html"><span class="micon ob"></span><span>Matchers</span></a></span><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$$TildeOps.html"><span class="micon cl"></span><span>TildeOps</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="matchers/Matchers.html"><span class="micon tr"></span><span>Matchers</span></a></span><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Error.html"><span class="micon cl"></span><span>Error</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$LoggingMatcher.html"><span class="micon cl"></span><span>LoggingMatcher</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Match.html"><span class="micon cl"></span><span>Match</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Match$.html"><span class="micon ob"></span><span>Match</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$MatchResult$.html"><span class="micon ob"></span><span>MatchResult</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$MatchResult.html"><span class="micon tr"></span><span>MatchResult</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$MatchResultOps.html"><span class="micon cl"></span><span>MatchResultOps</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Matcher.html"><span class="micon tr"></span><span>Matcher</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$MatcherOps.html"><span class="micon cl"></span><span>MatcherOps</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Miss.html"><span class="micon cl"></span><span>Miss</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$ParserOps.html"><span class="micon cl"></span><span>ParserOps</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Unsuccessful.html"><span class="micon cl"></span><span>Unsuccessful</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matchers/Matchers$Unsuccessful$.html"><span class="micon ob"></span><span>Unsuccessful</span></a></span></div></div><div class="ni n1 "><span class="nh "><a href="matchers/MonadicExpression.html"><span class="micon cl"></span><span>MonadicExpression</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/RegexGroups$.html"><span class="micon ob"></span><span>RegexGroups</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/RegexGroups.html"><span class="micon cl"></span><span>RegexGroups</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/Slf4jLogger.html"><span class="micon cl"></span><span>Slf4jLogger</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/Tilde$.html"><span class="micon ob"></span><span>Tilde</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/Valuable.html"><span class="micon cl"></span><span>Valuable</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/$tilde$.html"><span class="micon cl"></span><span>~</span></a></span></div><div class="ni n1 "><span class="nh "><a href="matchers/𝛑$.html"><span class="micon ob"></span><span>𝛑</span></a></span></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../index.html">Matchers</a>/<a href="matchers.html">com.phasmidsoftware.matchers</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <span class="icon"><span class="micon pa"></span></span>
+ <h1 class="h600 single">com.phasmidsoftware.matchers</h1>
+</div>
+<div class="fqname body-large">
+ <span></span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="modifiers"></span><span class="kind"><span t="k">package </span></span><a href="matchers.html" t="n" class="documentableName ">com.phasmidsoftware.matchers</a>
+ </div>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Type-members">
+     <div data-togglable="Type members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Type members" class="h400">Type members</h3>
+      </div>
+      <section id="Classlikes">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Classlikes</h4>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/DyadicExpression.html" t="n" class="documentableName ">DyadicExpression</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">left</span>: <span t="t">Expression</span>, <span t="k"></span><span data-unresolved-link="" t="n">right</span>: <span t="t">Expression</span>, <span t="k"></span><span data-unresolved-link="" t="n">operator</span>: <span data-unresolved-link="" t="t">String</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Represents a dyadic (binary) expression consisting of a left operand, a right operand, and an operator connecting them in an infix notation.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Represents a dyadic (binary) expression consisting of a left operand, a right operand, and an operator connecting them in an infix notation.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">left</dt>
+              <dd class="body-medium">
+               <p>the left-hand side operand of the expression, represented as an <code>Expression</code>.</p>
+              </dd>
+              <dt class="body-small">operator</dt>
+              <dd class="body-medium">
+               <p>the operator as a <code>String</code> connecting the left and right operands.</p>
+              </dd>
+              <dt class="body-small">right</dt>
+              <dd class="body-medium">
+               <p>the right-hand side operand of the expression, represented as an <code>Expression</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/Expression$.html" t="n" class="documentableName ">Expression</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Represents an <code>Expression</code> in a symbolic mathematical computation system.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Represents an <code>Expression</code> in a symbolic mathematical computation system.</p>
+              <p>This class provides operations for mathematical and logical manipulations, including arithmetic, trigonometric, and monadic transformations.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/Expression$.html" t="n">Expression</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">object </span></span><a href="matchers/LogDebug$.html" t="n" class="documentableName ">LogDebug</a><span t="k"> extends </span><a href="matchers/LogLevel.html" t="t">LogLevel</a></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Represents a logging level for debugging purposes.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Represents a logging level for debugging purposes.</p>
+              <p>This object is a case object that extends the LogLevel trait. It is used to specify that log messages should correspond to the debug logging level.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Singleton</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 trait <a href="matchers/LogLevel.html" t="n">LogLevel</a>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/LogDebug$.html" t="n">LogDebug</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">object </span></span><a href="matchers/LogInfo$.html" t="n" class="documentableName ">LogInfo</a><span t="k"> extends </span><a href="matchers/LogLevel.html" t="t">LogLevel</a></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Represents the information level for logging within the context of <code>SignificantSpaceParsers</code>. This level is used to log informational messages that provide general insights or details about the execution without indicating an error or warning.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Represents the information level for logging within the context of <code>SignificantSpaceParsers</code>. This level is used to log informational messages that provide general insights or details about the execution without indicating an error or warning.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Singleton</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 trait <a href="matchers/LogLevel.html" t="n">LogLevel</a>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/LogInfo$.html" t="n">LogInfo</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">trait </span></span><a href="matchers/LogLevel.html" t="n" class="documentableName ">LogLevel</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Trait which is used to define a logging level for the log method of SignificantSpaceParsers.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Trait which is used to define a logging level for the log method of SignificantSpaceParsers.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/LogLevel$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Known subtypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block subtypes">
+                <div>
+                 object <a href="matchers/LogDebug$.html" t="n">LogDebug</a>
+                </div>
+                <div>
+                 object <a href="matchers/LogInfo$.html" t="n">LogInfo</a>
+                </div>
+                <div>
+                 object <a href="matchers/LogOff$.html" t="n">LogOff</a>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/LogLevel$.html" t="n" class="documentableName ">LogLevel</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>LogLevel is an object that provides a default implicit value representing the log-off level. This implicit value can be used to disable logging when a LogLevel is required implicitly within the application.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>LogLevel is an object that provides a default implicit value representing the log-off level. This implicit value can be used to disable logging when a LogLevel is required implicitly within the application.</p>
+              <p>LogLevel represents a companion to the LogLevel trait, which defines different logging levels.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/LogLevel.html">trait</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/LogLevel$.html" t="n">LogLevel</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">object </span></span><a href="matchers/LogOff$.html" t="n" class="documentableName ">LogOff</a><span t="k"> extends </span><a href="matchers/LogLevel.html" t="t">LogLevel</a></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Represents a log-off level used to disable logging. Extends the LogLevel trait, indicating it is one of the possible log level settings. Typically used to silence all log messages.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Represents a log-off level used to disable logging. Extends the LogLevel trait, indicating it is one of the possible log level settings. Typically used to silence all log messages.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Singleton</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 trait <a href="matchers/LogLevel.html" t="n">LogLevel</a>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/LogOff$.html" t="n">LogOff</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/MatchLogger$.html" t="n" class="documentableName ">MatchLogger</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Companion object for the <code>MatchLogger</code> class, providing utility methods to create instances of <code>MatchLogger</code> using standard configurations.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Companion object for the <code>MatchLogger</code> class, providing utility methods to create instances of <code>MatchLogger</code> using standard configurations.</p>
+              <p>This object facilitates the creation of <code>MatchLogger</code> instances with specified log levels, target classes, or custom logger implementations.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/MatchLogger.html">class</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/MatchLogger$.html" t="n">MatchLogger</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"></span><span class="kind"><span t="k">class </span></span><a href="matchers/MatchLogger.html" t="n" class="documentableName ">MatchLogger</a>(<span t="k"></span><span t="k">val </span><span data-unresolved-link="" t="n">logLevel</span>: <a href="matchers/LogLevel.html" t="t">LogLevel</a>, <span t="k"></span><span data-unresolved-link="" t="n">f</span>: <span data-unresolved-link="" t="t">String</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Unit</span>)<span t="k"> extends </span><span data-unresolved-link="" t="t">String</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Unit</span></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>A logger class for handling and managing logging operations based on the specified log level.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>A logger class for handling and managing logging operations based on the specified log level.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">f</dt>
+              <dd class="body-medium">
+               <p>A function that takes a string input and performs the logging operation.</p>
+              </dd>
+              <dt class="body-small">logLevel</dt>
+              <dd class="body-medium">
+               <p>The logging level to determine the behavior of the logger (LogOff, LogInfo, LogDebug).</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Constructor</dt>
+              <dd class="body-medium">
+               <p>Creates a new MatchLogger instance with a given log level and a logging function.</p>
+              </dd>
+              <dt class="body-small">Note</dt>
+              <dd class="body-medium">
+               <div>
+                <div>
+                 <p>The class extends <code>String =&gt; Unit</code>, enabling it to be used directly as a function.</p>
+                </div>
+               </div>
+              </dd>
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/MatchLogger$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">String</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Unit</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Known subtypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block subtypes">
+                <div>
+                 class <a href="matchers/Slf4jLogger.html" t="n">Slf4jLogger</a>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/MatcherException$.html" t="n" class="documentableName ">MatcherException</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Companion object for the MatcherException case class. Provides utility methods for creating MatcherException instances.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Companion object for the MatcherException case class. Provides utility methods for creating MatcherException instances.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/MatcherException.html">class</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/MatcherException$.html" t="n">MatcherException</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/MatcherException.html" t="n" class="documentableName ">MatcherException</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">msg</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span data-unresolved-link="" t="t">Throwable</span>)<span t="k"> extends </span><span data-unresolved-link="" t="t">Exception</span></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>A MatcherException.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>A MatcherException.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">msg</dt>
+              <dd class="body-medium">
+               <p>a message.</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>a Throwable.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/MatcherException$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Exception</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Throwable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/Matchers$.html" t="n" class="documentableName ">Matchers</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>The <code>Matchers</code> object provides utilities and implicit conversions for working with matching operations and combining different types into structured forms. It contains an implicit class for the tilde (<code>~</code>) operator as well as a default instance of <code>Matchers</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>The <code>Matchers</code> object provides utilities and implicit conversions for working with matching operations and combining different types into structured forms. It contains an implicit class for the tilde (<code>~</code>) operator as well as a default instance of <code>Matchers</code>.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/Matchers.html">trait</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/Matchers$.html" t="n">Matchers</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">trait </span></span><a href="matchers/Matchers.html" t="n" class="documentableName ">Matchers</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>The <code>Matchers</code> trait defines behavior including the ability to create and manage many different types of <code>Matcher</code>. A <code>Matcher</code> is a combinator used for pattern matching and transformation based on some rules or functions.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>The <code>Matchers</code> trait defines behavior including the ability to create and manage many different types of <code>Matcher</code>. A <code>Matcher</code> is a combinator used for pattern matching and transformation based on some rules or functions.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/Matchers$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/Matchers.html" t="n">Matchers</a>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/MonadicExpression.html" t="n" class="documentableName ">MonadicExpression</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">expression</span>: <span t="t">Expression</span>, <span t="k"></span><span data-unresolved-link="" t="n">str</span>: <span data-unresolved-link="" t="t">String</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>A case class that models a monadic expression, which represents a single-operand operation applied to another <code>Expression</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>A case class that models a monadic expression, which represents a single-operand operation applied to another <code>Expression</code>.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">expression</dt>
+              <dd class="body-medium">
+               <p>the underlying <code>Expression</code> on which the monadic operation is applied.</p>
+              </dd>
+              <dt class="body-small">str</dt>
+              <dd class="body-medium">
+               <p>a string representation of the operator.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/RegexGroups$.html" t="n" class="documentableName ">RegexGroups</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>An object providing factory methods for creating instances of RegexGroups, which represent a combination of a regular expression and a list of group indexes.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>An object providing factory methods for creating instances of RegexGroups, which represent a combination of a regular expression and a list of group indexes.</p>
+              <p>It includes methods to construct RegexGroups with a regex pattern as a <code>Regex</code> instance or as a string, along with an optional list of group indexes. If no group indexes are provided, all groups are selected by default.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/RegexGroups.html">class</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/RegexGroups$.html" t="n">RegexGroups</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/RegexGroups.html" t="n" class="documentableName ">RegexGroups</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">regex</span>: <span data-unresolved-link="" t="t">Regex</span>, <span t="k"></span><span data-unresolved-link="" t="n">groups</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">Int</span>])
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>A class combining a regular expression and a list of group indexes. NOTE: there are no unit tests for this class.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>A class combining a regular expression and a list of group indexes. NOTE: there are no unit tests for this class.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">groups</dt>
+              <dd class="body-medium">
+               <p>a list of required group indexes (if Nil, then all groups are selected). NOTE that the group indexes start at 1.</p>
+              </dd>
+              <dt class="body-small">regex</dt>
+              <dd class="body-medium">
+               <p>a Regex.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matchers/RegexGroups$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/Slf4jLogger.html" t="n" class="documentableName ">Slf4jLogger</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">logLevel</span>: <a href="matchers/LogLevel.html" t="t">LogLevel</a>, <span t="k"></span><span data-unresolved-link="" t="n">logger</span>: <span data-unresolved-link="" t="t">Logger</span>)<span t="k"> extends </span><a href="matchers/MatchLogger.html" t="t">MatchLogger</a></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>A case class that wraps SLF4J logging functionality, extending <code>MatchLogger</code> to utilize a specified logging level and SLF4J logger instance for log operations.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>A case class that wraps SLF4J logging functionality, extending <code>MatchLogger</code> to utilize a specified logging level and SLF4J logger instance for log operations.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">logLevel</dt>
+              <dd class="body-medium">
+               <p>The logging level to control the behavior of the logger, determining whether logs are written based on the specified level (e.g., <code>LogInfo</code>, <code>LogDebug</code>).</p>
+              </dd>
+              <dt class="body-small">logger</dt>
+              <dd class="body-medium">
+               <p>The SLF4J <code>Logger</code> instance used for performing the logging operations. The class delegates the actual logging operations to SLF4J's <code>Logger</code> methods based on the provided logging level: - Logs at the <code>info</code> level if the <code>logLevel</code> is <code>LogInfo</code>. - Logs at the <code>debug</code> level if the <code>logLevel</code> is <code>LogDebug</code>. - Skips logging for other levels. Inherits functionality from <code>MatchLogger</code>, allowing it to act as a functional logger with behavior controlled by the specified <code>logLevel</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <a href="matchers/MatchLogger.html" t="n">MatchLogger</a>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">String</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Unit</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matchers/Tilde$.html" t="n" class="documentableName ">Tilde</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Companion object to ~ (although the name had to be changed).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Companion object to ~ (although the name had to be changed).</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/Tilde$.html" t="n">Tilde</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/Valuable.html" t="n" class="documentableName ">Valuable</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">value</span>: <span data-unresolved-link="" t="t">Int</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Represents a terminal expression in the expression hierarchy.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Represents a terminal expression in the expression hierarchy.</p>
+              <p>A Valuable is a leaf node in the expression structure, encapsulating a numeric value. It directly stores a value of type <code>com.phasmidsoftware.number.Int</code>.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">value</dt>
+              <dd class="body-medium">
+               <p>The numeric value encapsulated by this terminal expression.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Constructor</dt>
+              <dd class="body-medium">
+               <p>Creates a Valuable with the specified numeric value.</p>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matchers/$tilde$.html" t="n" class="documentableName ">~</a>[<span t="k">+</span><span data-unresolved-link="" t="t">L</span>, <span t="k">+</span><span data-unresolved-link="" t="t">R</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">l</span>: <span data-unresolved-link="" t="t">L</span>, <span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span data-unresolved-link="" t="t">R</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>The tilde class which is basically a Tuple (i.e., Product) with a few extra methods.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>The tilde class which is basically a Tuple (i.e., Product) with a few extra methods.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">L</dt>
+              <dd class="body-medium">
+               <p>the left type.</p>
+              </dd>
+              <dt class="body-small">R</dt>
+              <dd class="body-medium">
+               <p>the right type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">l</dt>
+              <dd class="body-medium">
+               <p>the left value.</p>
+              </dd>
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the right value.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">object </span></span><a href="matchers/𝛑$.html" t="n" class="documentableName ">𝛑</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="cover">
+             <div class="doc"></div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Singleton</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matchers/𝛑$.html" t="n">𝛑</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+    <section id="Givens">
+     <div data-togglable="Givens" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Givens" class="h400">Givens</h3>
+      </div>
+      <section id="Givens">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Givens</h4>
+        </div>
+        <div class="documentableElement" id="given_Conversion_Int_Expression-0">
+         <div class="documentableElement-expander">
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">given </span></span><a href="matchers.html#given_Conversion_Int_Expression-0" t="n" class="documentableName ">given_Conversion_Int_Expression</a>: <span data-unresolved-link="" t="t">Conversion</span>[<span data-unresolved-link="" t="t">Int</span>, <span t="t">Expression</span>]
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="given_Conversion_String_Expression-0">
+         <div class="documentableElement-expander">
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">given </span></span><a href="matchers.html#given_Conversion_String_Expression-0" t="n" class="documentableName ">given_Conversion_String_Expression</a>: <span data-unresolved-link="" t="t">Conversion</span>[<span data-unresolved-link="" t="t">String</span>, <span t="t">Expression</span>]
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#members-list">Members list</a><ul><li><a href="#Type-members">Type members</a><ul><li><a href="#Classlikes">Classlikes</a></li></ul></li><li><a href="#Givens">Givens</a><ul><li><a href="#Givens">Givens</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>
