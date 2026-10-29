@@ -24,6 +24,21 @@ There are three subclasses of _MatchResult_[_R_]:
 * case class Miss[T, R](msg: String, t: T)
 * case class Error[R](e: Throwable)
 
+Getting Started
+----------------
+
+Matchers is published on Maven Central. Add it to your `build.sbt`:
+
+```scala
+libraryDependencies += "com.phasmidsoftware" %% "matchers" % "<version>"
+```
+
+(see the Sonatype Central badge at the top of this page for the current version number).
+
+## API Documentation
+
+Full Scaladoc is available via [javadoc.io](https://javadoc.io/doc/com.phasmidsoftware/matchers_3).
+
 ## Safe creation of Match
 The _Match_ class has a "of" method which takes a value of type _R_ and returns a _MatchResult_[_R]_.
 The parameter of type _R_ is call-by-name and if an exception is thrown, that exception will be thrown (and not converted to an Error).
@@ -139,7 +154,8 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
-* 1.0.16 Redundant evaluations in `eitherOr` method resolved.
+* 1.0.17 Settled on Scala 3 LTS Version (3.3.8) with other minor changes.
+* 1.0.16 Redundant evaluations in `eitherOr` method resolved (??)
 * 1.0.15 Reverted throwing of exceptions wrapped in `Error` (such exceptions properly propagate now).
 * 1.0.14 Added safe `of` method for constructing a `Match`, with throwing of any exception wrapped in `Error`.
 * 1.0.13 Changed the signatures of _matchTryFunc_ and _matchOptionFunc_.

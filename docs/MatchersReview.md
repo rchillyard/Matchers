@@ -12,6 +12,7 @@ def **[T, R](m: Matcher[T ~ T ~ T, R], commutes: Boolean = true): Matcher[T ~ T 
 ```
 
 `m` appears three times. This is structurally the same pattern as the old `eitherOr` bug, though here the inputs differ between arms (original, rotated, inverted), so it is not strictly redundant. However, if `m` is expensive, unnecessary invocations still matter. The inputs are distinct so the fix is less straightforward, but the structure is worth a `CONSIDER`.
+NOTE this item has been resolved in V1.0.16.
 
 ---
 
@@ -75,6 +76,8 @@ Should read "third Matcher." Minor, but scaladoc errors in a library are visible
 ## 7. Commented-out `commutative` combinator contains broken syntax
 
 Lines 1708–1717 contain a commented-out `commutative` method with incomplete and syntactically invalid code. This should either be deleted entirely or replaced with a properly filed `// TODO` referencing a tracking issue.
+
+NOTE resolved in V1.0.16: deleted. The `ExpressionMatchers.matchComplementaryExpressions` duplication that looked like a plausible motivating use case (six pairs of mirrored `case` clauses covering both operand orders of commutative `Sum`/`Product`) is already solved at the `Number` level, not here: `expression/src/main/scala/com/phasmidsoftware/number/expression/expr/Extractors.scala` defines `CommutativeExtractor[A, B]`, a plain Scala extractor whose `unapply` tries both `(left, right)` and `(right, left)` orderings, and `CompositeExpression.scala` has several concrete extractors built on it (`MultiplicativeIdentityCommutative`, `AdditiveIdentityCommutative`, etc.). So no `Matchers`-level combinator is needed for this; commutative matching is handled at the extractor layer in `Number` itself.
 
 ---
 
