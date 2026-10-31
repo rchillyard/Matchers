@@ -1,11 +1,12 @@
 [![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/matchers_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/matchers_3)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/454847cac6214df8986ef2dec68e5049)](https://www.codacy.com/gh/rchillyard/Matchers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rchillyard/Matchers&amp;utm_campaign=Badge_Grade)
+[![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/Matchers/latest/api/)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/454847cac6214df8986ef2dec68e5049)](https://app.codacy.com/gh/rchillyard/Matchers/dashboard)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Matchers/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Matchers/tree/main)
-![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Matchers)
-![GitHub](https://img.shields.io/github/license/rchillyard/Matchers)
-![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Matchers)
-![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/Matchers)
-![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/Matchers/bug)
+[![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Matchers)](https://github.com/rchillyard/Matchers)
+[![GitHub](https://img.shields.io/github/license/rchillyard/Matchers)](https://github.com/rchillyard/Matchers/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Matchers)](https://github.com/rchillyard/Matchers/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/Matchers)](https://github.com/rchillyard/Matchers/issues)
+[![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/Matchers/bug)](https://github.com/rchillyard/Matchers/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 
 # Matchers
 A library of composable matchers.
@@ -37,7 +38,7 @@ libraryDependencies += "com.phasmidsoftware" %% "matchers" % "<version>"
 
 ## API Documentation
 
-Full Scaladoc is available via [javadoc.io](https://javadoc.io/doc/com.phasmidsoftware/matchers_3).
+Full Scaladoc is at <https://rchillyard.github.io/Matchers/latest/api/>.
 
 ## Safe creation of Match
 The _Match_ class has a "of" method which takes a value of type _R_ and returns a _MatchResult_[_R]_.
