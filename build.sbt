@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Matchers"
 
-version := "1.0.17"
+version := "1.1.0"
 
 scalaVersion := "3.9.0" // the current LTS
 
