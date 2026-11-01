@@ -155,6 +155,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.1.0 Built with Scala 3.9.0 (the current LTS), so it needs Scala 3.9 or later (for Scala 3.3, use 1.0.17); sbt 1.12.13; Scaladoc on GitHub Pages.
 * 1.0.17 Settled on Scala 3 LTS Version (3.3.8) with other minor changes.
 * 1.0.16 Redundant evaluations in `eitherOr` method resolved (??)
 * 1.0.15 Reverted throwing of exceptions wrapped in `Error` (such exceptions properly propagate now).
