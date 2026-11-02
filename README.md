@@ -35,6 +35,7 @@ libraryDependencies += "com.phasmidsoftware" %% "matchers" % "<version>"
 ```
 
 (see the Sonatype Central badge at the top of this page for the current version number).
+Matchers 1.1.0 and later need Scala 3.9 or later; for Scala 3.3 to 3.8, use 1.0.17.
 
 ## API Documentation
 
