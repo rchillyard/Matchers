@@ -6,7 +6,18 @@ version := "1.1.0"
 
 scalaVersion := "3.9.0" // the current LTS
 
-scalacOptions ++= Seq("-encoding", "UTF-8", "-unchecked", "-deprecation", "-feature", "-Wunused:all")
+// The compiler options that all the Phasmid libraries share.
+scalacOptions ++= Seq(
+  "-encoding", "UTF-8",
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Wunused:all",
+  "-Wvalue-discard",
+  "-Wnonunit-statement"
+)
+// Tests may use a value as a statement (for example, in a matcher), so they skip -Wnonunit-statement.
+Test / scalacOptions ~= (_.filterNot(_ == "-Wnonunit-statement"))
 
 val scalaTestVersion = "3.2.20"
 

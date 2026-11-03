@@ -1,6 +1,7 @@
 package com.phasmidsoftware.matchers
 
 import com.phasmidsoftware.matchers.Matchers.TildeOps
+import scala.annotation.unused
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
@@ -1744,7 +1745,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T0]
     */
-  def select2_0[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0] =
+  def select2_0[T0, T1, P <: Product](@unused f: (T0, T1) => P): Matcher[P, T0] =
     namedLift("select2_0")(
       p => p.productElement(0).asInstanceOf[T0]
     )
@@ -1758,7 +1759,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T1]
     */
-  def select2_1[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T1] =
+  def select2_1[T0, T1, P <: Product](@unused f: (T0, T1) => P): Matcher[P, T1] =
     namedLift("select2_1")(
       p => p.productElement(1).asInstanceOf[T1]
     )
@@ -1773,7 +1774,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T0]
     */
-  def select3_0[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0] =
+  def select3_0[T0, T1, T2, P <: Product](@unused f: (T0, T1, T2) => P): Matcher[P, T0] =
     namedLift("select3_0")(
       p => p.productElement(0).asInstanceOf[T0]
     )
@@ -1788,7 +1789,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T1]
     */
-  def select3_1[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T1] =
+  def select3_1[T0, T1, T2, P <: Product](@unused f: (T0, T1, T2) => P): Matcher[P, T1] =
     namedLift("select3_1")(
       p => p.productElement(1).asInstanceOf[T1]
     )
@@ -1803,7 +1804,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P,T1]
     */
-  def select3_2[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T2] =
+  def select3_2[T0, T1, T2, P <: Product](@unused f: (T0, T1, T2) => P): Matcher[P, T2] =
     namedLift("select3_2")(
       p => p.productElement(2).asInstanceOf[T2]
     )
@@ -1922,7 +1923,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P, T0 ~ T1].
     */
-  def tilde2[T0, T1, P <: Product](f: (T0, T1) => P): Matcher[P, T0 ~ T1] =
+  def tilde2[T0, T1, P <: Product](@unused f: (T0, T1) => P): Matcher[P, T0 ~ T1] =
     namedLift("tilde2")(
       p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1]
     )
@@ -1937,7 +1938,7 @@ trait Matchers {
     * @tparam P  the product type.
     * @return a Matcher[P, T0 ~ T1 ~ T2].
     */
-  def tilde3[T0, T1, T2, P <: Product](f: (T0, T1, T2) => P): Matcher[P, T0 ~ T1 ~ T2] =
+  def tilde3[T0, T1, T2, P <: Product](@unused f: (T0, T1, T2) => P): Matcher[P, T0 ~ T1 ~ T2] =
     namedLift("tilde3")(
       p => p.productElement(0).asInstanceOf[T0] ~ p.productElement(1).asInstanceOf[T1] ~ p.productElement(2).asInstanceOf[T2]
     )
@@ -2000,7 +2001,7 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R] that matches at least one of the elements of the given P.
     */
-  def matchProduct2Any[T0, T1, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R])(f: (T0, T1) => P): Matcher[P, R] =
+  def matchProduct2Any[T0, T1, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R])(@unused f: (T0, T1) => P): Matcher[P, R] =
     Matcher("matchProduct2Any")(p =>
       m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]))
 
@@ -2034,7 +2035,7 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R] that matches at least one of the elements of the given P.
     */
-  def matchProduct3Any[T0, T1, T2, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R], m2: => Matcher[T2, R])(f: (T0, T1, T2) => P): Matcher[P, R] =
+  def matchProduct3Any[T0, T1, T2, R, P <: Product](m0: Matcher[T0, R], m1: => Matcher[T1, R], m2: => Matcher[T2, R])(@unused f: (T0, T1, T2) => P): Matcher[P, R] =
     Matcher("matchProduct3Any")(p =>
       m0(p.productElement(0).asInstanceOf[T0]) || m1(p.productElement(1).asInstanceOf[T1]) || m2(p.productElement(2).asInstanceOf[T2]))
 
@@ -2051,7 +2052,7 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R0 ~ R1] that matches at least one of the elements of the given P.
     */
-  def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(f: (T0, T1) => P): Matcher[P, R0 ~ R1] =
+  def matchProduct2All[T0, T1, R0, R1, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1])(@unused f: (T0, T1) => P): Matcher[P, R0 ~ R1] =
     Matcher("matchProduct2All")(p =>
       m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]))
 
@@ -2071,7 +2072,7 @@ trait Matchers {
     * @tparam P  the input type.
     * @return a Matcher[P, R0 ~ R1 ~ R2] that matches at least one of the elements of the given P.
     */
-  def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(f: (T0, T1, T2) => P): Matcher[P, R0 ~ R1 ~ R2] =
+  def matchProduct3All[T0, T1, T2, R0, R1, R2, P <: Product](m0: Matcher[T0, R0], m1: => Matcher[T1, R1], m2: => Matcher[T2, R2])(@unused f: (T0, T1, T2) => P): Matcher[P, R0 ~ R1 ~ R2] =
     Matcher("matchProduct3All")(p =>
       m0(p.productElement(0).asInstanceOf[T0]) ~ m1(p.productElement(1).asInstanceOf[T1]) ~ m2(p.productElement(2).asInstanceOf[T2]))
 
