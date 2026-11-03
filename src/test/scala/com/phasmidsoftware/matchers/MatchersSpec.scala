@@ -190,6 +190,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   it should "support ||" in {
     val result = m.fail("")("") || m.success(0)("")
     result.successful shouldBe true
+    result.get shouldBe 0
   }
   it should "support &" in {
     val result = m.fail("")("") & m.success[Any, Int](0)
@@ -419,6 +420,24 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p = m.success(1) :| "success(1)"
     p(1).successful shouldBe true
     sb.toString() shouldBe ""
+  }
+  it should "handle nested matchers" in {
+    val sb = new StringBuilder
+    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
+    import m.MatcherOps
+    val m1 = m.matches(1) :| "one"
+    val m2 = m.matches(2) :| "two"
+    val x = (m1 | m2) :| "one or two"
+    x(3) should matchPattern { case m.Miss(_, _) => }
+    // CONSIDER indenting the nested matchers' lines (see Issue #10's PR, #16, which began this in 2021).
+    sb.toString() shouldBe
+            """trying matcher one or two on 3...
+              |trying matcher one on 3...
+              |... one(3): Miss: filter: predicate returned false for 3: 3
+              |trying matcher two on 3...
+              |... two(3): Miss: filter: predicate returned false for 3: 3
+              |... one or two(3): Miss: filter: predicate returned false for 3: 3
+              |""".stripMargin
   }
 
   // CONSIDER eliminating the loggedMatcher method.
