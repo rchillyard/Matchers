@@ -5,7 +5,11 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+import scala.annotation.nowarn
 import scala.util.{Failure, Success, Try}
+
+// Used by the matchResultTilde3 and matchResult3 tests. A local class can't be checked in a pattern at runtime.
+case class Trio(x: Int, y: String, z: Double)
 
 class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
@@ -152,7 +156,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val m1 = m.MatchResult(x, x) // should complain in Console
     m1 should matchPattern { case m.Match(1) => }
     val m2 = m.MatchResult(x, 2)
-    m1 should matchPattern { case m.Match(1) => }
+    m2 should matchPattern { case m.Match(1) => }
   }
 
   behavior of "Miss"
@@ -286,7 +290,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   it should "match exception" in {
     val target = m.error[Unit](noSuchElementException)
-    target(()) should matchPattern { case m.Unsuccessful(Left(e: NoSuchElementException)) => }
+    target(()) should matchPattern { case m.Unsuccessful(Left(_: NoSuchElementException)) => }
   }
 
   it should "match string" in {
@@ -547,8 +551,6 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: (Int, Int) => Boolean = {
       case (x, y) => x == y
     }
-    val sb = new StringBuilder
-    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val z: m.Matcher[(Int, String), Int] = m.valve(_.toInt, p)
     z(1, "1").successful shouldBe true
   }
@@ -556,8 +558,6 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
     val p: (Int, Int) => Boolean = {
       case (x, y) => y % 2 == x
     }
-    val sb = new StringBuilder
-    implicit val logger: MatchLogger = SBLogger(LogDebug, sb)
     val z: m.Matcher[(Int, String), Int] = m.valve(_.toInt, p)
     val odd = 1
     val even = 0
@@ -1241,16 +1241,14 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
 
   behavior of "matchResultTilde3"
   it should "invoke matchResultTilde3" in {
-    case class Triple(x: Int, y: String, z: Double)
     val triple = Match(1 ~ "Hello" ~ 3.14)
-    val builder: matchers.MatchResult[Int ~ String ~ Double] => matchers.MatchResult[Triple] = matchers.matchResultTilde3(Triple.apply)
-    builder(triple) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
-    builder(Miss("not a match", Triple(1, "Hello", 3.14))) should matchPattern { case Miss(_, _) => }
+    val builder: matchers.MatchResult[Int ~ String ~ Double] => matchers.MatchResult[Trio] = matchers.matchResultTilde3(Trio.apply)
+    builder(triple) should matchPattern { case Match(Trio(1, "Hello", 3.14)) => }
+    builder(Miss("not a match", Trio(1, "Hello", 3.14))) should matchPattern { case Miss(_, _) => }
   }
   it should "invoke matchResult3" in {
-    case class Triple(x: Int, y: String, z: Double)
-    val builder: (matchers.MatchResult[Int], matchers.MatchResult[String], matchers.MatchResult[Double]) => matchers.MatchResult[Triple] = matchers.matchResult3(Triple.apply)
-    builder(Match(1), Match("Hello"), Match(3.14)) should matchPattern { case Match(Triple(1, "Hello", 3.14)) => }
+    val builder: (matchers.MatchResult[Int], matchers.MatchResult[String], matchers.MatchResult[Double]) => matchers.MatchResult[Trio] = matchers.matchResult3(Trio.apply)
+    builder(Match(1), Match("Hello"), Match(3.14)) should matchPattern { case Match(Trio(1, "Hello", 3.14)) => }
     builder(Miss("", 1), Match("Hello"), Match(3.14)) should matchPattern { case Miss(_, _) => }
   }
 
@@ -1407,6 +1405,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "recursive matchers"
   it should "throw MatcherException when a matcher is directly recursive via |" in {
     pending // Issue #14 fully resolved.
+    @nowarn("msg=Infinite loop") // The recursion is what this (pending) test is about.
     lazy val recursive: AutoMatcher[Int] = recursive | success(42)
     an[MatcherException] should be thrownBy recursive(0)
   }

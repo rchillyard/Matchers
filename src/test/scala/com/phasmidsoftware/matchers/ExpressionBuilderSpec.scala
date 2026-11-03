@@ -2,6 +2,7 @@ package com.phasmidsoftware.matchers
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+import scala.language.implicitConversions
 
 class ExpressionBuilderSpec extends AnyFlatSpec with should.Matchers {
 

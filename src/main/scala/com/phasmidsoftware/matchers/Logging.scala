@@ -1,7 +1,6 @@
 package com.phasmidsoftware.matchers
 
 import org.slf4j.Logger
-import scala.util.matching.Regex
 
 /**
   * Trait which is used to define a logging level for the log method of SignificantSpaceParsers.
