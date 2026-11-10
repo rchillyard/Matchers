@@ -39,14 +39,84 @@ libraryDependencies += "com.phasmidsoftware" %% "matchers" % "x.y.z"
 Matchers 1.1.0 and later need Scala 3.9 or later. For Scala 3.3 to 3.8, use 1.0.17: it was built with
 Scala 3.3.8, and is functionally identical to 1.1.x (the only changes since have been to the build).
 
+## Your first matcher
+
+_Matchers_ is a trait, so you need an instance of it before you can do anything.
+The quickest way is the ready-made instance in the companion object:
+
+```scala
+import com.phasmidsoftware.matchers.Matchers.matchers
+
+val m = matchers
+
+val even: m.Matcher[Int, Int] = m.filter[Int](_ % 2 == 0)
+
+even(4) // Match: 4
+even(3) // Miss: filter: predicate returned false for 3: 3
+```
+
+A _Matcher_[_T_, _R_] is a function from _T_ to _MatchResult_[_R_], so you apply it like any other function.
+The result is either a _Match_ (with the value), a _Miss_ (with a message and the input that failed),
+or an _Error_ (wrapping a _Throwable_).
+Every example below assumes that `m` is in scope, as above.
+
+Note that the `m.` prefix matters: _Matcher_, _MatchResult_, _Match_ and _Miss_ are all defined *inside*
+the trait, so they are path-dependent types belonging to your particular instance.
+
+## Creating a Matchers instance
+
+There are three ways to get one, in increasing order of commitment.
+
+**1. Use the ready-made instance**, as above.
+It logs through SLF4J with logging switched off.
+It is the fastest way to start, and it is what the examples in this README use.
+
+**2. Create your own instance.**
+The trait has one abstract member, `matchLogger`, so supplying it is all you need.
+This is recommended over the default instance for anything beyond experimenting, because it lets you
+control logging (see [Debugging/Logging](#debugginglogging), below):
+
+```scala
+import com.phasmidsoftware.matchers.{LogOff, MatchLogger, Matchers}
+
+object MyMatchers extends Matchers {
+  protected val matchLogger: MatchLogger = MatchLogger(LogOff, classOf[Matchers])
+}
+
+MyMatchers.matches(1)(1) // Match: 1
+```
+
+**3. Extend the trait with your own matchers.**
+This is the interesting one, and it is how _Matchers_ is designed to be used: your own domain matchers
+become methods alongside the built-in combinators, so they compose with them.
+
+```scala
+trait StringMatchers extends Matchers {
+  def nonEmpty: Matcher[String, String] = filter[String](_.nonEmpty)
+}
+
+object StringMatchers extends StringMatchers {
+  protected val matchLogger: MatchLogger = MatchLogger(LogOff, classOf[Matchers])
+}
+
+StringMatchers.nonEmpty("hi") // Match: hi
+StringMatchers.nonEmpty("")   // Miss: filter: predicate returned false for :
+```
+
+For a real example of this pattern, see
+[Number](https://github.com/rchillyard/Number), which layers two levels on top:
+`trait MatchersExtras extends Matchers` adds general-purpose combinators, and
+`class ExpressionMatchers(using val matchLogger: MatchLogger) extends MatchersExtras` adds the ones
+specific to expressions.
+Number then makes a single instance available implicitly:
+`implicit val em: ExpressionMatchers = new ExpressionMatchers {}`.
+
 ## API Documentation
 
 Full Scaladoc is at <https://rchillyard.github.io/Matchers/latest/api/>.
 
-## Safe creation of Match
-The _Match_ class has a "of" method which takes a value of type _R_ and returns a _MatchResult_[_R]_.
-The parameter of type _R_ is call-by-name and if an exception is thrown, that exception will be thrown (and not converted to an Error).
-This is useful for situations where the expression being passed into Match throws an exception, which otherwise would tend to disappear.
+Every example in this README, and every result shown against one, is checked by `ReadmeSpec` in the
+test suite. If you change an example here, change it there too (and vice versa).
 
 # Composition of MatchResult
 Perhaps the simplest place to start is with the || method:
@@ -65,13 +135,26 @@ There is a similar method defined as |:
 It behaves as || if _this_ is successful, but otherwise, matcher _sm_ is invoked on the failed input value for this _Miss_.
 An _Error_ always returns itself.
 
-The corresponding "and" methods are somewhat different because the return
-type must include two values of two disparate types:
+There are two "and" methods, and the difference between them matters.
 
-    def &&[S](sm: => MatchResult[S]): MatchResult[R ~ S]
+The first is `&&`, which acts as a *guard*:
 
-The result of the && method will be successful only if _sm_ is also successful.
-In this case, the result will be a tuple of the two results.
+    def &&[S](sm: => MatchResult[S]): MatchResult[S]
+
+The result is successful only if both _this_ and _sm_ are successful, but the value of _this_ is
+discarded: only _sm_'s value survives. Use it when you need something to hold but don't need its value.
+
+    even(4) && double(21) // Match: 42
+    even(3) && double(21) // Miss: filter: predicate returned false for 3: 3
+
+The second is `~`, which keeps both values, and so needs a return type that holds two values of two
+disparate types:
+
+    def ~[S](sm: => MatchResult[S]): MatchResult[R ~ S]
+
+    even(4) ~ double(21) // Match: 4~42
+
+`~` is a synonym of _andThen_. See [Tilde](#tilde), below, for the _~_ class itself.
 
 # Parsing
 Any _Matcher_ whose input is a _String_ can be referred to as a _Parser_ (a type alias).
@@ -79,43 +162,67 @@ Any _Matcher_ whose input is a _String_ can be referred to as a _Parser_ (a type
 There are simple numeric parsers, for example:
 
     val p = m.parserInt
-    p("12345") shouldBe m.Match(12345)
+    p("12345") // Match: 12345
+    p("abc")   // Miss: parser: String abc did not match regex -?\d+: abc
 
 It is easy to create matchers that parse regular expressions (without having to depend on Scala Parser Combinators).
 For example:
 
-    import matchers._
-    val m: matchers.Parser[List[String]] = """(\w+)\s(\d+)""".regexGroups
-    m("Hello 12345") shouldBe matchers.Match(List("Hello", "12345"))
+    import m.*
+    val rg: m.Parser[List[String]] = """(\w+)\s(\d+)""".regexGroups
+    rg("Hello 12345") // Match: List(Hello, 12345)
 
-This utilizes the _regexGroups_ method of implicit class _ParserOps_.
+This utilizes the _regexGroups_ method of implicit class _ParserOps_, which the `import m.*` brings into scope.
 
 It is also easy to parse strings as instances of case classes, even with optional parameters.
 See, for example,
 
     case class Rating(code: String, age: Option[Int])
-    val p: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating)
-    p("PG-13") shouldBe m.Match(Rating("PG", Some(13)))
-    p("R") shouldBe m.Match(Rating("R", None))
+    val pr: m.Parser[Rating] = m.parser2("""(\w+)(-(\d+))?""", 1, 3)(m.always, m.opt(m.parserInt))(Rating.apply)
+    pr("PG-13") // Match: Rating(PG,Some(13))
+    pr("R")     // Match: Rating(R,None)
+
+Note `Rating.apply` rather than `Rating`: in Scala 3, the companion object is not automatically
+converted to a function.
 
 # Tilde
 As in the Scala Parser Combinators, there is a ~ case class.
 It is essentially just a tuple of two elements.
 However, if we use the ~ operator on two _Matchers_ for example as follows:
 
-    import matchers._
-    val m: matchers.Matcher[String ~ String, Int] = "1".m ~ "2".m ^^ {
+    import m.*
+    import com.phasmidsoftware.matchers.Matchers.TildeOps
+
+    val t: m.Matcher[String ~ String, Int] = "1".m ~ "2".m ^^ {
       case x ~ y => x.toInt + y.toInt
     }
+
+    t("1" ~ "2") // Match: 3
 
 ... you can use the ^^ (or _map_) method to transform the _MatchResult_ from _String_ ~ _String_ to some other type,
 in this case an _Int_.
 
-In this case, the _m_ method on a _String_ is provided by an implicit class _MatcherStringOps_.
+In this case, the _m_ method on a _String_ is provided by an implicit class _MatcherStringOps_,
+brought into scope by `import m.*`.
 
-# Usage
-Typical examples of the use of **Matchers** would be something such as the following
-(from an application which deals with lazy expressions of numeric quantities):
+The two imports do different jobs, and it is easy to be caught out by this.
+`import m.*` gives you `~` on _Matchers_ (building `"1".m ~ "2".m`), while
+`import com.phasmidsoftware.matchers.Matchers.TildeOps` gives you `~` on ordinary values
+(building the input `"1" ~ "2"`).
+Without the second one, the compiler reports that "value ~ is not a member of String".
+
+## Safe creation of Match
+The _Match_ class has a "of" method which takes a value of type _R_ and returns a _MatchResult_[_R]_.
+The parameter of type _R_ is call-by-name and if an exception is thrown, that exception will be thrown (and not converted to an Error).
+This is useful for situations where the expression being passed into Match throws an exception, which otherwise would tend to disappear.
+
+# A real-world example
+The examples above are self-contained. This section is different: it is taken from
+[Number](https://github.com/rchillyard/Number), which uses **Matchers** to simplify lazy expressions
+of numeric quantities before evaluating them, so as to avoid losing precision.
+The matchers referred to below (_matchBiFunction_, _matchDyadicBranches_ and so on) are Number's own,
+defined in its `ExpressionMatchers` class, so you cannot paste this into a REPL.
+It is here to show what a non-trivial set of matchers looks like when composed:
 
     def biFunctionSimplifier: Matcher[Expression, Expression] = matchBiFunction & (matchSimplifyPlus | matchSimplifyTimes) :| "biFunctionSimplifier"
 
@@ -158,7 +265,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
-* 1.1.1 Corrected the Maven Central description, which had been Number's; `-Werror`; versionScheme is now "pvp" rather than "early-semver". No functional change.
+* 1.1.1 Corrected the Maven Central description, which had been Number's; `-Werror`; versionScheme is now "pvp" rather than "early-semver"; MiMa checks binary compatibility; README rewritten with runnable examples (and a corrected description of `&&`). No functional change.
 * 1.1.0 Built with Scala 3.9.0 (the current LTS), so it needs Scala 3.9 or later (for Scala 3.3, use 1.0.17); sbt 1.12.13; Scaladoc on GitHub Pages.
 * 1.0.17 Settled on Scala 3 LTS Version (3.3.8) with other minor changes.
 * 1.0.16 Redundant evaluations in `eitherOr` method resolved (??)
