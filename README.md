@@ -29,14 +29,15 @@ There are three subclasses of _MatchResult_[_R_]:
 Getting Started
 ----------------
 
-Matchers is published on Maven Central. Add it to your `build.sbt`:
+Matchers is published on Maven Central. Add it to your `build.sbt`,
+where `x.y.z` is the latest version on Maven Central: it's shown on the [Sonatype Central](https://central.sonatype.com/artifact/com.phasmidsoftware/matchers_3) badge at the top of this page.
 
 ```scala
-libraryDependencies += "com.phasmidsoftware" %% "matchers" % "<version>"
+libraryDependencies += "com.phasmidsoftware" %% "matchers" % "x.y.z"
 ```
 
-(see the Sonatype Central badge at the top of this page for the current version number).
-Matchers 1.1.0 and later need Scala 3.9 or later; for Scala 3.3 to 3.8, use 1.0.17.
+Matchers 1.1.0 and later need Scala 3.9 or later. For Scala 3.3 to 3.8, use 1.0.17: it was built with
+Scala 3.3.8, and is functionally identical to 1.1.x (the only changes since have been to the build).
 
 ## API Documentation
 
@@ -157,6 +158,7 @@ You can easily set up your own implicit value of _MatchLogger_ which is simply a
 
 Version
 =======
+* 1.1.1 Corrected the Maven Central description, which had been Number's; `-Werror`; versionScheme is now "pvp" rather than "early-semver". No functional change.
 * 1.1.0 Built with Scala 3.9.0 (the current LTS), so it needs Scala 3.9 or later (for Scala 3.3, use 1.0.17); sbt 1.12.13; Scaladoc on GitHub Pages.
 * 1.0.17 Settled on Scala 3 LTS Version (3.3.8) with other minor changes.
 * 1.0.16 Redundant evaluations in `eitherOr` method resolved (??)

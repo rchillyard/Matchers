@@ -1,5 +1,5 @@
 // Optional but useful
-ThisBuild / description := "Fuzzy, Lazy Scala library for numerical computation"
+ThisBuild / description := "Scala library of composable matchers"
 ThisBuild / homepage := Some(url("https://github.com/rchillyard/Matchers"))
 ThisBuild / organizationName := "Phasmid Software"
 ThisBuild / organizationHomepage := Some(url("https://phasmidsoftware.com/"))
@@ -35,7 +35,10 @@ ThisBuild / developers := List(
 // Optional
 
 // Publishing settings
-ThisBuild / versionScheme := Some("early-semver")
+// PVP: the first two numbers make the major version. A patch release (x.y.z) is binary compatible with x.y.0;
+// a minor release (x.y) may break compatibility, with a release note. (Up to 1.1.0, this said "early-semver",
+// which promised binary compatibility across minor releases, so sbt and Coursier evicted older ones silently.)
+ThisBuild / versionScheme := Some("pvp")
 ThisBuild / publishConfiguration := publishConfiguration.value.withOverwrite(true)
 ThisBuild / publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
 

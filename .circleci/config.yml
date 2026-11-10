@@ -49,6 +49,11 @@ jobs:
           name: Test
           command: cat /dev/null | sbt test
 
+      # Binary compatibility with the last release (MiMa: see previousRelease in build.sbt)
+      - run:
+          name: Binary compatibility
+          command: cat /dev/null | sbt mimaReportBinaryIssues
+
       # Generate Scaladoc (catches doc warnings, and the docs are published to GitHub Pages)
       - run:
           name: Doc
