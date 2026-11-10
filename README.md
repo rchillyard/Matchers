@@ -115,6 +115,9 @@ Number then makes a single instance available implicitly:
 
 Full Scaladoc is at <https://rchillyard.github.io/Matchers/latest/api/>.
 
+Every example in this README, and every result shown against one, is checked by `ReadmeSpec` in the
+test suite. If you change an example here, change it there too (and vice versa).
+
 # Composition of MatchResult
 Perhaps the simplest place to start is with the || method:
 
