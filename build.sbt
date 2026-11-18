@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Matchers"
 
-version := "1.1.1"
+version := "1.1.2"
 
 // The current Scala 3 LTS. Code built with 3.9 can only be used from Scala 3.9 or later; Scala 3.3 users
 // should use 1.0.17, which was built with 3.3.8 and is functionally identical (1.1.0 changed only the build).
@@ -26,7 +26,7 @@ Test / scalacOptions ~= (_.filterNot(_ == "-Wnonunit-statement"))
 // The version scheme is PVP (see publish.sbt): a patch release must pass; a minor release may break compatibility,
 // on purpose and with a release note, by listing the breaks in mimaBinaryIssueFilters (or, after the release, by
 // moving previousRelease on). Note moduleName, not name: the published artifact is matchers_3, not Matchers_3.
-val previousRelease = "1.1.0"
+val previousRelease = "1.1.1"
 mimaPreviousArtifacts := Set(organization.value %% moduleName.value % previousRelease)
 
 val scalaTestVersion = "3.2.20"
