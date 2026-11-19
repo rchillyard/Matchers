@@ -169,7 +169,7 @@ trait Matchers {
       Matcher("<~")(this ~ m ^^ { case x ~ _ => x })
 
     /**
-      * CONSIDER maybe doesn't make sense (compare with valve).
+      * CONSIDER maybe doesn't make sense (compare with valve). See Issue #38.
       *
       * Matcher which succeeds or not, depending on an additional Q value (the control).
       *
@@ -185,9 +185,8 @@ trait Matchers {
 
     /**
       * Matcher which always succeeds (unless this causes an Error) but whose result is based on a Try[R].
-      * CONSIDER there are similarities between this and the `valve` method,
-      * as well as between this and the `matchTryFunc` method.
-      * TESTME more
+      * CONSIDER there are similarities between this and the `valve` method, as well as between this and the `matchTryFunc` method. See Issue #38.
+      * TESTME more. See Issue #42.
       *
       * @return Matcher[T, Try of R]
       */
@@ -418,7 +417,7 @@ trait Matchers {
     /**
       * Method to compose this `MatchResult` with `sm`.
       * If either this is a `Match` or sm is a `Match`, the result will be a `Match`.
-      * CONSIDER having two nested match clauses such that `sm` would not be evaluated if `this` was an `Error`.
+      * CONSIDER having two nested match clauses such that `sm` would not be evaluated if `this` was an `Error`. See Issue #40.
       *
       * @param sm a call-by-name MatchResult[S].
       * @tparam S the underlying type of s.
@@ -646,7 +645,7 @@ trait Matchers {
       * the value if evaluation is successful. If the evaluation fails with an exception,
       * the exception is wrapped and rethrown as a `MatcherException`.
       *
-      * CONSIDER whether we should return an Error instead of throwing an exception.
+      * CONSIDER whether we should return an Error instead of throwing an exception. See Issue #40.
       *
       * @param t The lazily-evaluated block of code whose result is to be encapsulated in a `MatchResult`.
       * @return A `MatchResult` encapsulating the successfully evaluated value of `t`.
@@ -663,7 +662,7 @@ trait Matchers {
   /**
     * Unsuccessful match of type dependent on `X`.
     *
-    * TODO eliminate `X` (or `R`?) from the type signature.
+    * TODO eliminate `X` (or `R`?) from the type signature. See Issue #41.
     *
     * @param x either a String or a Throwable.
     * @tparam X the type of x.
@@ -1017,7 +1016,7 @@ trait Matchers {
       * - Combines successful `Match` instances by collecting all their matched values.
       * - Propagates the first encountered `Error` instance, if any.
       * - Preserves `Miss` instances if no `Error` is present.
-      * CONSIDER using `accumulate`
+      * CONSIDER using `accumulate`. See Issue #39.
       *
       * If the result is a `Match`, then at least one element of `rms` was a `Match`.
       * If the result is a `Miss`, then each of the elements of `rms` was a `Miss`.
@@ -1053,7 +1052,7 @@ trait Matchers {
       * containing a sequence of all matched values.
       * If any `MatchResult` in the sequence represents a failure,
       * the aggregation stops at the first failure and returns that.
-      * CONSIDER using accumulate
+      * CONSIDER using accumulate. See Issue #39.
       *
       * @param rms the sequence of `MatchResult` objects to be aggregated.
       * @tparam R the type of the matched value.
@@ -1099,7 +1098,7 @@ trait Matchers {
   /**
     * Method to create a named `Matcher`, based on the given function `f`.
     *
-    * CONSIDER eliminating this method.
+    * CONSIDER eliminating this method. See Issue #43.
     *
     * @param name the name for the logger to mention.
     * @param f    a `T => MatchResult[R]`.
@@ -1306,7 +1305,7 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
-    * CONSIDER what to do with this
+    * CONSIDER what to do with this. See Issue #38.
     *
     * @param f a T => R.
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
@@ -1316,7 +1315,7 @@ trait Matchers {
     * @return a `Matcher[(Q, R), T]`.
     */
   def valve[Q, T, R](f: T => R, p: (Q, R) => Boolean): Matcher[(Q, T), R] = Matcher("valve") {
-    // CONSIDER redesign this in terms of other Matchers, not MatchResult
+    // CONSIDER redesign this in terms of other Matchers, not MatchResult. See Issue #38.
     case (q, t) =>
       MatchResult(f, p)(q, t)
   }
@@ -1325,7 +1324,7 @@ trait Matchers {
     * Matcher whose success depends on the application of a function f to the input,
     * then the application of a predicate to a control value and the result of f.
     *
-    * CONSIDER what to do with this
+    * CONSIDER what to do with this. See Issue #38.
     *
     * @param p a predicate based on the tuple (q, r) where r is the result of applying f to t.
     * @tparam Q the "control" type.
@@ -1513,7 +1512,7 @@ trait Matchers {
     * Method to yield a Parser[Z] using the given regex, a function String=>P0 and a function P0=>Z.
     * Typically, Z will be a case class.
     *
-    * TESTME
+    * TESTME. See Issue #42.
     *
     * @param regex     a regular expression.
     * @param groups    a list of required group indexes, starting at 1 (if empty, then all groups are selected).
@@ -1587,7 +1586,7 @@ trait Matchers {
     * Defines a `Matcher` which reverses the sense of this `Matcher`.
     * However, an `Error` remains an `Error`.
     * The result is named "not."
-    * TODO define this in terms of `MatchResult.invert`
+    * TODO define this in terms of `MatchResult.invert`. See Issue #40.
     *
     * @param m a `Matcher[T, R]`
     * @param r the default result value, only to be used in the even of a `Miss`.
@@ -1649,7 +1648,7 @@ trait Matchers {
     *
     * NOTE: if you are looking for a method which takes a function f of form T => R, then you need to use the lift method.
     *
-    * TODO: rename Matcher as UnnamedMatcher and this as Matcher.
+    * TODO: rename Matcher as UnnamedMatcher and this as Matcher. See Issue #41.
     *
     * If `f` is a partial function, it may result in a `MatchError`.
     * In such a case, this is simply treated as a `Miss`.
@@ -2079,7 +2078,7 @@ trait Matchers {
   /**
     * Method to match any element of a Tuple3.
     *
-    * TODO fix me
+    * TODO fix me. See Issue #44.
     *
     * @param m0 the Matcher corresponding to the first element.
     * @param m1 the Matcher corresponding to the second element.
@@ -2298,7 +2297,7 @@ trait Matchers {
         tryMatch(f, t) ::- (r => logger(s"... $name: Match: $r"), w => logger(s"... $name($t): $w"))
 
       case LogInfo =>
-        // CONSIDER that `t` and `r` are of disparate types in general,
+        // NOTE that `t` and `r` are of disparate types in general,
         //  but you can ignore the warning because, sometimes, `t == r`.
         tryMatch(f, t) :- (r => if t != r then logger(s"$name: matched $t as $r"))
 
