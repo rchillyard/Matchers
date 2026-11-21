@@ -440,7 +440,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
               |""".stripMargin
   }
 
-  // CONSIDER eliminating the loggedMatcher method.
+  // CONSIDER eliminating the loggedMatcher method. (#48)
   behavior of "loggedMatcher"
   it should "work with fixed success result" in {
     val sb = new StringBuilder
@@ -1274,7 +1274,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "matchAll"
   it should "invoke matchAll match" in {
     val target = Seq(1, 2, 3)
-    // CONSIDER using Matcher[Int,Int] (without the new)
+    // CONSIDER using Matcher[Int,Int] (without the new) (#49)
     val posInt = new Matcher[Int, Int] {
       def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
@@ -1293,7 +1293,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   behavior of "matchAny"
   it should "invoke matchAny match 1" in {
     val target = Seq(1, 2, 3)
-    // CONSIDER using Matcher[Int,Int] (without the new)
+    // CONSIDER using Matcher[Int,Int] (without the new) (#49)
     val posInt = new Matcher[Int, Int] {
       def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
@@ -1302,7 +1302,7 @@ class MatchersSpec extends AnyFlatSpec with should.Matchers {
   }
   it should "invoke matchAny match 2" in {
     val target = Seq(-1, 2, -3)
-    // CONSIDER using Matcher[Int,Int] (without the new)
+    // CONSIDER using Matcher[Int,Int] (without the new) (#49)
     val posInt = new Matcher[Int, Int] {
       def apply(x: Int): matchers.MatchResult[Int] = if x >= 0 then Match(x) else Miss("", x)
     }
